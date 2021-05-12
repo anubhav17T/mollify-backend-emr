@@ -18,7 +18,7 @@ import uuid
 import cloudinary
 from fastapi import File
 from cloudinary import uploader
-
+from fastapi import Query, Path
 from constants.const import CLOUD_NAME, API_KEY, API_SECRET
 
 cloudinary.config(
@@ -43,7 +43,8 @@ async def adding_specialisation(specailisation: Specialisation):
 
 
 @app_v1.get("/doctors/specialisations", tags=["DOCTORS/GENERAL"])
-async def get_specialisations(search_query: str):
+async def get_specialisations(search_query: str = Query(..., title="Query parameter for search",
+                                                        description="Provide values in type(string)= true/false/getAll")):
     logger.info("###### GET SPECIALISATION ######## ")
     try:
         if search_query == "true" or search_query == "false":
@@ -57,7 +58,7 @@ async def get_specialisations(search_query: str):
                        }
                 val_array.append(val)
             return val_array
-        elif search_query == "all":
+        elif search_query == "getAll":
             result_object = await get_all_specialisation()
             val_array = []
             for values_ in result_object:
@@ -72,7 +73,10 @@ async def get_specialisations(search_query: str):
             return {"error": {"message": "no parameter found", "code": status.HTTP_404_NOT_FOUND, "success": False}}
     except Exception as e:
         logger.error("### ERROR IN DOCTORS SPECIALISATION {} ####".format(e))
-        return {"error": {"message": "no parameter found", "code": status.HTTP_404_NOT_FOUND, "success": False}}
+        return {"error":
+                    {"message": "no parameter found",
+                     "code": status.HTTP_404_NOT_FOUND,
+                     "success": False}}
 
 
 @app_v1.get("/doctors/check-registration/", response_model_exclude_unset=True, tags=["DOCTORS/GENERAL"])
@@ -274,7 +278,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
 
 @app_v1.post("/doctors/forgot-password/{through}", tags=["DOCTORS/GENERAL"])
-async def forget_password(through, request: ForgotPassword):
+async def forget_password(request: ForgotPassword, through: str = Path(..., title="to check whether user has logged "
+                                                                                  "in through mail/phone")):
     if through == "mail":
         result = await find_exist_username_email(check=request.mail)
         if not result:
