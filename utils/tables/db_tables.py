@@ -6,6 +6,7 @@ import psycopg2
 from sqlalchemy import ForeignKey
 from sqlalchemy_utils import URLType
 
+
 def creating_doctor_table():
     try:
         logger.info(" ########## GOING FOR DOCTOR/THERAPIST TABLES ##############")
@@ -33,11 +34,11 @@ def creating_doctor_table():
                 sqlalchemy.Column("econsultation_fee", sqlalchemy.Integer),
                 sqlalchemy.Column("isActive", sqlalchemy.Boolean()),
                 sqlalchemy.Column("isOnline", sqlalchemy.Boolean()),
-                sqlalchemy.Column("slug", sqlalchemy.String(150)),
-                sqlalchemy.Column("url", sqlalchemy.String(100)),
-                sqlalchemy.Column("created_on", DateTime),
+                sqlalchemy.Column("url", sqlalchemy.String(150)),
                 sqlalchemy.Column("follow_up_fee", sqlalchemy.Integer),
                 sqlalchemy.Column("about", sqlalchemy.String(300)),
+                sqlalchemy.Column("slug", sqlalchemy.String(150)),
+                sqlalchemy.Column("created_on", DateTime),
             )
             engine = sqlalchemy.create_engine(
                 DB_URL, pool_size=3)

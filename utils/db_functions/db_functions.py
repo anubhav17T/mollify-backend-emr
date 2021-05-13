@@ -100,11 +100,8 @@ def find_slug_therapist(slug: str):
 
 def save_doctor(doctor: Doctor, slug):
     dt = datetime.now(timezone.utc)
-    print("one")
     try:
-        query = """ INSERT INTO doctors VALUES (nextval('doctors_id_seq'),:username,:full_name,:mail,:password," \
-                ":phone_number,:gender,:experience,:econsultation_fee,:isActive,:isOnline,:slug,:url,:created_on," \
-                ":follow_up_fee,:about) """
+        query = """ INSERT INTO doctors VALUES (nextval('doctors_id_seq'),:username,:full_name,:mail,:password,:phone_number,:gender,:experience,:econsultation_fee,:isActive,:isOnline,:url,:follow_up_fee,:about, :slug, :created_on) """
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY")
         return db.execute(query=query, values={"username": doctor.username,
                                                "full_name": doctor.full_name, "mail": doctor.mail,
@@ -114,10 +111,11 @@ def save_doctor(doctor: Doctor, slug):
                                                "econsultation_fee": doctor.econsultation_fee,
                                                "isActive": doctor.isActive,
                                                "isOnline": doctor.isActive,
-                                               "slug": slug,
-                                               "created_on": dt.utcnow(),
+                                               "url": doctor.url,
                                                "follow_up_fee": doctor.follow_up_fee,
-                                               "about": doctor.about
+                                               "about": doctor.about,
+                                               "slug": slug,
+                                               "created_on": dt.utcnow()
                                                }
                           )
 
