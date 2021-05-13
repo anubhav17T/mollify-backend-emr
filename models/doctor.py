@@ -18,7 +18,7 @@ class Doctor(BaseModel):
     econsultation_fee: int
     isActive: bool = None
     isOnline: bool = None
-    url: str
+    url: str = None
     follow_up_fee: int
     about: str = Field(..., example="about yourself in less than 350 words")
     qualification: List[Qualification] = None
