@@ -5,12 +5,13 @@ from datetime import datetime, timezone
 from models.specialisation import Specialisation
 from models.doctor_specialisation import DoctorSpecialisation
 
+
 def save_specialisation(specailisations: Specialisation):
     try:
-        query = """INSERT INTO specialisations VALUES (nextval('specialisations_id_seq'),:name,:active) """
+        query = """INSERT INTO specialisations VALUES (nextval('specialisations_id_seq'),:name,:is_active) """
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF SPECIALISATION")
         return db.execute(query, values={"name": specailisations.name,
-                                         "active": specailisations.active})
+                                         "is_active": specailisations.is_active})
     except Exception as e:
         logger.error("##### EXCEPTION IN SAVE_SPECIALISATION FUNCTION IS {}".format(e))
         return False
@@ -18,15 +19,31 @@ def save_specialisation(specailisations: Specialisation):
         logger.info("#### FIND SAVE_SPECIALISATION FUNCTION COMPLETED ####")
 
 
-def get_sepecific_specialisation(search_query: str):
+def get_specific_doctor(search_query):
     try:
-        query = "select * from specialisations where active=:active"
-        logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF GET SPECIALISATION")
-        return db.fetch_all(query, values={"active": search_query})
+        query = """ SELECT * FROM doctors WHERE mail=:mail or username=:username """
+        logger.info("### PROCEEDING FURTHER FOR EXECUTION OF QUERY OF GET SPECIFIC DOCTOR")
+        return db.fetch_one(query, values={"mail": search_query, "username": search_query})
     except Exception as e:
-        print(e)
+        logger.error("#### EXCEPTION IN GET SPECIFIC DOCTOR IS {} #####".format(e))
+
+
+def get_all_doctor():
+    try:
+        query = """ SELECT * FROM doctors LIMIT 10"""
+        logger.info("### PROCEEDING FURTHER FOR EXECUTION OF QUERY OF GET SPECIFIC DOCTOR")
+        return db.fetch_all(query)
+    except Exception as e:
+        logger.error("#### EXCEPTION IN GET SPECIFIC DOCTOR IS {} #####".format(e))
+
+
+def get_sepecific_specialisation(state: str):
+    try:
+        query = "select * from specialisations where is_active=:is_active"
+        logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF GET SPECIALISATION")
+        return db.fetch_all(query, values={"is_active": state})
+    except Exception as e:
         logger.error("##### EXCEPTION IN GET_SPECIALISATION FUNCTION IS {}".format(e))
-        return False
     finally:
         logger.info("#### GET_SPECIALISATION FUNCTION COMPLETED ####")
 
@@ -128,7 +145,6 @@ def save_doctor(doctor: Doctor, slug):
 
 
 def save_specialisation_map(map):
-    print(map)
     query = "INSERT INTO doctors_specialisations_map VALUES (nextval('doctors_specialisations_map_id_seq'),:doctor_id,:specialisation_id) "
     logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF SAVE SPECIALISATION MAP QUERY")
     try:
@@ -138,9 +154,6 @@ def save_specialisation_map(map):
         return False
     finally:
         logger.error("#######  SAVE_SPECIALISATION_MAP FUNCTION OVER ##### ")
-
-
-
 
 
 def find_black_list_token(token: str):
@@ -198,10 +211,10 @@ def disable_reset_code(reset_password_token: str, mail: str):
         logger.info("#### disable_reset_password_user FUNCTION COMPLETED ####")
 
 
-def get_doctor_information(username: str):
-    query = "SELECT id FROM doctors WHERE username=:username"
+def get_doctor_information(mail: str):
+    query = "SELECT id FROM doctors WHERE mail=:mail"
     try:
-        return db.fetch_one(query, values={"username": username})
+        return db.fetch_one(query, values={"mail": mail})
     except Exception as e:
         logger.error("####### EXCEPTION IN FIND_BLACK_LIST_TOKEN FUNCTION IS = {}".format(e))
     finally:

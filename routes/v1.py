@@ -5,7 +5,7 @@ from utils.logger.logger import logger
 from utils.db_functions.db_functions import find_exist_username_email, find_exist_user, find_exist_username, \
     find_exist_user_phone, find_slug_therapist, save_doctor, create_reset_code, check_reset_password_token, \
     reset_password_user, disable_reset_code, update_profile_picture, get_doctor_information, save_qualification, \
-    save_specialisation, get_sepecific_specialisation, get_all_specialisation, save_specialisation_map
+    save_specialisation, get_sepecific_specialisation, get_all_specialisation, save_specialisation_map, get_all_doctor
 from models.doctor import Doctor, ForgotPassword, ResetPassword, DoctorImageUrl
 from models.specialisation import Specialisation
 from utils.random_generator.random_digits import random_with_N_digits
@@ -32,6 +32,12 @@ cloudinary.config(
 app_v1 = APIRouter()
 
 
+@app_v1.get("/doctors/", tags=["DOCTORS/CRUD"])
+async def get_all_doctors():
+    logger.info("#### GET ALL DOCTORS ####")
+    return await get_all_doctor()
+
+
 @app_v1.post("/doctors/specialisations", tags=["DOCTORS/GENERAL"])
 async def adding_specialisation(specailisation: Specialisation):
     logger.info("###### ADDING SPECIALISATION ######## ")
@@ -40,37 +46,27 @@ async def adding_specialisation(specailisation: Specialisation):
         return {"message": "specialisation added successfully", "code": status.HTTP_201_CREATED, "success": True}
     except Exception as e:
         logger.error("###### ERROR IN ADDING SPECIALISATION {} ###########".format(e))
+        return {"error": {
+            "message": "Unable to save specialisation {}".format(e),
+            "code": status.HTTP_400_BAD_REQUEST,
+            "success": False,
+            "target": "SAVE-SPECIALISATION"
+        }}
     finally:
         logger.info("#### REGISTER SPECIALISATION FUNCTION OVER #####")
 
 
 @app_v1.get("/doctors/specialisations", tags=["DOCTORS/GENERAL"])
-async def get_specialisations(search_query: str = Query(..., title="Query parameter for search",
+async def get_specialisations(active_state: str = Query(None, title="Query parameter for search",
                                                         description="Provide values in type(string)= true/false/getAll")):
     logger.info("###### GET SPECIALISATION ######## ")
     try:
-        if search_query == "true" or search_query == "false":
-            result_object = await get_sepecific_specialisation(search_query)
-            val_array = []
-            for values_ in result_object:
-                key = dict(values_)
-                val = {"id": key['id'],
-                       "name": key["name"],
-                       "active": key["active"]
-                       }
-                val_array.append(val)
-            return val_array
-        elif search_query == "getAll":
-            result_object = await get_all_specialisation()
-            val_array = []
-            for values_ in result_object:
-                key = dict(values_)
-                val = {"id": key['id'],
-                       "name": key["name"],
-                       "active": key["active"]
-                       }
-                val_array.append(val)
-            return val_array
+        if active_state == "true" or active_state == "false":
+            return await get_sepecific_specialisation(state=active_state)
+        elif active_state == "getAll":
+            return await get_all_specialisation()
+        elif active_state is None:
+            return await get_sepecific_specialisation(state="true")
         else:
             return {"error": {"message": "no parameter found", "code": status.HTTP_404_NOT_FOUND, "success": False}}
     except Exception as e:
@@ -79,6 +75,8 @@ async def get_specialisations(search_query: str = Query(..., title="Query parame
                     {"message": "no parameter found",
                      "code": status.HTTP_404_NOT_FOUND,
                      "success": False}}
+    finally:
+        logger.info("##### GET SPECIALISATIONS FUNCTION OVER #####")
 
 
 @app_v1.get("/doctors/check-registration/", response_model_exclude_unset=True, tags=["DOCTORS/GENERAL"])
@@ -112,6 +110,29 @@ async def check_availability(request: Request):
         logger.info("######## CHECK DOCTOR-REGISTRATION METHOD FINISHED ########")
 
 
+@app_v1.get("/doctors/{mail}", tags=["DOCTORS/CRUD"])
+async def get_doctor(mail: str):
+    logger.info("#### CALL FOR SPECIFIC DOCTOR ####")
+    try:
+        result_ = await find_exist_user(mail)
+        if result_ is None:
+            return {"error": {
+                "message": "cannot able to find the doctor/therapist",
+                "code": status.HTTP_404_NOT_FOUND,
+                "success": False,
+                "target": "GET-DOCTOR"
+            }}
+        else:
+            return {"info": result_, "success": True}
+    except Exception as e:
+        logger.error("### ERROR IN GET SPECIFIC DOCTOR ID IS {} ####".format(e))
+        return {"error": {
+            "message": "Unable to get doctor information {}".format(e),
+            "code": status.HTTP_400_BAD_REQUEST,
+            "success": False
+        }}
+
+
 @app_v1.post("/doctors/register", status_code=status.HTTP_201_CREATED,
              tags=["DOCTORS/GENERAL"])
 async def register_user(user: Doctor):
@@ -129,14 +150,14 @@ async def register_user(user: Doctor):
                               "success": False}
                     }
 
-        result_obj = await find_exist_username(username=user.username)
-        if result_obj is not None:
-            logger.error("#### USER ALREADY REGISTERED  WITH USERNAME #####")
-            return {"error": {"message": "Doctor/Therapist has already registered",
-                              "code": status.HTTP_409_CONFLICT,
-                              "target": "doctor/registration",
-                              "success": False}
-                    }
+        # result_obj = await find_exist_username(username=user.username)
+        # if result_obj is not None:
+        #     logger.error("#### USER ALREADY REGISTERED  WITH USERNAME #####")
+        #     return {"error": {"message": "Doctor/Therapist has already registered",
+        #                       "code": status.HTTP_409_CONFLICT,
+        #                       "target": "doctor/registration",
+        #                       "success": False}
+        #             }
         else:
             if user.phone_number is None:
                 logger.error("##### PHONE NUMBER FIELD NOT PROVIDED ##### ")
@@ -158,16 +179,17 @@ async def register_user(user: Doctor):
                                           "success": False}}
 
                     """ TO-DO -> FOR NOW, RANDOMLY GENERATING THE DOCTOR/THERAPIST PASSWORD"""
+                    user.password = str(random_with_N_digits(n=5))
                     user.password = hash_password(password=user.password)
                     logger.info("#### RANDOMLY GENERATED USER PASSWORD ##### ")
-                    slug_object = user.full_name + '-' + user.username
+                    slug_object = user.full_name + "-" + str(random_with_N_digits(n=2))
                     result_slug = await find_slug_therapist(slug=slug_object)
                     if result_slug is not None:
                         logger.info(
                             "###### NAME WITH SAME SLUG NAME IS ALREADY THERE THEREFORE ADDING SOME IDENTFIER ##### ")
                         slug_object = slug_object + "-" + str(random_with_N_digits(n=3))
-                        result_new = await save_doctor(doctor=user, slug=slug_object)
-                        coroutine_id = await get_doctor_information(username=user.username)
+                        await save_doctor(doctor=user, slug=slug_object)
+                        coroutine_id = await get_doctor_information(mail=user.mail)
                         coroutine_id = dict(coroutine_id)
                         values = []
                         for get_values in user.qualification:
@@ -202,17 +224,9 @@ async def register_user(user: Doctor):
                             }
                     else:
                         logger.info("###### NO MATCHING SLUG WAS FOUND ######### ")
+                        await save_doctor(doctor=user, slug=slug_object)
                         try:
-                            await save_doctor(doctor=user, slug=slug_object)
-                        except Exception as e:
-                            logger.error("##### ERROR IN SAVE_DOCTOR FUNCTION {} FOR USER ".format(e, user.username))
-                            return {"error": {"message": "unable to save doctor",
-                                              "code": status.HTTP_400_BAD_REQUEST,
-                                              "success": False,
-                                              "target": "SAVE-DOC-INFO[Register]"
-                                              }}
-                        try:
-                            coroutine_id = await get_doctor_information(username=user.username)
+                            coroutine_id = await get_doctor_information(mail=user.mail)
                         except Exception as e:
                             logger.error(
                                 "##### ERROR IN GET_DOCTOR_INFORMATION FUNCTION {} FOR USER ".format(e, user.username))

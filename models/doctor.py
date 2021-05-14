@@ -8,7 +8,7 @@ from typing import List
 
 
 class Doctor(BaseModel):
-    username: str = Field(..., example="username")
+    username: str = Field(None, example="username")
     full_name: str = Field(..., example="name + surname")
     mail: str = Query(..., regex=EMAIL_REGEX)
     password: str = Field(None, example="test@123")

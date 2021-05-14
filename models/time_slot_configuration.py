@@ -15,5 +15,5 @@ class TimeSlot(BaseModel):
     audio_frequency: int
     chat_frequency: int
     is_available: bool
-    non_availability_reason: str
-    isActive: bool
+    non_availability_reason: str = None
+    is_active: bool
