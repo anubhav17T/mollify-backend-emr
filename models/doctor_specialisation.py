@@ -1,6 +1,6 @@
 from pydantic import BaseModel
+from typing import List
 
 
 class DoctorSpecialisation(BaseModel):
-    doctor_id: int
-    specialisation_id: int
+    specialisation_id: List[int]

@@ -5,7 +5,7 @@ from utils.logger.logger import logger
 from utils.db_functions.db_functions import find_exist_username_email, find_exist_user, find_exist_username, \
     find_exist_user_phone, find_slug_therapist, save_doctor, create_reset_code, check_reset_password_token, \
     reset_password_user, disable_reset_code, update_profile_picture, get_doctor_information, save_qualification, \
-    save_specialisation, get_sepecific_specialisation, get_all_specialisation
+    save_specialisation, get_sepecific_specialisation, get_all_specialisation, save_specialisation_map
 from models.doctor import Doctor, ForgotPassword, ResetPassword, DoctorImageUrl
 from models.specialisation import Specialisation
 from utils.random_generator.random_digits import random_with_N_digits
@@ -20,6 +20,8 @@ from fastapi import File
 from cloudinary import uploader
 from fastapi import Query, Path
 from constants.const import CLOUD_NAME, API_KEY, API_SECRET
+from models.doctor_specialisation import DoctorSpecialisation
+from fastapi import Body
 
 cloudinary.config(
     cloud_name=CLOUD_NAME,
@@ -113,6 +115,7 @@ async def check_availability(request: Request):
 @app_v1.post("/doctors/register", status_code=status.HTTP_201_CREATED,
              tags=["DOCTORS/GENERAL"])
 async def register_user(user: Doctor):
+    global object_map
     user.Config.orm_mode = True
     logger.info("##### REGISTRATION PROCESS STARTED #########")
     # check if doctor exist or not
@@ -164,7 +167,6 @@ async def register_user(user: Doctor):
                             "###### NAME WITH SAME SLUG NAME IS ALREADY THERE THEREFORE ADDING SOME IDENTFIER ##### ")
                         slug_object = slug_object + "-" + str(random_with_N_digits(n=3))
                         result_new = await save_doctor(doctor=user, slug=slug_object)
-                        print(result_new)
                         coroutine_id = await get_doctor_information(username=user.username)
                         coroutine_id = dict(coroutine_id)
                         values = []
@@ -200,9 +202,35 @@ async def register_user(user: Doctor):
                             }
                     else:
                         logger.info("###### NO MATCHING SLUG WAS FOUND ######### ")
-                        await save_doctor(doctor=user, slug=slug_object)
-                        coroutine_id = await get_doctor_information(username=user.username)
+                        try:
+                            await save_doctor(doctor=user, slug=slug_object)
+                        except Exception as e:
+                            logger.error("##### ERROR IN SAVE_DOCTOR FUNCTION {} FOR USER ".format(e, user.username))
+                            return {"error": {"message": "unable to save doctor",
+                                              "code": status.HTTP_400_BAD_REQUEST,
+                                              "success": False,
+                                              "target": "SAVE-DOC-INFO[Register]"
+                                              }}
+                        try:
+                            coroutine_id = await get_doctor_information(username=user.username)
+                        except Exception as e:
+                            logger.error(
+                                "##### ERROR IN GET_DOCTOR_INFORMATION FUNCTION {} FOR USER ".format(e, user.username))
+                            return {"error": {"message": "unable to get doctor information",
+                                              "code": status.HTTP_400_BAD_REQUEST,
+                                              "success": False,
+                                              "target": "GET-DOC-INFO[Register]"
+                                              }}
+
                         coroutine_id = dict(coroutine_id)
+                        map_object = []
+                        for get_index in user.specialisation:
+                            object_map = {"doctor_id": coroutine_id["id"],
+                                          "specialisation_id": get_index
+                                          }
+                            map_object.append(object_map)
+
+                        await save_specialisation_map(map=map_object)
                         values = []
                         for get_values in user.qualification:
                             qualification_object = {"doctor_id": coroutine_id["id"],
@@ -213,6 +241,7 @@ async def register_user(user: Doctor):
                             values.append(qualification_object)
                         logger.info("###### GOING FOR SAVE QUALIFICATION TABLE ######### ")
                         await save_qualification(values=values)
+
                         logger.info("#####  NEW THERAPIST CREATED SUCCESSFULLY WITH NAME #########")
                         access_token_expires = jwt_utils.timedelta(minutes=JWT_EXPIRATION_TIME)
                         access_token = await jwt_utils.create_access_token(
@@ -237,6 +266,11 @@ async def register_user(user: Doctor):
                     return {"message": "invalid phone number", "status": status.HTTP_409_CONFLICT, "success": False}
     except Exception as e:
         logger.error("###### ERROR IN REGISTRATION FOR DOCTOR/THERAPIST EXCEPTION {} ###########".format(e))
+        return {"error": {"message": "unable to register doctor information {}".format(e),
+                          "code": status.HTTP_400_BAD_REQUEST,
+                          "success": False,
+                          "target": "Register_Main"
+                          }}
     finally:
         logger.info("#### REGISTER DOCTOR/THEAPIST FUNCTION OVER #####")
 

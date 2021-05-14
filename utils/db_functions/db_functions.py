@@ -3,7 +3,7 @@ from utils.logger.logger import logger
 from utils.connection_configuration.db_object import db
 from datetime import datetime, timezone
 from models.specialisation import Specialisation
-
+from models.doctor_specialisation import DoctorSpecialisation
 
 def save_specialisation(specailisations: Specialisation):
     try:
@@ -125,6 +125,22 @@ def save_doctor(doctor: Doctor, slug):
         return {"mail": doctor.mail, "message": "cannot able to add in db", "code": 400}
     finally:
         logger.info("#### save_user FUNCTION COMPLETED ####")
+
+
+def save_specialisation_map(map):
+    print(map)
+    query = "INSERT INTO doctors_specialisations_map VALUES (nextval('doctors_specialisations_map_id_seq'),:doctor_id,:specialisation_id) "
+    logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF SAVE SPECIALISATION MAP QUERY")
+    try:
+        return db.execute_many(query=query, values=map)
+    except Exception as e:
+        logger.error("####### EXCEPTION IN SAVE_SPECIALISATION_MAP FUNCTION IS = {}".format(e))
+        return False
+    finally:
+        logger.error("#######  SAVE_SPECIALISATION_MAP FUNCTION OVER ##### ")
+
+
+
 
 
 def find_black_list_token(token: str):

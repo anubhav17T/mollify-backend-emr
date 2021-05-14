@@ -50,7 +50,7 @@ def creating_doctor_table():
 
 def creating_qualification_table():
     try:
-        logger.info("######## GOING FOR SPECIALISATION TABLE #########")
+        logger.info("######## GOING FOR QUALIFICATION TABLE #########")
         conn = psycopg2.connect(database=DB_NAME, user=DB_USER, host=DB_HOST, password=DB_PASSWORD, port=DB_PORT)
         cur = conn.cursor()
         cur.execute("select * from information_schema.tables where table_name=%s", ('qualifications',))
@@ -155,6 +155,34 @@ def creating_specialisations_table():
                 DB_URL, pool_size=3)
             metadata.create_all(engine)
             return specialisations
+    except Exception as e:
+        logger.error("######## WENT WRONG IN CREATING SPECIALISATION TABLE {} ########".format(e))
+    finally:
+        logger.info("###### CREATE SPECIALISATION TABLE FUNCTION OVER ###### ")
+
+
+def doctor_specialisation_mapping():
+    logger.info("######## GOING FOR SPECIALISATION TABLE #########")
+    try:
+        conn = psycopg2.connect(database=DB_NAME, user=DB_USER, host=DB_HOST, password=DB_PASSWORD, port=DB_PORT)
+        cur = conn.cursor()
+        cur.execute("select * from information_schema.tables where table_name=%s", ('doctors_specialisation_map',))
+        if bool(cur.rowcount):
+            logger.info("#### TABLE ALREADY EXIST IN THE DATABASE PASSING IT")
+            conn.close()
+            return True
+        else:
+            metadata = sqlalchemy.MetaData()
+            doctors_specialisations_map = sqlalchemy.Table(
+                "doctors_specialisations_map", metadata,
+                sqlalchemy.Column("id", Integer, Sequence("doctors_specialisations_map_id_seq"), primary_key=True),
+                sqlalchemy.Column("doctor_id", Integer),
+                sqlalchemy.Column("specialisation_id", Integer),
+            )
+            engine = sqlalchemy.create_engine(
+                DB_URL, pool_size=3)
+            metadata.create_all(engine)
+            return doctors_specialisations_map
     except Exception as e:
         logger.error("######## WENT WRONG IN CREATING SPECIALISATION TABLE {} ########".format(e))
     finally:

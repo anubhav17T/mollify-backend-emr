@@ -6,7 +6,7 @@ from utils.custom_exceptions.custom_exceptions import CustomException
 from utils.connection_configuration.check_connection import DatabaseConfiguration
 from utils.connection_configuration.db_object import db
 from utils.tables.db_tables import creating_doctor_table, creating_blacklist_table, creating_codes_table,\
-    creating_qualification_table, creating_specialisations_table
+    creating_qualification_table, creating_specialisations_table, doctor_specialisation_mapping
 from utils.logger.logger import logger
 from routes.v1 import app_v1
 from routes.doctor_routes import doctor_routes
@@ -73,5 +73,6 @@ if __name__ == "__main__":
         creating_specialisations_table()
         creating_blacklist_table()
         creating_codes_table()
+        doctor_specialisation_mapping()
     except Exception as e:
         logger.error("###### EXCEPTION IN MAIN FILE IS {} ####### ".format(e))

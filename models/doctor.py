@@ -22,8 +22,7 @@ class Doctor(BaseModel):
     follow_up_fee: int
     about: str = Field(..., example="about yourself in less than 350 words")
     qualification: List[Qualification] = None
-    #slug
-    #createdon
+    specialisation: List[int] = None
 
 
 class DoctorResponse(BaseModel):
