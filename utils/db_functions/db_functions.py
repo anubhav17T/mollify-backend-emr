@@ -12,7 +12,7 @@ def save_specialisation(specailisations: Specialisation):
         query = """INSERT INTO specialisations VALUES (nextval('specialisations_id_seq'),:name,:is_active) """
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF SPECIALISATION")
         return db.execute(query, values={"name": specailisations.name,
-                                         "is_active": specailisations.is_active})
+                                         "is_active": "true"})
     except Exception as e:
         logger.error("##### EXCEPTION IN SAVE_SPECIALISATION FUNCTION IS {}".format(e))
         return False

@@ -45,7 +45,7 @@ async def adding_specialisation(specailisation: Specialisation):
     logger.info("###### ADDING SPECIALISATION ######## ")
     try:
         await save_specialisation(specailisation)
-        # return {"message": "specialisation added successfully", "code": status.HTTP_201_CREATED, "success": True}
+        return {"message": "specialisation added successfully", "code": status.HTTP_201_CREATED, "success": True}
     except Exception as e:
         logger.error("###### ERROR IN ADDING SPECIALISATION {} ###########".format(e))
         return {"error": {
