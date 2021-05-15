@@ -4,6 +4,7 @@ from utils.connection_configuration.db_object import db
 from datetime import datetime, timezone
 from models.specialisation import Specialisation
 from models.doctor_specialisation import DoctorSpecialisation
+from models.time_slot_configuration import TimeSlot
 
 
 def save_specialisation(specailisations: Specialisation):
@@ -69,6 +70,17 @@ def find_exist_user(mail: str):
         logger.error("##### EXCEPTION IN FIND_EXIST_USER FUNCTION IS {}".format(e))
     finally:
         logger.info("#### FIND EXIST USER FUNCTION COMPLETED ####")
+
+
+def find_exist_user_id(id: int):
+    try:
+        query = "select * from doctors where id=:id"
+        logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY")
+        return db.fetch_one(query=query, values={"id": id})
+    except Exception as e:
+        logger.error("##### EXCEPTION IN FIND_EXIST_USER_ID FUNCTION IS {}".format(e))
+    finally:
+        logger.info("#### FIND EXIST USER WITH ID FUNCTION COMPLETED ####")
 
 
 def find_exist_username_email(check: str):
@@ -251,3 +263,47 @@ def update_profile_picture(username, url):
         return False
     finally:
         logger.info("##### UPDATE PROFILE PICTURE FUNCTION OVER ###### ")
+
+
+def save_time_slot_config(val):
+    try:
+        query = " INSERT INTO doctors_time_slot VALUES (nextval('doctors_time_slot_id_seq'),:day,:video,:audio,:chat,:start_time,:end_time,:video_frequency,:audio_frequency,:chat_frequency,:is_available,:non_availability_reason,:is_active) RETURNING id; "
+        logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF SAVE TIMESLOT QUERY")
+        return db.execute(query=query, values={"day": val.day,
+                                               "video": val.video,
+                                               "audio": val.audio,
+                                               "chat": val.chat,
+                                               "start_time": val.start_time,
+                                               "end_time": val.end_time,
+                                               "video_frequency": val.video_frequency,
+                                               "audio_frequency": val.audio_frequency,
+                                               "chat_frequency": val.chat_frequency,
+                                               "is_available": val.is_available,
+                                               "non_availability_reason": val.non_availability_reason,
+                                               "is_active": val.is_active
+                                               })
+    except Exception as e:
+        logger.error("####### EXCEPTION IN SAVE_TIME_SLOT IS = {}".format(e))
+        return {"error":
+                    {"message": "error in time slot configuration",
+                     "code": 400,
+                     "success": False
+                     }
+                }
+    finally:
+        logger.info("#### TIMESLOT CONFIGURATION  FUNCTION COMPLETED ####")
+
+
+def save_timeSlot_doctor_map(doctor_id, time_slot_id):
+    try:
+        logger.info("##### GOING FOR SAVING TIME_SLOT AND DOCTOR_ID QUERY ####### ")
+        query = "INSERT INTO doctors_timeSlot_map VALUES (nextval('doctors_timeSlot_map_id_seq'),:doctor_id,:time_slot_id) RETURNING id"
+        return db.execute(query, values={"doctor_id": doctor_id, "time_slot_id": time_slot_id})
+    except Exception as e:
+        logger.error("##### EXCEPTION IN TIME_SLOT AND DOCTOR_ID MAP QUERY {} #########".format(e))
+        return {"error": {"message": "error occured due to {}".format(e),
+                          "code": 400,
+                          "success": False
+                          }}
+    finally:
+        logger.info("#### SAVING TIME_SLOT AND DOCTOR_ID OVER ######")

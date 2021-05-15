@@ -71,3 +71,7 @@ class DoctorLogin(BaseModel):
 
 class ChannelName(BaseModel):
     channel_name: str
+
+
+class DoctorId(BaseModel):
+    doctor_id: int

@@ -6,7 +6,7 @@ from utils.db_functions.db_functions import find_exist_username_email, find_exis
     find_exist_user_phone, find_slug_therapist, save_doctor, create_reset_code, check_reset_password_token, \
     reset_password_user, disable_reset_code, update_profile_picture, get_doctor_information, save_qualification, \
     save_specialisation, get_sepecific_specialisation, get_all_specialisation, save_specialisation_map, get_all_doctor
-from models.doctor import Doctor, ForgotPassword, ResetPassword, DoctorImageUrl
+from models.doctor import Doctor, ForgotPassword, ResetPassword, DoctorImageUrl, DoctorId
 from models.specialisation import Specialisation
 from utils.random_generator.random_digits import random_with_N_digits
 from utils.security.security import hash_password, verify_password
@@ -22,6 +22,8 @@ from fastapi import Query, Path
 from constants.const import CLOUD_NAME, API_KEY, API_SECRET
 from models.doctor_specialisation import DoctorSpecialisation
 from fastapi import Body
+from models.time_slot_configuration import TimeSlot
+from typing import List
 
 cloudinary.config(
     cloud_name=CLOUD_NAME,
@@ -43,7 +45,7 @@ async def adding_specialisation(specailisation: Specialisation):
     logger.info("###### ADDING SPECIALISATION ######## ")
     try:
         await save_specialisation(specailisation)
-        return {"message": "specialisation added successfully", "code": status.HTTP_201_CREATED, "success": True}
+        # return {"message": "specialisation added successfully", "code": status.HTTP_201_CREATED, "success": True}
     except Exception as e:
         logger.error("###### ERROR IN ADDING SPECIALISATION {} ###########".format(e))
         return {"error": {
