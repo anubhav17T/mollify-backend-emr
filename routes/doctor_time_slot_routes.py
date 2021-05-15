@@ -10,13 +10,14 @@ from utils.db_functions.db_functions import find_exist_username_email, find_exis
 from fastapi import Body
 from models.time_slot_configuration import TimeSlot
 from fastapi import Query
-
+from typing import List
 
 doctor_time_slot_routes = APIRouter()
 
 
 @doctor_time_slot_routes.post("/doctors/time-slot", tags=["DOCTOR/TIME-SLOT"])
-async def time_slot_mapping(time_slot_config: TimeSlot, doctor_id: int = Body(..., description="doctor id")):
+async def time_slot_mapping(time_slot_config: List[TimeSlot], doctor_id: int = Body(..., description="doctor id")):
+    global object_id
     logger.info("##### POST CALL FOR DOCTOR TIME-SLOT CONFIG ######### ")
     try:
         find_doctor_id = await find_exist_user_id(id=doctor_id)
@@ -26,28 +27,21 @@ async def time_slot_mapping(time_slot_config: TimeSlot, doctor_id: int = Body(..
                               "success": False,
                               "target": "POST[DOCTOR-TIMESLOT]"
                               }}
-        object_id = await save_time_slot_config(val=time_slot_config)
-        if object_id is None:
-            return {"error": {"message": "cannot able to fetch timeslot id",
-                              "success": False,
-                              "code": status.HTTP_409_CONFLICT,
-                              "target": "POST[DOCTOR-TIMESLOT]"
-                              }}
-        else:
-            logger.info(
-                "### TIME SLOT CONFIGURATION FOR THE DOCTOR ID {} HAS BEEN UPDATED SUCCESSFULLY WITH OBJECT ID  "
-                "####".format(
-                    str(doctor_id)))
-            check_id = await save_timeSlot_doctor_map(doctor_id=doctor_id, time_slot_id=object_id)
-            print(check_id)
-            if check_id is None:
-                return {"error": {"message": "cannot able to insert timeslot doctorid map",
-                                  "success": False,
-                                  "code": status.HTTP_409_CONFLICT,
-                                  "target": "POST[DOCTOR-TIMESLOT-MAP]"
-                                  }}
-            return {"message": "inserted success in timeslot doctor map", "success": True,
-                    "code": status.HTTP_201_CREATED}
+        map_array_objects = []
+        for time_values in time_slot_config:
+            object_id = await save_time_slot_config(val=time_values)
+            map_object = {"doctor_id": doctor_id,
+                          "time_slot_id": object_id
+                          }
+            map_array_objects.append(map_object)
+        print(map_array_objects)
+        logger.info(
+            "### TIME SLOT CONFIGURATION FOR THE DOCTOR ID {} HAS BEEN UPDATED SUCCESSFULLY WITH OBJECT ID  "
+            "####".format(
+                str(doctor_id)))
+        await save_timeSlot_doctor_map(map_array_objects)
+        return {"message": "inserted success in timeslot doctor map", "success": True,
+                "code": status.HTTP_201_CREATED}
     except Exception as e:
         return {"error": {"message": "error occurred because of {}".format(e),
                           "code": status.HTTP_400_BAD_REQUEST,

@@ -6,4 +6,5 @@ class Specialisation(BaseModel):
 
 
 class SpecialisationsActiveState(BaseModel):
-    is_active:str
+    is_active: bool
+

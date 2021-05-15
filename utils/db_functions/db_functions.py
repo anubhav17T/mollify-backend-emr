@@ -12,7 +12,7 @@ def save_specialisation(specailisations: Specialisation):
         query = """INSERT INTO specialisations VALUES (nextval('specialisations_id_seq'),:name,:is_active) """
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF SPECIALISATION")
         return db.execute(query, values={"name": specailisations.name,
-                                         "is_active": "true"})
+                                         "is_active": True})
     except Exception as e:
         logger.error("##### EXCEPTION IN SAVE_SPECIALISATION FUNCTION IS {}".format(e))
         return False
@@ -42,7 +42,29 @@ def get_sepecific_specialisation(state: str):
     try:
         query = "select * from specialisations where is_active=:is_active"
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF GET SPECIALISATION")
-        return db.fetch_all(query, values={"is_active": state})
+        return db.fetch_all(query, values={"is_active": bool(state)})
+    except Exception as e:
+        logger.error("##### EXCEPTION IN GET_SPECIALISATION FUNCTION IS {}".format(e))
+    finally:
+        logger.info("#### GET_SPECIALISATION FUNCTION COMPLETED ####")
+
+
+def get_true_specialisation():
+    try:
+        query = "select * from specialisations where is_active=:is_active"
+        logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF GET SPECIALISATION")
+        return db.fetch_all(query, values={"is_active": True})
+    except Exception as e:
+        logger.error("##### EXCEPTION IN GET_SPECIALISATION FUNCTION IS {}".format(e))
+    finally:
+        logger.info("#### GET_SPECIALISATION FUNCTION COMPLETED ####")
+
+
+def get_false_specialisation():
+    try:
+        query = "select * from specialisations where is_active=:is_active"
+        logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF GET SPECIALISATION")
+        return db.fetch_all(query, values={"is_active": False})
     except Exception as e:
         logger.error("##### EXCEPTION IN GET_SPECIALISATION FUNCTION IS {}".format(e))
     finally:
@@ -130,7 +152,7 @@ def find_slug_therapist(slug: str):
 def save_doctor(doctor: Doctor, slug):
     dt = datetime.now(timezone.utc)
     try:
-        query = """ INSERT INTO doctors VALUES (nextval('doctors_id_seq'),:username,:full_name,:mail,:password,:phone_number,:gender,:experience,:econsultation_fee,:isActive,:isOnline,:url,:follow_up_fee,:about, :slug, :created_on) """
+        query = """ INSERT INTO doctors VALUES (nextval('doctors_id_seq'),:username,:full_name,:mail,:password,:phone_number,:gender,:experience,:econsultation_fee,:isActive,:isOnline,:url,:follow_up_fee,:about, :slug, :created_on) RETURNING id """
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY")
         return db.execute(query=query, values={"username": doctor.username,
                                                "full_name": doctor.full_name, "mail": doctor.mail,
@@ -294,11 +316,11 @@ def save_time_slot_config(val):
         logger.info("#### TIMESLOT CONFIGURATION  FUNCTION COMPLETED ####")
 
 
-def save_timeSlot_doctor_map(doctor_id, time_slot_id):
+def save_timeSlot_doctor_map(map_array_object):
     try:
         logger.info("##### GOING FOR SAVING TIME_SLOT AND DOCTOR_ID QUERY ####### ")
-        query = "INSERT INTO doctors_timeSlot_map VALUES (nextval('doctors_timeSlot_map_id_seq'),:doctor_id,:time_slot_id) RETURNING id"
-        return db.execute(query, values={"doctor_id": doctor_id, "time_slot_id": time_slot_id})
+        query = "INSERT INTO doctors_timeSlot_map VALUES (nextval('doctors_timeSlot_map_id_seq'),:doctor_id,:time_slot_id)"
+        return db.execute_many(query, values=map_array_object)
     except Exception as e:
         logger.error("##### EXCEPTION IN TIME_SLOT AND DOCTOR_ID MAP QUERY {} #########".format(e))
         return {"error": {"message": "error occured due to {}".format(e),

@@ -1,12 +1,13 @@
 from fastapi import Request
 import re
-from fastapi import status, APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi import status, APIRouter, HTTPException, Depends
 from utils.logger.logger import logger
 from utils.db_functions.db_functions import find_exist_username_email, find_exist_user, find_exist_username, \
     find_exist_user_phone, find_slug_therapist, save_doctor, create_reset_code, check_reset_password_token, \
-    reset_password_user, disable_reset_code, update_profile_picture, get_doctor_information, save_qualification, \
-    save_specialisation, get_sepecific_specialisation, get_all_specialisation, save_specialisation_map, get_all_doctor
-from models.doctor import Doctor, ForgotPassword, ResetPassword, DoctorImageUrl, DoctorId
+    reset_password_user, disable_reset_code, save_qualification, \
+    save_specialisation, get_sepecific_specialisation, get_all_specialisation, save_specialisation_map, get_all_doctor, \
+    get_true_specialisation, get_false_specialisation
+from models.doctor import Doctor, ForgotPassword, ResetPassword
 from models.specialisation import Specialisation
 from utils.random_generator.random_digits import random_with_N_digits
 from utils.security.security import hash_password, verify_password
@@ -20,10 +21,6 @@ from fastapi import File
 from cloudinary import uploader
 from fastapi import Query, Path
 from constants.const import CLOUD_NAME, API_KEY, API_SECRET
-from models.doctor_specialisation import DoctorSpecialisation
-from fastapi import Body
-from models.time_slot_configuration import TimeSlot
-from typing import List
 
 cloudinary.config(
     cloud_name=CLOUD_NAME,
@@ -40,7 +37,7 @@ async def get_all_doctors():
     return await get_all_doctor()
 
 
-@app_v1.post("/doctors/specialisations", tags=["DOCTORS/GENERAL"])
+@app_v1.post("/doctors/specialisations", tags=["DOCTORS/SPECIALISATIONS"], description="Create specialisation")
 async def adding_specialisation(specailisation: Specialisation):
     logger.info("###### ADDING SPECIALISATION ######## ")
     try:
@@ -58,17 +55,17 @@ async def adding_specialisation(specailisation: Specialisation):
         logger.info("#### REGISTER SPECIALISATION FUNCTION OVER #####")
 
 
-@app_v1.get("/doctors/specialisations", tags=["DOCTORS/GENERAL"])
+@app_v1.get("/doctors/specialisations", tags=["DOCTORS/SPECIALISATIONS"], description="Get specialisations")
 async def get_specialisations(active_state: str = Query(None, title="Query parameter for search",
                                                         description="Provide values in type(string)= true/false/getAll")):
     logger.info("###### GET SPECIALISATION ######## ")
     try:
-        if active_state == "true" or active_state == "false":
-            return await get_sepecific_specialisation(state=active_state)
+        if active_state == "true" or active_state is None:
+            return await get_true_specialisation()
+        elif active_state == "false":
+            return await get_false_specialisation()
         elif active_state == "getAll":
             return await get_all_specialisation()
-        elif active_state is None:
-            return await get_sepecific_specialisation(state="true")
         else:
             return {"error": {"message": "no parameter found", "code": status.HTTP_404_NOT_FOUND, "success": False}}
     except Exception as e:
@@ -79,6 +76,9 @@ async def get_specialisations(active_state: str = Query(None, title="Query param
                      "success": False}}
     finally:
         logger.info("##### GET SPECIALISATIONS FUNCTION OVER #####")
+
+
+
 
 
 @app_v1.get("/doctors/check-registration/", response_model_exclude_unset=True, tags=["DOCTORS/GENERAL"])
@@ -136,7 +136,7 @@ async def get_doctor(mail: str):
 
 
 @app_v1.post("/doctors/register", status_code=status.HTTP_201_CREATED,
-             tags=["DOCTORS/GENERAL"])
+             tags=["DOCTORS/GENERAL"], description="Post call for addings doctors")
 async def register_user(user: Doctor):
     global object_map
     user.Config.orm_mode = True
@@ -190,12 +190,10 @@ async def register_user(user: Doctor):
                         logger.info(
                             "###### NAME WITH SAME SLUG NAME IS ALREADY THERE THEREFORE ADDING SOME IDENTFIER ##### ")
                         slug_object = slug_object + "-" + str(random_with_N_digits(n=3))
-                        await save_doctor(doctor=user, slug=slug_object)
-                        coroutine_id = await get_doctor_information(mail=user.mail)
-                        coroutine_id = dict(coroutine_id)
+                        doctor_id = await save_doctor(doctor=user, slug=slug_object)
                         values = []
                         for get_values in user.qualification:
-                            qualification_object = {"doctor_id": coroutine_id["id"],
+                            qualification_object = {"doctor_id": doctor_id,
                                                     "qualification_name": get_values.qualification_name,
                                                     "institute_name": get_values.institute_name,
                                                     "year": get_values.year
@@ -226,30 +224,17 @@ async def register_user(user: Doctor):
                             }
                     else:
                         logger.info("###### NO MATCHING SLUG WAS FOUND ######### ")
-                        await save_doctor(doctor=user, slug=slug_object)
-                        try:
-                            coroutine_id = await get_doctor_information(mail=user.mail)
-                        except Exception as e:
-                            logger.error(
-                                "##### ERROR IN GET_DOCTOR_INFORMATION FUNCTION {} FOR USER ".format(e, user.username))
-                            return {"error": {"message": "unable to get doctor information",
-                                              "code": status.HTTP_400_BAD_REQUEST,
-                                              "success": False,
-                                              "target": "GET-DOC-INFO[Register]"
-                                              }}
-
-                        coroutine_id = dict(coroutine_id)
+                        doctor_id = await save_doctor(doctor=user, slug=slug_object)
                         map_object = []
                         for get_index in user.specialisation:
-                            object_map = {"doctor_id": coroutine_id["id"],
+                            object_map = {"doctor_id": doctor_id,
                                           "specialisation_id": get_index
                                           }
                             map_object.append(object_map)
-
                         await save_specialisation_map(map=map_object)
                         values = []
                         for get_values in user.qualification:
-                            qualification_object = {"doctor_id": coroutine_id["id"],
+                            qualification_object = {"doctor_id": doctor_id,
                                                     "qualification_name": get_values.qualification_name,
                                                     "institute_name": get_values.institute_name,
                                                     "year": get_values.year
@@ -257,7 +242,6 @@ async def register_user(user: Doctor):
                             values.append(qualification_object)
                         logger.info("###### GOING FOR SAVE QUALIFICATION TABLE ######### ")
                         await save_qualification(values=values)
-
                         logger.info("#####  NEW THERAPIST CREATED SUCCESSFULLY WITH NAME #########")
                         access_token_expires = jwt_utils.timedelta(minutes=JWT_EXPIRATION_TIME)
                         access_token = await jwt_utils.create_access_token(
