@@ -5,14 +5,29 @@ from fastapi.middleware.cors import CORSMiddleware
 from utils.custom_exceptions.custom_exceptions import CustomException
 from utils.connection_configuration.check_connection import DatabaseConfiguration
 from utils.connection_configuration.db_object import db
-from utils.tables.db_tables import creating_doctor_table, creating_blacklist_table, creating_codes_table,\
-    creating_qualification_table, creating_specialisations_table, doctor_specialisation_mapping
+from utils.tables.db_tables import creating_doctor_table, creating_blacklist_table, creating_codes_table, \
+    creating_qualification_table, creating_specialisations_table, doctor_specialisation_mapping, doctors_time_slot, \
+    doctors_timeSlot_map
 from utils.logger.logger import logger
 from routes.v1 import app_v1
 from routes.doctor_routes import doctor_routes
+from routes.doctor_time_slot_routes import doctor_time_slot_routes
 
 origins = ["*"]
 conn = DatabaseConfiguration()
+
+
+def connections():
+    conn.checking_database_connection()
+    creating_doctor_table()
+    creating_qualification_table()
+    creating_specialisations_table()
+    creating_blacklist_table()
+    creating_codes_table()
+    doctor_specialisation_mapping()
+    doctors_time_slot()
+    doctors_timeSlot_map()
+connections()
 
 app = FastAPI(title="Mollify RestApi's Version 1.0",
               description="Api For EMR Service, Developer=Anubhav Tyagi(anubhav1tyagi@gmail.com)",
@@ -29,6 +44,7 @@ app.add_middleware(
 
 app.include_router(app_v1, prefix="/api/v1")
 app.include_router(doctor_routes, prefix="/api/v1")
+app.include_router(doctor_time_slot_routes, prefix="/api/v1")
 
 
 @app.get("/")
@@ -67,12 +83,6 @@ async def middleware(request: Request, call_next):
 if __name__ == "__main__":
     try:
         """ADD MULTIPLE PROCESSING IN CREATING DATABASE TABLE FOR FAST EXECUTION """
-        conn.checking_database_connection()
-        creating_doctor_table()
-        creating_qualification_table()
-        creating_specialisations_table()
-        creating_blacklist_table()
-        creating_codes_table()
-        doctor_specialisation_mapping()
+        connections()
     except Exception as e:
         logger.error("###### EXCEPTION IN MAIN FILE IS {} ####### ".format(e))
