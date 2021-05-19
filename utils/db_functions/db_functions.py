@@ -9,7 +9,7 @@ from models.time_slot_configuration import TimeSlot
 
 def save_specialisation(specailisations: Specialisation):
     try:
-        query = """INSERT INTO specialisations VALUES (nextval('specialisations_id_seq'),:name,:is_active) """
+        query = """INSERT INTO specialisations VALUES (nextval('specialisations_id_seq'),:name,:is_active,now() at time zone 'UTC') """
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF SPECIALISATION")
         return db.execute(query, values={"name": specailisations.name,
                                          "is_active": True})
@@ -51,7 +51,7 @@ def get_sepecific_specialisation(state: str):
 
 def get_true_specialisation():
     try:
-        query = "select * from specialisations where is_active=:is_active"
+        query = "select * from specialisations where is_active=:is_active order by created_on desc"
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF GET SPECIALISATION")
         return db.fetch_all(query, values={"is_active": True})
     except Exception as e:
@@ -62,7 +62,7 @@ def get_true_specialisation():
 
 def get_false_specialisation():
     try:
-        query = "select * from specialisations where is_active=:is_active"
+        query = "select * from specialisations where is_active=:is_active order by created_on desc"
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF GET SPECIALISATION")
         return db.fetch_all(query, values={"is_active": False})
     except Exception as e:
@@ -73,7 +73,7 @@ def get_false_specialisation():
 
 def get_all_specialisation():
     try:
-        query = "select * FROM specialisations"""
+        query = "select * FROM specialisations order by created_on desc"""
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF GET SPECIALISATION")
         return db.fetch_all(query)
     except Exception as e:

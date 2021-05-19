@@ -150,6 +150,7 @@ def creating_specialisations_table():
                 sqlalchemy.Column("id", Integer, Sequence("specialisations_id_seq"), primary_key=True),
                 sqlalchemy.Column("name", sqlalchemy.String(100)),
                 sqlalchemy.Column("is_active", sqlalchemy.Boolean),
+                sqlalchemy.Column("created_on", DateTime),
             )
             engine = sqlalchemy.create_engine(
                 DB_URL, pool_size=3)
