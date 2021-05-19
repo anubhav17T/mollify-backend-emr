@@ -8,3 +8,7 @@ class Specialisation(BaseModel):
 class SpecialisationsActiveState(BaseModel):
     is_active: bool
 
+
+class SpecialisationUpdate(BaseModel):
+    name: str = None
+    is_active: bool = None

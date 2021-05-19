@@ -28,6 +28,7 @@ def connections():
     doctors_time_slot()
     doctors_timeSlot_map()
 
+connections()
 
 app = FastAPI(title="Mollify RestApi's Version 1.0",
               description="Api For EMR Service, Developer=Anubhav Tyagi(anubhav1tyagi@gmail.com)",
@@ -79,10 +80,11 @@ async def middleware(request: Request, call_next):
     response.headers["x-execution-time"] = str(execution_time)
     return response
 
-
-if __name__ == "__main__":
-    try:
-        """ADD MULTIPLE PROCESSING IN CREATING DATABASE TABLE FOR FAST EXECUTION """
-        connections()
-    except Exception as e:
-        logger.error("###### EXCEPTION IN MAIN FILE IS {} ####### ".format(e))
+#
+# if __name__ == "__main__":
+#     try:
+#         """ADD MULTIPLE PROCESSING IN CREATING DATABASE TABLE FOR FAST EXECUTION """
+#         import uvicorn
+#         uvicorn.run(app)
+#     except Exception as e:
+#         logger.error("###### EXCEPTION IN MAIN FILE IS {} ####### ".format(e))
