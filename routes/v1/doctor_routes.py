@@ -1,6 +1,8 @@
 from fastapi import status, APIRouter, HTTPException, Depends, Path
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
-from utils.db_functions.db_specialisation_function import update_doctor_status
+from utils.db_functions.db_language_function import get_language_doctor
+from utils.db_functions.db_qualifications_function import get_doc_qualifications
+from utils.db_functions.db_specialisation_function import update_doctor_status, get_specialisation_of_doctor
 from utils.db_functions.raw_queries import WHERE_ID_DOCTORS, UPDATE_DOCTORS_SET
 from utils.security.security import verify_password, hash_password
 from models.doctor import Doctor, ChangePassword, ChannelName, DoctorStatus, DoctorUpdateInformation
@@ -10,7 +12,8 @@ from conferencing.RtcTokenBuilder import RtcTokenBuilder, Role_Attendee, Role_Pu
 import time
 from constants import const
 from utils.random_generator.random_digits import random_with_N_digits
-from utils.db_functions.db_functions import find_exist_user, get_doctor_information, get_all_doctor, find_exist_user_id
+from utils.db_functions.db_functions import find_exist_user, get_doctor_information, get_all_doctor, find_exist_user_id, \
+    combined_results, specific_results_doctor
 from utils.db_functions.doctor_crud import change_password_user, save_black_list_token
 from utils.utils_classes.classes_for_checks import CheckUserExistence, DoctorByName
 
@@ -115,7 +118,17 @@ async def get_all_doctors():
 async def get_specific_doctor_by_id(id: int):
     logger.info("##### GET DOCTOR BY SPECIFIC ID FUNCTION CALLED #####")
     response = CheckUserExistence(_id=id, target="DOCTORS-CRUD-GET-SEPECIFIC-DOCTOR")
-    return await response.check_if_user_id_exist()
+    user_info = await response.check_if_user_id_exist()
+    if user_info is None:
+        raise CustomExceptionHandler(message="Unable to fetch the results",
+                                     target="GET DOCTOR BY ID",
+                                     code=status.HTTP_400_BAD_REQUEST,success=False)
+    result = {"doctor": await specific_results_doctor(id=id),
+              "languages":await get_language_doctor(id=id),
+              "qualification":await get_doc_qualifications(id=id),
+              "specialisation":await get_specialisation_of_doctor(doctor_id=id)
+              }
+    return result
 
 
 @doctor_routes.patch("/doctors/status/{id}", tags=["DOCTORS/CRUD"], description="Patch call for doctor status")

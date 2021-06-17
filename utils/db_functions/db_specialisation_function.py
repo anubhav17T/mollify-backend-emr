@@ -1,3 +1,4 @@
+from utils.db_functions.raw_queries import QUERY_FOR_DOCTOR_SPECIALISATION_MAP
 from utils.logger.logger import logger
 from utils.connection_configuration.db_object import db
 from datetime import datetime, timezone
@@ -57,3 +58,7 @@ def update_specialisation_table(var_id, name, is_active):
         logger.error("### ERROR IN UPDATING SPECIALISATION TABLE {} #####".format(e))
     finally:
         logger.info("##### UPDATE SPECIALISATION TABLE METHOD OVER ####")
+
+
+def get_specialisation_of_doctor(doctor_id:int):
+    return db.fetch_all(query=QUERY_FOR_DOCTOR_SPECIALISATION_MAP,values={"doctor_id":doctor_id})

@@ -18,29 +18,26 @@ doctor_time_slot_routes = APIRouter()
 async def time_slot_mapping(time_slot_config: List[TimeSlot], doctor_id: int = Body(..., description="doctor id")):
     global object_id
     logger.info("##### POST CALL FOR DOCTOR TIME-SLOT CONFIG ######### ")
-    try:
-        response = CheckUserExistence(_id=doctor_id, target="POST[DOCTOR-TIMESLOT]")
-        await response.check_if_user_id_exist()
-        map_array_objects = []
-        for time_values in time_slot_config:
-            object_id = await save_time_slot_config(val=time_values)
-            map_object = {"doctor_id": doctor_id,
-                          "time_slot_id": object_id
-                          }
-            map_array_objects.append(map_object)
-        logger.info(
-            "### TIME SLOT CONFIGURATION FOR THE DOCTOR ID {} HAS BEEN UPDATED SUCCESSFULLY WITH OBJECT ID  "
-            "####".format(
-                str(doctor_id)))
-        await save_timeSlot_doctor_map(map_array_objects)
-        return {"message": "inserted success in timeslot doctor map", "success": True,
+    response = CheckUserExistence(_id=doctor_id, target="POST[DOCTOR-TIMESLOT]")
+    await response.check_if_user_id_exist()
+
+    map_array_objects = []
+    for time_values in time_slot_config:
+        print(time_values)
+
+        object_id = await save_time_slot_config(val=time_values)
+        map_object = {"doctor_id": doctor_id,
+                      "time_slot_id": object_id
+                      }
+        map_array_objects.append(map_object)
+    logger.info(
+        "### TIME SLOT CONFIGURATION FOR THE DOCTOR ID {} HAS BEEN UPDATED SUCCESSFULLY WITH OBJECT ID  "
+        "####".format(
+            str(doctor_id)))
+    await save_timeSlot_doctor_map(map_array_objects)
+    return {"message": "Inserted success in timeslot doctor map", "success": True,
                 "code": status.HTTP_201_CREATED}
-    except Exception as e:
-        raise CustomExceptionHandler(message="error occurred because of {}".format(e),
-                                     code=status.HTTP_400_BAD_REQUEST,
-                                     success=False,
-                                     target="POST[TIMESLOT-DOCTOR0-MAP]"
-                                     )
+
 
 
 """ ROLLBACK IN THIS ROUTE AND ALSO CHECK FOR SAME DAY MULTIPLE VALUES """

@@ -6,7 +6,7 @@ from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from utils.db_functions.db_functions import save_specialisation, get_true_specialisation, get_false_specialisation, \
     get_all_specialisation, find_particular_specialisation
 from utils.db_functions.db_specialisation_function import check_if_id_exists, update_specialisation, \
-    update_specialisation_table
+    update_specialisation_table, get_specialisation_of_doctor
 from utils.logger.logger import logger
 from utils.utils_classes.classes_for_checks import CheckUserExistence
 
@@ -19,7 +19,7 @@ async def adding_specialisation(specailisation: Specialisation):
     logger.info("###### ADDING SPECIALISATION ######## ")
     if specailisation.name is None:
         raise CustomExceptionHandler(message="Specialisation value not provided",
-                                     code=status.HTTP_400_BAD_REQUEST,success=False,target="Post Specialisation")
+                                     code=status.HTTP_400_BAD_REQUEST, success=False, target="Post Specialisation")
     check_response = await find_particular_specialisation(name=specailisation.name)
     if check_response is not None:
         raise CustomExceptionHandler(message="Specialisation already added",
@@ -97,3 +97,10 @@ async def get_specialisations(active_state: str = Query(None, title="Query param
     else:
         raise CustomExceptionHandler(message="no parameter found", code=status.HTTP_404_NOT_FOUND, success=False,
                                      target="GET-SPECIALISATION")
+
+
+@doctor_specialisation.get("/doctors/specialisations/{doctor_id}", tags=["DOCTORS/SPECIALISATIONS"],
+                           description="Get specialisations")
+async def get_specialisations_doctor(doctor_id: int):
+    logger.info("###### GET SPECIALISATION FOR SPECIFIC DOCTOR IS CALLED  ########")
+    return await get_specialisation_of_doctor(doctor_id=doctor_id)

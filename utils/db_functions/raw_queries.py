@@ -23,7 +23,11 @@ WHERE_ID_DOCTORS = " WHERE id=:id RETURNING id"
 
 QUERY_FOR_SPECIALISATION_MAP = "INSERT INTO doctors_specialisations_map VALUES (nextval('doctors_specialisations_map_id_seq'),:doctor_id,:specialisation_id) "
 
-
 UPDATE_DOCTORS_SET = "UPDATE doctors SET "
 
 INSERT_QUERY_FOR_TIMESLOT = " INSERT INTO doctors_time_slot VALUES (nextval('doctors_time_slot_id_seq'),:day,:video,:audio,:chat,:start_time,:end_time,:video_frequency,:audio_frequency,:chat_frequency,:is_available,:non_availability_reason,:is_active,now() at time zone 'UTC') RETURNING id; "
+
+QUERY_FOR_DOCTORS_QUALIFICATIONS_SELECT = "SELECT doctors.id,doctors.full_name,doctors.mail,doctors.gender,doctors.phone_number,doctors.experience,doctors.econsultation_fee,doctors.is_active,doctors.slug,doctors.url,doctors.about,doctors.is_online,qualifications.qualification_name,qualifications.institute_name,qualifications.year FROM doctors INNER JOIN qualifications ON doctors.id = qualifications.doctor_id"
+
+
+QUERY_FOR_DOCTOR_SPECIALISATION_MAP = "SELECT doctors_specialisations_map.doctor_id,doctors_specialisations_map.specialisation_id,specialisations.name,specialisations.is_active FROM doctors_specialisations_map INNER JOIN specialisations ON doctors_specialisations_map.specialisation_id=specialisations.id WHERE doctor_id=:doctor_id"
