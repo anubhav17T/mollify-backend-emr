@@ -175,16 +175,17 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         expire_delta=access_token_expires
     )
     if not access_token:
-        return {"status": 400, "message": "cannot able to create token", "success": False}
+        raise CustomExceptionHandler(message="cannot able to create token",success=False,
+                                     code=status.HTTP_400_BAD_REQUEST,target="CREATE-DOCTOR")
     else:
         return {
             "access_token": access_token,
             "token_type": "bearer",
+            "success": True,
             "user_info": {
                 "fullname": user.full_name,
                 "message": "user logged in successfully",
-                "code": 200,
-                "status": True
+                "code": 200
             }
         }
 
@@ -229,11 +230,9 @@ async def forget_password(request: ForgotPassword, background_tasks: BackgroundT
             logger.error(
                 "###### EXCEPTION OCCURRED IN SENDING FORGOT PASSWORD FOR THE MAIL {} WITH EXCEPTION {} ###".format(
                     request.mail, e))
-            return {
-                "code": 401,
-                "message": "Error, email not send",
-                "success": False
-            }
+            raise CustomExceptionHandler(message="Error, email not send",
+                                         success=False,
+                                         code=status.HTTP_409_CONFLICT, target="FORGOT-PASSWORD")
     except Exception as e:
         logger.error("####### SOMETHING WENT WRONG IN FORGOT PASSWORD MAIL IN USER {} #########".format(e))
     finally:
