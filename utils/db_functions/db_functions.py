@@ -11,7 +11,7 @@ from models.specialisation import Specialisation
 from models.doctor_specialisation import DoctorSpecialisation
 
 
-def save_specialisation(specailisations: Specialisation):
+def save_specialisation(specailisations:Specialisation):
     try:
         query = """INSERT INTO specialisations VALUES (nextval('specialisations_id_seq'),:name,:is_active,now() at time zone 'UTC') """
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF SPECIALISATION")
@@ -583,3 +583,14 @@ async def register_user_combined(doctor, slug):
             await transaction.commit()
             logger.info("###### TRANSACTION COMMITTED AND SUCCESS TRUE #######")
             return True
+
+
+def find_particular_specialisation(name):
+    try:
+        query = "SELECT * FROM specialisations WHERE name=:name"
+        logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF FINDING PARTICULAR ####")
+        return db.fetch_one(query=query, values={"name": name})
+    except Exception as e:
+        logger.error("##### EXCEPTION IN SAVE_LANGUAGE FUNCTION IS {}".format(e))
+    finally:
+        logger.info("#### FIND PARTICULAR_LANGUAGE FUNCTION COMPLETED ####")

@@ -4,7 +4,7 @@ from fastapi import status, APIRouter, HTTPException, Depends
 from models.specialisation import Specialisation, SpecialisationUpdate
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from utils.db_functions.db_functions import save_specialisation, get_true_specialisation, get_false_specialisation, \
-    get_all_specialisation
+    get_all_specialisation, find_particular_specialisation
 from utils.db_functions.db_specialisation_function import check_if_id_exists, update_specialisation, \
     update_specialisation_table
 from utils.logger.logger import logger
@@ -17,6 +17,15 @@ doctor_specialisation = APIRouter()
                             description="Create specialisation")
 async def adding_specialisation(specailisation: Specialisation):
     logger.info("###### ADDING SPECIALISATION ######## ")
+    if specailisation.name is None:
+        raise CustomExceptionHandler(message="Specialisation value not provided",
+                                     code=status.HTTP_400_BAD_REQUEST,success=False,target="Post Specialisation")
+    check_response = await find_particular_specialisation(name=specailisation.name)
+    if check_response is not None:
+        raise CustomExceptionHandler(message="Specialisation already added",
+                                     code=status.HTTP_409_CONFLICT,
+                                     success=False,
+                                     target="Post Specialisation")
     try:
         await save_specialisation(specailisation)
         return {"message": "specialisation added successfully", "code": status.HTTP_201_CREATED, "success": True}

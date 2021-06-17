@@ -312,8 +312,8 @@ async def uploading_image(file: bytes = File(...)):
     try:
         logger.info("######## UPDATING IMAGE FOR THE DOCTOR/THERAPIST {} ####")
         logger.info("#### USERNAME IS VALID #####")
-        result = cloudinary.uploader.upload(file)
-        url = result.get("url")
+        result_ = cloudinary.uploader.upload(file)
+        url = result_.get("secure_url")
         return {
             "status": status.HTTP_201_CREATED,
             "message": "Image uploaded successfully",
