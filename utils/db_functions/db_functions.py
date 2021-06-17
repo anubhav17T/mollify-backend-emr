@@ -61,7 +61,7 @@ def get_specific_doctor(search_query):
 def get_all_doctor():
     try:
         query = """SELECT id,username,full_name,mail,phone_number,gender,experience,econsultation_fee,is_active,url,
-        is_online,follow_up_fee,about FROM doctors ORDER BY created_on DESC """
+        is_online,follow_up_fee,about,slug FROM doctors ORDER BY created_on DESC """
         logger.info("### PROCEEDING FURTHER FOR EXECUTION OF QUERY OF GET SPECIFIC DOCTOR")
         return db.fetch_all(query)
     except Exception as e:
