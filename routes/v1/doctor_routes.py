@@ -180,6 +180,7 @@ async def find_doctor_by_name(name: str = Path(None, description="NAME OF DOCTOR
     if not name:
         return await get_all_doctor()
     logger.info("#### NAME OF THE DOCTOR IS {}".format(name))
+    name = name.lower()
     result = DoctorByName(name=name, target='FIND DOCTOR BY NAME')
     return await result.find_doctor_by_name()
 
