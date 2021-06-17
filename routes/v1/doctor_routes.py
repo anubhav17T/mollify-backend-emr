@@ -122,13 +122,17 @@ async def get_specific_doctor_by_id(id: int):
     if user_info is None:
         raise CustomExceptionHandler(message="Unable to fetch the results",
                                      target="GET DOCTOR BY ID",
-                                     code=status.HTTP_400_BAD_REQUEST,success=False)
-    result = {"doctor": await specific_results_doctor(id=id),
-              "languages":await get_language_doctor(id=id),
-              "qualification":await get_doc_qualifications(id=id),
-              "specialisation":await get_specialisation_of_doctor(doctor_id=id)
-              }
-    return result
+                                     code=status.HTTP_400_BAD_REQUEST, success=False)
+    doc_or_therapist_results = await specific_results_doctor(id=id)
+    doc_or_therapist_results = dict(doc_or_therapist_results)
+
+    doc_or_therapist_information = {
+        "languages": await get_language_doctor(id=id),
+        "qualification": await get_doc_qualifications(id=id),
+        "specialisation": await get_specialisation_of_doctor(doctor_id=id)
+    }
+    doc_or_therapist_results.update(doc_or_therapist_information)
+    return doc_or_therapist_results
 
 
 @doctor_routes.patch("/doctors/status/{id}", tags=["DOCTORS/CRUD"], description="Patch call for doctor status")
