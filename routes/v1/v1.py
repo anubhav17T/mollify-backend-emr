@@ -3,6 +3,9 @@ import re
 from fastapi import status, APIRouter, HTTPException, Depends
 from mail.sendgrid_email_configuration import send_email
 from models.languages import Languages, LanguagesUpdate
+from utils.db_functions.db_language_function import get_language_doctor
+from utils.db_functions.db_qualifications_function import get_doc_qualifications
+from utils.db_functions.db_specialisation_function import get_specialisation_of_doctor
 from utils.logger.logger import logger
 from utils.db_functions.db_functions import find_exist_username_email, find_exist_user, find_exist_username, \
     find_exist_user_phone, find_slug_therapist, save_doctor, create_reset_code, check_reset_password_token, \
@@ -76,7 +79,6 @@ async def register_user(user: Doctor):
     global object_map
     user.Config.orm_mode = True
     logger.info("##### REGISTRATION PROCESS STARTED FOR THE USER {} #########".format(user.full_name))
-    user.full_name = user.full_name.lower()
     # check if doctor exist or not
     find_user_by_mail_object = CheckUserByMail(mail=user.mail, target="doctor/registration")
     await find_user_by_mail_object.find_user_by_email()
@@ -116,12 +118,12 @@ async def register_user(user: Doctor):
                           "target": "FIND SPECIFIC-SPECIALISATION"
                           }}
     speciality = dict(specialisation_name_object)
-    slug_object = slug_object + "-" + str(speciality["name"])
+    slug_object = slug_object + "-" + str(speciality["name"]).lower()
     result_slug = await find_slug_therapist(slug=slug_object)
     if result_slug is not None:
         logger.info(
             "###### NAME WITH SAME SLUG NAME IS ALREADY THERE THEREFORE ADDING SOME IDENTFIER ##### ")
-        slug_object = slug_object + "-" + str(specific_string(length=4))
+        slug_object = slug_object + "-" + str(specific_string(length=4)).lower()
     if user.is_active is None:
         user.is_active = True
     if user.is_online is None:
@@ -337,8 +339,16 @@ async def get_doctor_information(slug: str = Path(...)):
     logger.info("###### GET DOCTOR INFORMATION FUNCTION IS CALLED #######")
     doctor_information = await find_doctor_information(slug=slug)
     if not doctor_information:
-        raise CustomExceptionHandler(message="unable to find the information for the specific slug",
+        raise CustomExceptionHandler(message="Unable to find the information for the specific slug",
                                      code=status.HTTP_400_BAD_REQUEST,
                                      target="INFORMATION FROM SLUG", success=False
                                      )
-    return doctor_information
+    doc_or_therapist_results = dict(doctor_information)
+
+    doc_or_therapist_information = {
+        "languages": await get_language_doctor(id=doc_or_therapist_results["id"]),
+        "qualification": await get_doc_qualifications(id=doc_or_therapist_results["id"]),
+        "specialisation": await get_specialisation_of_doctor(doctor_id=doc_or_therapist_results["id"])
+    }
+    doc_or_therapist_results.update(doc_or_therapist_information)
+    return doc_or_therapist_results
