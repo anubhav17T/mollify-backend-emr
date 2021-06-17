@@ -76,6 +76,7 @@ async def register_user(user: Doctor):
     global object_map
     user.Config.orm_mode = True
     logger.info("##### REGISTRATION PROCESS STARTED FOR THE USER {} #########".format(user.full_name))
+    user.full_name = user.full_name.lower()
     # check if doctor exist or not
     find_user_by_mail_object = CheckUserByMail(mail=user.mail, target="doctor/registration")
     await find_user_by_mail_object.find_user_by_email()
