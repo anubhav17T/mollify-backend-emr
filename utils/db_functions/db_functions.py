@@ -3,7 +3,7 @@ import json
 from models.doctor import Doctor
 from models.languages import LanguagesUpdate
 from utils.db_functions.raw_queries import QUERY_FOR_REGISTER_DOCTOR, QUERY_FOR_SAVE_SPECIALISATION, \
-    QUERY_FOR_SAVE_LANGUAGE, QUERY_FOR_SAVE_QUALIFICATION, QUERY_FOR_SPECIALISATION_MAP
+    QUERY_FOR_SAVE_LANGUAGE, QUERY_FOR_SAVE_QUALIFICATION, QUERY_FOR_SPECIALISATION_MAP, INSERT_QUERY_FOR_TIMESLOT
 from utils.logger.logger import logger
 from utils.connection_configuration.db_object import db
 from datetime import datetime, timezone
@@ -60,7 +60,8 @@ def get_specific_doctor(search_query):
 
 def get_all_doctor():
     try:
-        query = """ SELECT * FROM doctors LIMIT 10"""
+        query = """SELECT id,username,full_name,mail,phone_number,gender,experience,econsultation_fee,is_active,url,
+        is_online,follow_up_fee,about FROM doctors ORDER BY created_on DESC """
         logger.info("### PROCEEDING FURTHER FOR EXECUTION OF QUERY OF GET SPECIFIC DOCTOR")
         return db.fetch_all(query)
     except Exception as e:
@@ -233,8 +234,8 @@ def save_doctor(doctor: Doctor, slug):
                                                "phone_number": doctor.phone_number, "gender": doctor.gender,
                                                "experience": doctor.experience,
                                                "econsultation_fee": doctor.econsultation_fee,
-                                               "isActive": doctor.isActive,
-                                               "isOnline": doctor.isActive,
+                                               "is_active": doctor.is_active,
+                                               "is_online": doctor.is_online,
                                                "url": doctor.url,
                                                "follow_up_fee": doctor.follow_up_fee,
                                                "about": doctor.about,
@@ -594,3 +595,36 @@ def find_particular_specialisation(name):
         logger.error("##### EXCEPTION IN SAVE_LANGUAGE FUNCTION IS {}".format(e))
     finally:
         logger.info("#### FIND PARTICULAR_LANGUAGE FUNCTION COMPLETED ####")
+
+
+# async def add_timeslot_combined_function(val,doctor_id,map_array_objects):
+#     async with db.transaction():
+#         transaction = await db.transaction()
+#         try:
+#             logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY TIMESLOT ADD CALL #######")
+#             object_id = await db.execute(INSERT_QUERY_FOR_TIMESLOT,values={"day": val.day,
+#                                                "video": val.video,
+#                                                "audio": val.audio,
+#                                                "chat": val.chat,
+#                                                "start_time": val.start_time,
+#                                                "end_time": val.end_time,
+#                                                "video_frequency": val.video_frequency,
+#                                                "audio_frequency": val.audio_frequency,
+#                                                "chat_frequency": val.chat_frequency,
+#                                                "is_available": val.is_available,
+#                                                "non_availability_reason": val.non_availability_reason,
+#                                                "is_active": val.is_active
+#                                                })
+#             map_object = {"doctor_id": doctor_id,
+#                       "time_slot_id": object_id
+#                       }
+#             map_array_objects.append(map_object)
+#             logger.info(
+#                 "### TIME SLOT CONFIGURATION FOR THE DOCTOR ID {} HAS BEEN UPDATED SUCCESSFULLY WITH OBJECT ID  "
+#                 "####".format(
+#                     str(doctor_id)))
+#             await save_timeSlot_doctor_map(map_array_objects)
+
+
+
+

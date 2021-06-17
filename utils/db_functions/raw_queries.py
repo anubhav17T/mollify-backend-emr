@@ -25,3 +25,5 @@ QUERY_FOR_SPECIALISATION_MAP = "INSERT INTO doctors_specialisations_map VALUES (
 
 
 UPDATE_DOCTORS_SET = "UPDATE doctors SET "
+
+INSERT_QUERY_FOR_TIMESLOT = " INSERT INTO doctors_time_slot VALUES (nextval('doctors_time_slot_id_seq'),:day,:video,:audio,:chat,:start_time,:end_time,:video_frequency,:audio_frequency,:chat_frequency,:is_available,:non_availability_reason,:is_active,now() at time zone 'UTC') RETURNING id; "

@@ -26,7 +26,7 @@ class CheckUserExistence(object):
         response = await find_exist_user_id(id=self._id)
         if response is None:
             logger.error("########### NO USER IS FOUND FOR GIVED ID ############")
-            raise CustomExceptionHandler(message="Cannot able to find the user for given id",
+            raise CustomExceptionHandler(message="User not found for the given id",
                                          code=status.HTTP_400_BAD_REQUEST,
                                          success=False,
                                          target=self.target
