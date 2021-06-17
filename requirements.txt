@@ -112,3 +112,5 @@ SQLAlchemy-Utils==0.37.0
 boto3==1.17.53
 itsdangerous==1.1.0
 python-socketio==5.2.1
+alembic==1.6.4
+sendgrid==6.7.0

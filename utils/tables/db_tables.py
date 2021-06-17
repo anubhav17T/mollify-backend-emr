@@ -32,8 +32,8 @@ def creating_doctor_table():
                 sqlalchemy.Column("gender", sqlalchemy.String()),
                 sqlalchemy.Column("experience", sqlalchemy.String()),
                 sqlalchemy.Column("econsultation_fee", sqlalchemy.Integer),
-                sqlalchemy.Column("isActive", sqlalchemy.Boolean()),
-                sqlalchemy.Column("isOnline", sqlalchemy.Boolean()),
+                sqlalchemy.Column("is_active", sqlalchemy.Boolean()),
+                sqlalchemy.Column("is_online", sqlalchemy.Boolean()),
                 sqlalchemy.Column("url", sqlalchemy.String(150)),
                 sqlalchemy.Column("follow_up_fee", sqlalchemy.Integer),
                 sqlalchemy.Column("about", sqlalchemy.String(300)),
@@ -43,6 +43,7 @@ def creating_doctor_table():
             engine = sqlalchemy.create_engine(
                 DB_URL, pool_size=3)
             metadata.create_all(engine)
+            conn.close()
             return doctor
     except Exception as e:
         logger.error("######## WENT WRONG IN CREATING THERAPIST TABLE {} ########".format(e))
@@ -71,6 +72,7 @@ def creating_qualification_table():
             engine = sqlalchemy.create_engine(
                 DB_URL, pool_size=3)
             metadata.create_all(engine)
+            conn.close()
             return qualifications
     except Exception as e:
         logger.error("######## WENT WRONG IN CREATING QUALIFICATION TABLE {} ########".format(e))
@@ -98,6 +100,7 @@ def creating_blacklist_table():
             engine = sqlalchemy.create_engine(
                 DB_URL, pool_size=3, max_overflow=0)
             metadata.create_all(engine)
+            conn.close()
             return blacklists
     except Exception as e:
         logger.error("{}".format(e))
@@ -128,6 +131,7 @@ def creating_codes_table():
             engine = sqlalchemy.create_engine(
                 DB_URL, pool_size=3, max_overflow=0)
             metadata.create_all(engine)
+            conn.close()
             return codes
     except Exception as e:
         logger.error("{}".format(e))
@@ -155,6 +159,7 @@ def creating_specialisations_table():
             engine = sqlalchemy.create_engine(
                 DB_URL, pool_size=3)
             metadata.create_all(engine)
+            conn.close()
             return specialisations
     except Exception as e:
         logger.error("######## WENT WRONG IN CREATING SPECIALISATION TABLE {} ########".format(e))
@@ -183,6 +188,7 @@ def doctor_specialisation_mapping():
             engine = sqlalchemy.create_engine(
                 DB_URL, pool_size=3)
             metadata.create_all(engine)
+            conn.close()
             return doctors_specialisations_map
     except Exception as e:
         logger.error("######## WENT WRONG IN CREATING SPECIALISATION TABLE {} ########".format(e))
@@ -217,10 +223,12 @@ def doctors_time_slot():
                 sqlalchemy.Column("is_available", sqlalchemy.Boolean),
                 sqlalchemy.Column("non_availability_reason", sqlalchemy.String(300)),
                 sqlalchemy.Column("is_active", sqlalchemy.Boolean),
+                sqlalchemy.Column("created_on", DateTime),
             )
             engine = sqlalchemy.create_engine(
                 DB_URL, pool_size=3)
             metadata.create_all(engine)
+            conn.close()
             return doctors_time_slot
     except Exception as e:
         logger.error("######## WENT WRONG IN CREATING SPECIALISATION TABLE {} ########".format(e))
@@ -245,12 +253,146 @@ def doctors_timeSlot_map():
                 sqlalchemy.Column("id", Integer, Sequence("doctors_timeslot_map_id_seq"), primary_key=True),
                 sqlalchemy.Column("doctor_id", Integer),
                 sqlalchemy.Column("time_slot_id", Integer),
+                sqlalchemy.Column("created_on", DateTime),
             )
             engine = sqlalchemy.create_engine(
                 DB_URL, pool_size=3)
             metadata.create_all(engine)
+            conn.close()
             return doctors_timeslot_map
     except Exception as e:
         logger.error("######## WENT WRONG IN CREATING SPECIALISATION TABLE {} ########".format(e))
     finally:
         logger.info("###### CREATE SPECIALISATION TABLE FUNCTION OVER ###### ")
+
+
+def feedback():
+    logger.info("######## GOING FOR DOCTOR/THERAPIST FEEDBACK  TABLE #########")
+    try:
+        conn = psycopg2.connect(database=DB_NAME, user=DB_USER, host=DB_HOST, password=DB_PASSWORD, port=DB_PORT)
+        cur = conn.cursor()
+        cur.execute("select * from information_schema.tables where table_name=%s", ('feedbacks',))
+        if bool(cur.rowcount):
+            logger.info("#### TABLE FEEDBACK ALREADY EXIST IN THE DATABASE PASSING IT")
+            conn.close()
+            return True
+        else:
+            metadata = sqlalchemy.MetaData()
+            feedbacks_table = sqlalchemy.Table(
+                "feedbacks", metadata,
+                sqlalchemy.Column("id", Integer, Sequence("feedbacks_id_seq"), primary_key=True),
+                sqlalchemy.Column("consultation_id", Integer),
+                sqlalchemy.Column("doctor_id", Integer),
+                sqlalchemy.Column("rating", sqlalchemy.FLOAT),
+                sqlalchemy.Column("description", sqlalchemy.String(300)),
+                sqlalchemy.Column("patient_id", Integer),
+                sqlalchemy.Column("created_on", DateTime),
+            )
+            engine = sqlalchemy.create_engine(
+                DB_URL, pool_size=3)
+            metadata.create_all(engine)
+            conn.close()
+            return feedbacks_table
+    except Exception as e:
+        logger.error("######## WENT WRONG IN CREATING FEEDBACK TABLE {} ########".format(e))
+    finally:
+        logger.info("###### CREATE FEEDBACK TABLE FUNCTION OVER ###### ")
+
+
+def consultation():
+    """:returns consultation table"""
+    logger.info("######## GOING FOR DOCTOR/THERAPIST CONSULTATION  TABLE #########")
+    try:
+        conn = psycopg2.connect(database=DB_NAME, user=DB_USER, host=DB_HOST, password=DB_PASSWORD, port=DB_PORT)
+        cur = conn.cursor()
+        cur.execute("select * from information_schema.tables where table_name=%s", ('consultations',))
+        if bool(cur.rowcount):
+            logger.info("#### TABLE CONSULTATIONS ALREADY EXIST IN THE DATABASE PASSING IT")
+            conn.close()
+            return True
+        else:
+            metadata = sqlalchemy.MetaData()
+            consultations_table = sqlalchemy.Table(
+                "consultations", metadata,
+                sqlalchemy.Column("id", Integer, Sequence("consultations_id_seq"), primary_key=True),
+                sqlalchemy.Column("patient_id", Integer),
+                sqlalchemy.Column("doctor_id", Integer),
+                sqlalchemy.Column("parent_id", Integer),
+                sqlalchemy.Column("start_time", DateTime),
+                sqlalchemy.Column("end_time", DateTime),
+                sqlalchemy.Column("time_slot_config_id", Integer),
+                sqlalchemy.Column("status", sqlalchemy.String(10)),
+                sqlalchemy.Column("cancel_reason", sqlalchemy.String(200)),
+                sqlalchemy.Column("created_on", DateTime)
+            )
+            engine = sqlalchemy.create_engine(
+                DB_URL, pool_size=3)
+            metadata.create_all(engine)
+            conn.close()
+            return consultations_table
+    except Exception as e:
+        logger.error("######## WENT WRONG IN CREATING CONSULTATIONS TABLE {} ########".format(e))
+    finally:
+        logger.info("###### CREATE CONSULTATIONS TABLE FUNCTION OVER ###### ")
+
+
+def creating_language_table():
+    try:
+        logger.info("######## GOING FOR LANGUAGE TABLE #########")
+        conn = psycopg2.connect(database=DB_NAME, user=DB_USER, host=DB_HOST, password=DB_PASSWORD, port=DB_PORT)
+        cur = conn.cursor()
+        cur.execute("select * from information_schema.tables where table_name=%s", ('languages',))
+        if bool(cur.rowcount):
+            logger.info("#### TABLE ALREADY EXIST IN THE DATABASE PASSING IT")
+            conn.close()
+            return True
+        else:
+            metadata = sqlalchemy.MetaData()
+            languages = sqlalchemy.Table(
+                "languages", metadata,
+                sqlalchemy.Column("id", Integer, Sequence("languages_id_seq"), primary_key=True),
+                sqlalchemy.Column("name", sqlalchemy.String(100)),
+                sqlalchemy.Column("is_active", sqlalchemy.Boolean),
+                sqlalchemy.Column("created_on", DateTime),
+            )
+            engine = sqlalchemy.create_engine(
+                DB_URL, pool_size=3)
+            metadata.create_all(engine)
+            conn.close()
+            return languages
+    except Exception as e:
+        logger.error("######## WENT WRONG IN CREATING LANGUAGES TABLE {} ########".format(e))
+    finally:
+        logger.info("###### CREATE LANGUAGES TABLE FUNCTION OVER ###### ")
+
+
+def doctor_language_mapping():
+    logger.info("######## GOING FOR DOCTOR-LANGUAGE-MAP TABLE #########")
+    try:
+        conn = psycopg2.connect(database=DB_NAME, user=DB_USER, host=DB_HOST, password=DB_PASSWORD, port=DB_PORT)
+        cur = conn.cursor()
+        cur.execute("select * from information_schema.tables where table_name=%s", ('doctors_languages_map',))
+        if bool(cur.rowcount):
+            logger.info("#### TABLE ALREADY EXIST IN THE DATABASE PASSING IT")
+            conn.close()
+            return True
+        else:
+            metadata = sqlalchemy.MetaData()
+            doctors_languages_map = sqlalchemy.Table(
+                "doctors_languages_map", metadata,
+                sqlalchemy.Column("id", Integer, Sequence("doctors_languages_map_id_seq"), primary_key=True),
+                sqlalchemy.Column("doctor_id", Integer),
+                sqlalchemy.Column("languages_id", Integer),
+                sqlalchemy.Column("created_on", DateTime),
+            )
+            engine = sqlalchemy.create_engine(
+                DB_URL, pool_size=3)
+            metadata.create_all(engine)
+            conn.close()
+            return doctors_languages_map
+    except Exception as e:
+        logger.error("######## WENT WRONG IN CREATING SPECIALISATION TABLE {} ########".format(e))
+    finally:
+        logger.info("###### CREATE SPECIALISATION TABLE FUNCTION OVER ###### ")
+
+# 2021-05-15 20:20:00

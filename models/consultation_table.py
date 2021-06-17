@@ -1,12 +1,23 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
+from typing import Optional
+from enum import Enum
+
+
+class Status(str, Enum):
+    open = "OPEN"
+    cancelled = "CANCELLED"
+    completed = "COMPLETED"
+    inprogress = "INPROGRESS"
+    rescheduled = "RESCHEDULED"
 
 
 class ConsultationTable(BaseModel):
     patient_id: int
     doctor_id: int
+    parent_id: Optional[int]
     start_time: datetime
     end_time: datetime
     time_slot_config_id: int
-    status: str  # enums ['RESCHUDLE, CANCELLED, INPROGRESS, OPEN, COMPLETED']
-    reason: str
+    status: Status
+    cancel_reason: Optional[str]

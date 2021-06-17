@@ -1,11 +1,22 @@
 from pydantic import BaseModel, Field
 from datetime import datetime, timedelta
+from enum import Enum
 
 """ MAKE DAYS AS ENUMS"""
 
 
+class Status(str, Enum):
+    sunday = "SUNDAY"
+    monday = "MONDAY"
+    tuesday = "TUESDAY"
+    wednesday = "WEDNESDAY"
+    thrusday = "THRUSDAY"
+    friday = "FRIDAY"
+    saturday = "SATURDAY"
+
+
 class TimeSlot(BaseModel):
-    day: str
+    day: Status
     video: bool
     audio: bool
     chat: bool
@@ -14,6 +25,22 @@ class TimeSlot(BaseModel):
     video_frequency: int
     audio_frequency: int
     chat_frequency: int
+    is_available: bool = None
+    non_availability_reason: str = None
+    is_active: bool = None
+
+
+class TimeSlotUpdate(BaseModel):
+    time_slot_id: int = None
+    day: Status = None
+    video: bool = None
+    audio: bool = None
+    chat: bool = None
+    start_time: datetime = Field(None, example="2021-05-15 20:20:00 [YYYY-MM-DD HOUR:MINUTES:SS]")
+    end_time: datetime = Field(None, example="2021-05-15 20:20 [YYYY-MM-DD HOUR:MINUTES]")
+    video_frequency: int = None
+    audio_frequency: int = None
+    chat_frequency: int = None
     is_available: bool = None
     non_availability_reason: str = None
     is_active: bool = None

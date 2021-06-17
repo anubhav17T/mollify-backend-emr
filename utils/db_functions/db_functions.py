@@ -1,10 +1,14 @@
+import json
+
 from models.doctor import Doctor
+from models.languages import LanguagesUpdate
+from utils.db_functions.raw_queries import QUERY_FOR_REGISTER_DOCTOR, QUERY_FOR_SAVE_SPECIALISATION, \
+    QUERY_FOR_SAVE_LANGUAGE, QUERY_FOR_SAVE_QUALIFICATION, QUERY_FOR_SPECIALISATION_MAP
 from utils.logger.logger import logger
 from utils.connection_configuration.db_object import db
 from datetime import datetime, timezone
 from models.specialisation import Specialisation
 from models.doctor_specialisation import DoctorSpecialisation
-from models.time_slot_configuration import TimeSlot
 
 
 def save_specialisation(specailisations: Specialisation):
@@ -20,6 +24,31 @@ def save_specialisation(specailisations: Specialisation):
         logger.info("#### FIND SAVE_SPECIALISATION FUNCTION COMPLETED ####")
 
 
+def save_languages(languages: LanguagesUpdate):
+    try:
+        query = """INSERT INTO languages VALUES (nextval('languages_id_seq'),:name,:is_active,now() at time zone 
+        'UTC') """
+        logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF LANGUAGES")
+        return db.execute(query, values={"name": languages.name,
+                                         "is_active": languages.is_active})
+    except Exception as e:
+        logger.error("##### EXCEPTION IN SAVE_LANGUAGE FUNCTION IS {}".format(e))
+        return False
+    finally:
+        logger.info("#### FIND SAVE_LANGUAGE FUNCTION COMPLETED ####")
+
+
+def find_particular_language(name):
+    try:
+        query = "SELECT * FROM languages WHERE name=:name"
+        logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF FINDING PARTICULAR ####")
+        return db.fetch_one(query=query, values={"name": name})
+    except Exception as e:
+        logger.error("##### EXCEPTION IN SAVE_LANGUAGE FUNCTION IS {}".format(e))
+    finally:
+        logger.info("#### FIND PARTICULAR_LANGUAGE FUNCTION COMPLETED ####")
+
+
 def get_specific_doctor(search_query):
     try:
         query = """ SELECT * FROM doctors WHERE mail=:mail or username=:username """
@@ -33,6 +62,16 @@ def get_all_doctor():
     try:
         query = """ SELECT * FROM doctors LIMIT 10"""
         logger.info("### PROCEEDING FURTHER FOR EXECUTION OF QUERY OF GET SPECIFIC DOCTOR")
+        return db.fetch_all(query)
+    except Exception as e:
+        logger.error("#### EXCEPTION IN GET SPECIFIC DOCTOR IS {} #####".format(e))
+
+
+def doctor_by_name(name: str):
+    name = name + str('%')
+    query = """ SELECT * FROM doctors WHERE full_name LIKE '{}' """.format(name)
+    try:
+        logger.info("### FETCHING ALL THE RESULTS ######")
         return db.fetch_all(query)
     except Exception as e:
         logger.error("#### EXCEPTION IN GET SPECIFIC DOCTOR IS {} #####".format(e))
@@ -60,6 +99,17 @@ def get_true_specialisation():
         logger.info("#### GET_SPECIALISATION FUNCTION COMPLETED ####")
 
 
+def get_true_languages():
+    try:
+        query = "select * from languages where is_active=:is_active order by created_on desc"
+        logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF GET LANGUAGES")
+        return db.fetch_all(query, values={"is_active": True})
+    except Exception as e:
+        logger.error("##### EXCEPTION IN GET_SPECIALISATION FUNCTION IS {}".format(e))
+    finally:
+        logger.info("#### GET_SPECIALISATION FUNCTION COMPLETED ####")
+
+
 def get_false_specialisation():
     try:
         query = "select * from specialisations where is_active=:is_active order by created_on desc"
@@ -71,9 +121,32 @@ def get_false_specialisation():
         logger.info("#### GET_SPECIALISATION FUNCTION COMPLETED ####")
 
 
+def get_false_languages():
+    try:
+        query = "select * from languages where is_active=:is_active order by created_on desc"
+        logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF GET SPECIALISATION")
+        return db.fetch_all(query, values={"is_active": False})
+    except Exception as e:
+        logger.error("##### EXCEPTION IN GET_SPECIALISATION FUNCTION IS {}".format(e))
+    finally:
+        logger.info("#### GET_SPECIALISATION FUNCTION COMPLETED ####")
+
+
 def get_all_specialisation():
     try:
         query = "select * FROM specialisations order by created_on desc"""
+        logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF GET SPECIALISATION")
+        return db.fetch_all(query)
+    except Exception as e:
+        logger.error("##### EXCEPTION IN GET_SPECIALISATION FUNCTION IS {}".format(e))
+        return False
+    finally:
+        logger.info("#### GET_ALL_SPECIALISATION FUNCTION COMPLETED ####")
+
+
+def get_all_languages():
+    try:
+        query = "select * FROM languages order by created_on desc"""
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY OF GET SPECIALISATION")
         return db.fetch_all(query)
     except Exception as e:
@@ -190,6 +263,27 @@ def save_specialisation_map(map):
         logger.error("#######  SAVE_SPECIALISATION_MAP FUNCTION OVER ##### ")
 
 
+def save_languages_map(map):
+    query = "INSERT INTO doctors_languages_map VALUES (nextval('doctors_languages_map_id_seq'),:doctor_id,:languages_id,now() at time zone 'UTC') "
+    logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF SAVE LANGUAGES MAP QUERY")
+    try:
+        return db.execute_many(query=query, values=map)
+    except Exception as e:
+        logger.error("####### EXCEPTION IN SAVE_LANGUAGES_MAP FUNCTION IS = {}".format(e))
+        return False
+    finally:
+        logger.error("#######  SAVE_LANGUAGES_MAP FUNCTION OVER ##### ")
+
+
+def find_specialisation(specialisation_value: int):
+    query = "SELECT name FROM SPECIALISATIONS WHERE id=:id"
+    logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF FIND SPECIALISATION QUERY")
+    try:
+        return db.fetch_one(query=query, values={"id": specialisation_value})
+    except Exception as e:
+        logger.error("###### ERROR IN FINDING SPECIALISATION FROM THE DATABASE {} ######".format(e))
+
+
 def find_black_list_token(token: str):
     query = "SELECT * FROM doctors_blacklists WHERE token=:token"
     try:
@@ -289,7 +383,7 @@ def update_profile_picture(username, url):
 
 def save_time_slot_config(val):
     try:
-        query = " INSERT INTO doctors_time_slot VALUES (nextval('doctors_time_slot_id_seq'),:day,:video,:audio,:chat,:start_time,:end_time,:video_frequency,:audio_frequency,:chat_frequency,:is_available,:non_availability_reason,:is_active) RETURNING id; "
+        query = " INSERT INTO doctors_time_slot VALUES (nextval('doctors_time_slot_id_seq'),:day,:video,:audio,:chat,:start_time,:end_time,:video_frequency,:audio_frequency,:chat_frequency,:is_available,:non_availability_reason,:is_active,now() at time zone 'UTC') RETURNING id; "
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF SAVE TIMESLOT QUERY")
         return db.execute(query=query, values={"day": val.day,
                                                "video": val.video,
@@ -319,7 +413,7 @@ def save_time_slot_config(val):
 def save_timeSlot_doctor_map(map_array_object):
     try:
         logger.info("##### GOING FOR SAVING TIME_SLOT AND DOCTOR_ID QUERY ####### ")
-        query = "INSERT INTO doctors_timeSlot_map VALUES (nextval('doctors_timeSlot_map_id_seq'),:doctor_id,:time_slot_id)"
+        query = "INSERT INTO doctors_timeSlot_map VALUES (nextval('doctors_timeSlot_map_id_seq'),:doctor_id,:time_slot_id,now() at time zone 'UTC')"
         return db.execute_many(query, values=map_array_object)
     except Exception as e:
         logger.error("##### EXCEPTION IN TIME_SLOT AND DOCTOR_ID MAP QUERY {} #########".format(e))
@@ -329,3 +423,163 @@ def save_timeSlot_doctor_map(map_array_object):
                           }}
     finally:
         logger.info("#### SAVING TIME_SLOT AND DOCTOR_ID OVER ######")
+
+
+def get_doctor_id(slug: str):
+    query = "SELECT id FROM doctors WHERE slug=:slug"
+    try:
+        return db.fetch_one(query, values={"slug": slug})
+    except Exception as e:
+        logger.error("####### EXCEPTION IN FIND_ID FROM DOCTORS TABLE FUNCTION IS = {}".format(e))
+    finally:
+        logger.info("#### get_doctor_id FUNCTION COMPLETED ####")
+
+
+def find_doctor_information(slug: str):
+    query = "SELECT * FROM doctors WHERE slug=:slug"
+    try:
+        return db.fetch_one(query, values={"slug": slug})
+    except Exception as e:
+        logger.error("####### EXCEPTION IN FIND_DOCTOR_INFORMATION FROM DOCTORS TABLE FUNCTION IS = {}".format(e))
+    finally:
+        logger.info("#### get_doctor_id FUNCTION COMPLETED ####")
+
+
+def find_time_slot(doctor_id: int):
+    query = """SELECT day,video,audio,chat,start_time,end_time,video_frequency,audio_frequency,chat_frequency, 
+    doctor_id FROM doctors_time_slot,doctors_timeslot_map WHERE 
+    doctors_time_slot.id=doctors_timeslot_map.time_slot_id AND doctor_id=:doctor_id AND is_available='true' AND 
+    start_time>now() at time zone 'UTC' ORDER BY start_time"""
+    try:
+        return db.fetch_all(query, values={"doctor_id": doctor_id})
+    except Exception as e:
+        logger.error("####### EXCEPTION IN FIND_DOCTOR_INFORMATION FROM DOCTORS TABLE FUNCTION IS = {}".format(e))
+    finally:
+        logger.info("#### get_doctor_id FUNCTION COMPLETED ####")
+
+
+def get_time_slot_configuration(doctor_id: int):
+    query = """SELECT day,video,audio,chat,start_time,end_time,video_frequency,audio_frequency,chat_frequency,is_available,non_availability_reason,is_active FROM doctors_time_slot,doctors_timeslot_map WHERE 
+        doctors_time_slot.id=doctors_timeslot_map.time_slot_id AND doctor_id=:doctor_id """
+    try:
+        return db.fetch_all(query=query, values={"doctor_id": doctor_id})
+    except Exception as e:
+        logger.error("####### EXCEPTION IN ALL_TIME_SLOT_CONFIGURATION FROM DOCTORS TABLE FUNCTION IS = {}".format(e))
+    finally:
+        logger.info("#### ALL_TIME_SLOT_CONFIGURATION FUNCTION COMPLETED ####")
+
+
+def find_booked_time_slot(doctor_id: int):
+    query = """SELECT start_time,end_time,time_slot_config_id FROM consultations where doctor_id=:doctor_id"""
+    try:
+        return db.fetch_all(query=query, values={"doctor_id": doctor_id})
+    except Exception as e:
+        logger.error("####### EXCEPTION IN FIND_BOOKED_TIMESLOTS FROM CONSULTATION TABLE FUNCTION IS = {}".format(e))
+    finally:
+        logger.info("#### FIND_BOOKED_TIMESLOTS FUNCTION COMPLETED ####")
+
+
+def check_if_language_id_exist(id: int):
+    query = "SELECT * FROM languages WHERE id=:id"
+    try:
+        logger.info("### PROCEEDING FURTHER FOR EXECUTION OF QUERY OF GET SPECIFIC ID")
+        return db.fetch_one(query, values={"id": id})
+    except Exception as e:
+        logger.error("error in fetching id {}".format(e))
+    finally:
+        logger.info("#### FIND ID METHOD OVER ######")
+
+
+def update_language(id, name):
+    query = "UPDATE languages SET name=:name WHERE id=:id RETURNING id"
+    try:
+        return db.execute(query, values={"name": name, "id": id})
+    except Exception as e:
+        logger.error("### ERROR IN UPDATING SPECIALISATION {} #####".format(e))
+    finally:
+        logger.info("##### UPDATE SPECIALISATION METHOD OVER ####")
+
+
+def check_if_time_slot_id_exist(id):
+    query = "SELECT * From doctors_time_slot WHERE id=:id"
+    try:
+        return db.fetch_one(query=query, values={"id": id})
+    except Exception as e:
+        logger.error("### ERROR IN FINDING TIMESLOT ID {} #####".format(e))
+    finally:
+        logger.info("##### FINDING TIMESLOT ID METHOD OVER ####")
+
+
+def update_time_slot(query_object: str, update_value_map):
+    try:
+        return db.execute(query=query_object, values=update_value_map)
+    except Exception as e:
+        logger.error("### ERROR IN UPDATING SPECIALISATION {} #####".format(e))
+    finally:
+        logger.info("##### UPDATE SPECIALISATION METHOD OVER ####")
+
+
+async def register_user_combined(doctor, slug):
+    async with db.transaction():
+        transaction = await db.transaction()
+        try:
+            dt = datetime.now(timezone.utc)
+            logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY")
+            doctor_id = await db.execute(query=QUERY_FOR_REGISTER_DOCTOR, values={"username": doctor.username,
+                                                                                  "full_name": doctor.full_name,
+                                                                                  "mail": doctor.mail,
+                                                                                  "password": doctor.password,
+                                                                                  "phone_number": doctor.phone_number,
+                                                                                  "gender": doctor.gender,
+                                                                                  "experience": doctor.experience,
+                                                                                  "econsultation_fee": doctor.econsultation_fee,
+                                                                                  "is_active": doctor.is_active,
+                                                                                  "is_online": doctor.is_online,
+                                                                                  "url": doctor.url,
+                                                                                  "follow_up_fee": doctor.follow_up_fee,
+                                                                                  "about": doctor.about,
+                                                                                  "slug": slug,
+                                                                                  "created_on": dt.utcnow()
+                                                                                  }
+                                         )
+            logger.info("####### SUCCESS IN DOCTOR TABLE #########")
+            map_object = []
+            for get_index in doctor.specialisation:
+                object_map = {"doctor_id": doctor_id,
+                              "specialisation_id": get_index
+                              }
+                map_object.append(object_map)
+            print(map_object)
+            logger.info("####### GOING FOR EXECUTION OF DOCTOR SPECIALISATION MAP ########### ")
+            await db.execute_many(query=QUERY_FOR_SPECIALISATION_MAP, values=map_object)
+            logger.info("####### SUCCESSFULLY EXECUTED DOCTOR SPECIALISATION MAP ########### ")
+            object_to_map = []
+            for index in doctor.languages:
+                to_map = {"doctor_id": doctor_id,
+                          "languages_id": index
+                          }
+                object_to_map.append(to_map)
+            logger.info("####### GOING FOR EXECUTION OF DOCTOR SAVE_LANGUAGE MAP ########### ")
+            await db.execute_many(query=QUERY_FOR_SAVE_LANGUAGE, values=object_to_map)
+            logger.info("####### SUCCESSFULLY EXECUTED LANGUAGE MAP ########### ")
+            values = []
+            for get_values in doctor.qualification:
+                qualification_object = {"doctor_id": doctor_id,
+                                        "qualification_name": get_values.qualification_name,
+                                        "institute_name": get_values.institute_name,
+                                        "year": get_values.year
+                                        }
+                values.append(qualification_object)
+            logger.info("####### GOING GOR QUALIFICATION TABLE INSERTION ########## ")
+            await db.execute_many(query=QUERY_FOR_SAVE_QUALIFICATION, values=values)
+            logger.info("####### SUCCESSFULLY EXECUTED SAVE_QUALIFICATION MAP ########### ")
+        except Exception as WHY:
+            logger.error("######### ERROR IN THE QUERY BECAUSE {} ".format(WHY))
+            logger.info("########## ROLLING BACK TRANSACTIONS #################")
+            await transaction.rollback()
+            return False
+        else:
+            logger.info("##### ALL WENT WELL COMMITTING TRANSACTION ########")
+            await transaction.commit()
+            logger.info("###### TRANSACTION COMMITTED AND SUCCESS TRUE #######")
+            return True

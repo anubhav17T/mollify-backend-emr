@@ -6,7 +6,7 @@ EMAIL_REGEX = "^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$"
 PHONE_REGEX = "(0/91)?[7-9][0-9]{9}"
 
 """ ============= DATABASE CONFIGURATION FILE ================== """
-#postgres password = postgres
+# postgres password = postgres
 # DB_HOST = "localhost"
 # DB_USER = "postgres"
 # DB_PASSWORD = "mollify@123"
@@ -39,11 +39,11 @@ MAIN_PAGE_SUMMARY = "It returns the main page"
 BCRYPT_SCHEMA = "bcrypt"
 
 """ =============== EMAIL CONFIGURATIONS ========"""
-MAIL_USERNAME = "YourUsername",
-MAIL_PASSWORD = "strong_password",
-MAIL_FROM = "your@email.com",
+MAIL_USERNAME = "",
+MAIL_PASSWORD = "",
+MAIL_FROM = "",
 MAIL_PORT = 587,
-MAIL_SERVER = "your mail server",
+MAIL_SERVER = "smtp.gmail.com",
 MAIL_TLS = True,
 MAIL_SSL = False,
 USE_CREDENTIALS = True
@@ -82,3 +82,14 @@ IS_LOAD_TEST = False
 "========== CONFERENCING ========== "
 APPLICATION_ID = "72e966f174b748bca6a35e5b281d7c9d"
 APPLICATION_CERTIFICATE = "f04e1c68506c4d309deb06ffff8e0088"
+
+"============== ALEMBIC LOCAL CONFIGURATION =========="
+URL = "postgresql://postgres:mollify@123@localhost/mollify"
+
+
+SENDGRID_API_KEY = "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"
+
+
+""" QUERIES FOR UPDATE TIMESLOTS """
+UPDATE = "UPDATE doctors_time_slot SET "
+WHERE = " WHERE id=:id Returning id"

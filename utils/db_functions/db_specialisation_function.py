@@ -24,6 +24,17 @@ def update_specialisation(id, name):
         logger.info("##### UPDATE SPECIALISATION METHOD OVER ####")
 
 
+def update_doctor_status(query, values):
+    try:
+        logger.info("###### DB METHOD UPDATE DOCTOR STATUS IS CALLED #########")
+        return db.execute(query=query, values=values)
+    except Exception as e:
+        logger.error("###### SOMETHING WENT WRONG IN UPDATE DOCTOR STATUS METHOD WITH {} #########".format(e))
+    finally:
+        logger.info("###### DB METHOD FOR DOCTOR_STATUS UPDATE IS FINISHED ##########")
+
+
+
 def update_specialisation_table(var_id, name, is_active):
     if name is None:
         query = "UPDATE specialisations SET is_active=:is_active WHERE id=:id RETURNING id"

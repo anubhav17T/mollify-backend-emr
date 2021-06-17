@@ -1,3 +1,4 @@
+from enum import Enum
 from pydantic import BaseModel, Field
 from fastapi import Query
 from constants.const import EMAIL_REGEX
@@ -7,22 +8,28 @@ from models.qualification import Qualification
 from typing import List
 
 
+class Gender(str, Enum):
+    male = "MALE"
+    female = "FEMALE"
+    other = "OTHER"
+
 class Doctor(BaseModel):
     username: str = Field(None, example="username")
     full_name: str = Field(..., example="name + surname")
-    mail: str = Query(..., regex=EMAIL_REGEX,example="john.doe@gmail.com")
+    mail: str = Query(..., regex=EMAIL_REGEX, example="john.doe@gmail.com")
     password: str = Field(None, example="test@123")
     phone_number: str
-    gender: Optional[str] = "Male/Female"
+    gender:  Gender
     experience: str
     econsultation_fee: int
-    isActive: bool = None
-    isOnline: bool = None
+    is_active: bool = None
+    is_online: bool = None
     url: str = None
     follow_up_fee: int
     about: str = Field(..., example="about yourself in less than 350 words")
     qualification: List[Qualification] = None
     specialisation: List[int] = None
+    languages: List[int]
 
 
 class DoctorResponse(BaseModel):
@@ -75,3 +82,21 @@ class ChannelName(BaseModel):
 
 class DoctorId(BaseModel):
     doctor_id: int
+
+
+class DoctorStatus(BaseModel):
+    is_active: bool = None
+    is_online: bool = None
+
+
+class DoctorUpdateInformation(BaseModel):
+    username: str = None
+    phone_number: str = None
+    gender: Gender = None
+    experience: str = None
+    econsultation_fee: int = None
+    is_active:bool = None
+    is_online:bool = None
+    follow_up_fee:int = None
+    about:str = None
+    url:str = None
