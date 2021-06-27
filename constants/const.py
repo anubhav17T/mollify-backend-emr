@@ -7,12 +7,12 @@ PHONE_REGEX = "(0/91)?[7-9][0-9]{9}"
 
 """ ============= DATABASE CONFIGURATION FILE ================== """
 # postgres password = postgres
-DB_HOST = "localhost"
-DB_USER = "postgres"
-DB_PASSWORD = "mollify@123"
-DB_NAME = "mollify"
-DB_PORT = 5432
-DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+# DB_HOST = "localhost"
+# DB_USER = "postgres"
+# DB_PASSWORD = "mollify@123"
+# DB_NAME = "mollify"
+# DB_PORT = 5432
+# DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
 
 """ =================== CLOUDINARY CONFIGURATION        ===================== """
 
@@ -20,12 +20,12 @@ CLOUD_NAME = "mollify"
 API_KEY = "466423759736745"
 API_SECRET = "Arv-iXxAZuNrVgf3k4_nS47VFag"
 #
-# DB_HOST = "ec2-54-163-254-204.compute-1.amazonaws.com"
-# DB_USER = "jkyfmagnmgcpjs"
-# DB_PASSWORD = "a63ffcd21fa58bf0619dd063e87da51afa3b665b4c1305ea73014dbad828f59e"
-# DB_NAME = "d42op193oij6q"
-# DB_PORT = 5432
-# DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+DB_HOST = "ec2-54-163-254-204.compute-1.amazonaws.com"
+DB_USER = "jkyfmagnmgcpjs"
+DB_PASSWORD = "a63ffcd21fa58bf0619dd063e87da51afa3b665b4c1305ea73014dbad828f59e"
+DB_NAME = "d42op193oij6q"
+DB_PORT = 5432
+DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
 
 
 """ ============= JWT TOKEN =================="""
