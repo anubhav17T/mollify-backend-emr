@@ -2,10 +2,11 @@ from datetime import datetime
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from routes.v1.doctor_language_routes import doctor_languages
-from routes.v1.doctor_specialisation_routes import doctor_specialisation
-from routes.v1.doctors_qualification_routes import doctor_qualification_router
-from routes.v2.doctor_filter_routes import app_v2_filters
+from constants.const import V1_PREFIX, V2_PREFIX
+from views.v1.doctor_language_routes import doctor_languages
+from views.v1.doctor_specialisation_routes import doctor_specialisation
+from views.v1.doctors_qualification_routes import doctor_qualification_router
+from views.v2.filters.doctor_filter_routes import app_v2_filters
 from utils.custom_exceptions.custom_exceptions import CustomException, \
     CustomExceptionHandler
 from utils.connection_configuration.check_connection import DatabaseConfiguration
@@ -14,11 +15,11 @@ from utils.tables.db_tables import creating_doctor_table, creating_blacklist_tab
     creating_qualification_table, creating_specialisations_table, doctor_specialisation_mapping, doctors_time_slot, \
     doctors_timeSlot_map, feedback, consultation, creating_language_table, doctor_language_mapping
 from utils.logger.logger import logger
-from routes.v1.v1 import app_v1
-from routes.v1.doctor_routes import doctor_routes
-from routes.v1.doctor_time_slot_routes import doctor_time_slot_routes
-from routes.v1.doctor_feedback_routes import doctor_feedback
-from routes.v1.doctor_consultation_routes import doctor_consultation
+from views.v1.v1 import app_v1
+from views.v1.doctor_routes import doctor_routes
+from views.v1.doctor_time_slot_routes import doctor_time_slot_routes
+from views.v1.doctor_feedback_routes import doctor_feedback
+from views.v1.doctor_consultation_routes import doctor_consultation
 
 origins = ["*"]
 conn = DatabaseConfiguration()
@@ -40,10 +41,8 @@ def connections():
     doctor_language_mapping()
 
 
-connections()
-
 app = FastAPI(title="Mollify RestApi's Version 1.0",
-              description="Api For EMR Service, Developer=Anubhav Tyagi(anubhav1tyagi@gmail.com)",
+              description="HTTP CALLS For EMR Service, Developer=Anubhav Tyagi (anubhav1tyagi@gmail.com)",
               version="1.0.0"
               )
 
@@ -55,19 +54,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(app_v1, prefix="/api/v1")
-app.include_router(doctor_routes, prefix="/api/v1")
-app.include_router(doctor_time_slot_routes, prefix="/api/v1")
-app.include_router(doctor_feedback, prefix="/api/v1")
-app.include_router(doctor_consultation, prefix="/api/v1")
-app.include_router(doctor_specialisation, prefix="/api/v1")
-app.include_router(doctor_languages, prefix="/api/v1")
-app.include_router(doctor_qualification_router, prefix="/api/v2")
-app.include_router(app_v2_filters, prefix="/api/v2")
+
+def configure_routing():
+    """:ROUTES CONFIGURATIONS FOR THE VIEWS/API'S"""
+    app.include_router(app_v1, prefix=V1_PREFIX)
+    app.include_router(doctor_routes, prefix=V1_PREFIX)
+    app.include_router(doctor_time_slot_routes, prefix=V1_PREFIX)
+    app.include_router(doctor_feedback, prefix=V1_PREFIX)
+    app.include_router(doctor_consultation, prefix=V1_PREFIX)
+    app.include_router(doctor_specialisation, prefix=V1_PREFIX)
+    app.include_router(doctor_languages, prefix=V1_PREFIX)
+    app.include_router(doctor_qualification_router, prefix=V2_PREFIX)
+    app.include_router(app_v2_filters, prefix=V2_PREFIX)
+
+
+def configure():
+    connections()
+    configure_routing()
 
 
 @app.get("/")
 async def home():
+    """:return MOLLIFY HOME"""
     return {"API": "MOLLIFY DOCTOR-EMR SERVICE"}
 
 
@@ -90,7 +98,8 @@ async def unicorn_exception_handler(request: Request, e: CustomException):
 
 
 @app.exception_handler(CustomExceptionHandler)
-async def NotFoundException(request: Request, exception: CustomExceptionHandler):
+async def NotFoundException(request: Request,exception: CustomExceptionHandler):
+    """:return custom exceptions """
     return JSONResponse(status_code=exception.code,
                         content={"error": {"message": exception.message,
                                            "code": exception.code,
@@ -104,17 +113,15 @@ async def NotFoundException(request: Request, exception: CustomExceptionHandler)
 async def middleware(request: Request, call_next):
     start_time = datetime.utcnow()
     response = await call_next(request)
-    # modify response
+    # modify response adding custom headers
     execution_time = (datetime.utcnow() - start_time).microseconds
     response.headers["x-execution-time"] = str(execution_time)
     return response
-#
-#
-# if __name__ == "__main__":
-#     try:
-#         """ADD MULTIPLE PROCESSING IN CREATING DATABASE TABLE FOR FAST EXECUTION """
-#         import uvicorn
-#
-#         uvicorn.run(app)
-#     except Exception as e:
-#         logger.error("###### EXCEPTION IN MAIN FILE IS {} ####### ".format(e))
+
+
+if __name__ == "__main__":
+    try:
+        configure()
+        """ADD MULTIPLE PROCESSING IN CREATING DATABASE TABLE FOR FAST EXECUTION """
+    except Exception as e:
+        logger.error("###### EXCEPTION IN MAIN FILE IS {} ####### ".format(e))
