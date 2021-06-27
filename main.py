@@ -19,7 +19,7 @@ from views.v1.doctor_routes import doctor_routes
 from views.v1.doctor_time_slot_routes import doctor_time_slot_routes
 from views.v1.doctor_feedback_routes import doctor_feedback
 from views.v1.doctor_consultation_routes import doctor_consultation
-
+from constants.const import V1_PREFIX,V2_PREFIX
 origins = ["*"]
 conn = DatabaseConfiguration()
 
@@ -56,15 +56,15 @@ app.add_middleware(
 )
 
 """:ROUTES CONFIGURATIONS FOR THE VIEWS/API'S DON'T CHANGE IT"""
-app.include_router(app_v1, prefix="/api/v1")
-app.include_router(doctor_routes, prefix="/api/v1")
-app.include_router(doctor_time_slot_routes, prefix="/api/v1")
-app.include_router(doctor_feedback, prefix="/api/v1")
-app.include_router(doctor_consultation, prefix="/api/v1")
-app.include_router(doctor_specialisation, prefix="/api/v1")
-app.include_router(doctor_languages, prefix="/api/v1")
-app.include_router(doctor_qualification_router, prefix="/api/v2")
-app.include_router(app_v2_filters, prefix="/api/v2")
+app.include_router(app_v1, prefix=V1_PREFIX)
+app.include_router(doctor_routes, prefix=V1_PREFIX)
+app.include_router(doctor_time_slot_routes, prefix=V1_PREFIX)
+app.include_router(doctor_feedback, prefix=V1_PREFIX)
+app.include_router(doctor_consultation, prefix=V1_PREFIX)
+app.include_router(doctor_specialisation, prefix=V1_PREFIX)
+app.include_router(doctor_languages, prefix=V1_PREFIX)
+app.include_router(doctor_qualification_router, prefix=V2_PREFIX)
+app.include_router(app_v2_filters, prefix=V2_PREFIX)
 
 
 @app.get("/")
