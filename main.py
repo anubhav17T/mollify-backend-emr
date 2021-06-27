@@ -2,7 +2,6 @@ from datetime import datetime
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from constants.const import V1_PREFIX, V2_PREFIX
 from views.v1.doctor_language_routes import doctor_languages
 from views.v1.doctor_specialisation_routes import doctor_specialisation
 from views.v1.doctors_qualification_routes import doctor_qualification_router
@@ -56,16 +55,16 @@ app.add_middleware(
 
 
 def configure_routing():
-    """:ROUTES CONFIGURATIONS FOR THE VIEWS/API'S"""
-    app.include_router(app_v1, prefix=V1_PREFIX)
-    app.include_router(doctor_routes, prefix=V1_PREFIX)
-    app.include_router(doctor_time_slot_routes, prefix=V1_PREFIX)
-    app.include_router(doctor_feedback, prefix=V1_PREFIX)
-    app.include_router(doctor_consultation, prefix=V1_PREFIX)
-    app.include_router(doctor_specialisation, prefix=V1_PREFIX)
-    app.include_router(doctor_languages, prefix=V1_PREFIX)
-    app.include_router(doctor_qualification_router, prefix=V2_PREFIX)
-    app.include_router(app_v2_filters, prefix=V2_PREFIX)
+    """:ROUTES CONFIGURATIONS FOR THE VIEWS/API'S DONT CHANGE IT"""
+    app.include_router(app_v1, prefix="/api/v1")
+    app.include_router(doctor_routes, prefix="/api/v1")
+    app.include_router(doctor_time_slot_routes, prefix="/api/v1")
+    app.include_router(doctor_feedback, prefix="/api/v1")
+    app.include_router(doctor_consultation, prefix="/api/v1")
+    app.include_router(doctor_specialisation, prefix="/api/v1")
+    app.include_router(doctor_languages, prefix="/api/v1")
+    app.include_router(doctor_qualification_router, prefix="/api/v2")
+    app.include_router(app_v2_filters, prefix="/api/v2")
 
 
 def configure():

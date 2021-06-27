@@ -140,12 +140,12 @@ async def get_specific_doctor_by_id(id: int):
             "specialisation": await get_specialisation_of_doctor(doctor_id=id)
         }
     except Exception as WHY:
-        logger.error("####### EXCEPTION IN GETTING USER DETAILS IS {} ###########".format(WHY))
+        logger.error("####### EXCEPTION IN GETTING DOCTOR DETAILS IS {} ###########".format(WHY))
         raise CustomExceptionHandler(message="Unable to fetch the results",
                                      target="GET DOCTOR INFORMATION BY ID",
                                      code=status.HTTP_400_BAD_REQUEST, success=False)
     else:
-        logger.info("######## UPDATING FINAL DOCTOR_RESULT MAP ############")
+        logger.info("######## GETTING FINAL DOCTOR_RESULT MAP ############")
         doc_or_therapist_results.update(doc_or_therapist_information)
         return doc_or_therapist_results
 

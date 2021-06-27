@@ -357,11 +357,19 @@ async def get_doctor_information(slug: str = Path(...)):
                                      target="INFORMATION FROM SLUG", success=False
                                      )
     doc_or_therapist_results = dict(doctor_information)
-
-    doc_or_therapist_information = {
-        "languages": await get_language_doctor(id=doc_or_therapist_results["id"]),
-        "qualification": await get_doc_qualifications(id=doc_or_therapist_results["id"]),
-        "specialisation": await get_specialisation_of_doctor(doctor_id=doc_or_therapist_results["id"])
-    }
-    doc_or_therapist_results.update(doc_or_therapist_information)
-    return doc_or_therapist_results
+    try:
+        logger.info("####### FETCHING DOCTOR INFORMAION FROM THE SLUG ###########")
+        doc_or_therapist_information = {
+            "languages": await get_language_doctor(id=doc_or_therapist_results["id"]),
+            "qualification": await get_doc_qualifications(id=doc_or_therapist_results["id"]),
+            "specialisation": await get_specialisation_of_doctor(doctor_id=doc_or_therapist_results["id"])
+        }
+    except Exception as WHY:
+        logger.error("####### EXCEPTION IN GETTING DOCTOR DETAILS IS {} ###########".format(WHY))
+        raise CustomExceptionHandler(message="Unable to fetch the results",
+                                     target="GET DOCTOR INFORMATION BY SLUG",
+                                     code=status.HTTP_400_BAD_REQUEST, success=False)
+    else:
+        logger.info("##### GETTING FINAL DOCTOR_RESULT INFORMATION MAP ##########")
+        doc_or_therapist_results.update(doc_or_therapist_information)
+        return doc_or_therapist_results
