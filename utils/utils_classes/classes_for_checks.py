@@ -100,19 +100,20 @@ class TimeslotConfiguration(object):
         self.doctor_id = doctor_id
 
     def time_slot_configuration_checks(self):
-        if self.start_time >= self.end_time:
-            logger.error("##### ERROR = ENDTIME IS LESS THAN START TIME #####")
-            raise CustomExceptionHandler(message="Your end time is less than start time!!",
-                                         success=False,
-                                         target="Save Timeslot",
-                                         code=status.HTTP_400_BAD_REQUEST)
-        if self.start_time.day != self.end_time.day:
-            logger.error("##### ERROR, YOU CANNOT PROVIDE END TIME GREATER THAN 24 HOURS #####")
-            raise CustomExceptionHandler(
-                message="End time provided for greater than 24 hours for doctor id {}".format(str(self.doctor_id)),
-                success=False,
-                target="Save Timeslot",
-                code=status.HTTP_400_BAD_REQUEST)
+        if self.start_time is not None and self.end_time is not None:
+            if self.start_time >= self.end_time:
+                logger.error("##### ERROR = ENDTIME IS LESS THAN START TIME #####")
+                raise CustomExceptionHandler(message="Your end time is less than start time!!",
+                                             success=False,
+                                             target="Save Timeslot",
+                                             code=status.HTTP_400_BAD_REQUEST)
+            if self.start_time.day != self.end_time.day:
+                logger.error("##### ERROR, YOU CANNOT PROVIDE END TIME GREATER THAN 24 HOURS #####")
+                raise CustomExceptionHandler(
+                    message="End time provided for greater than 24 hours for doctor id {}".format(str(self.doctor_id)),
+                    success=False,
+                    target="Save Timeslot",
+                    code=status.HTTP_400_BAD_REQUEST)
 
         if self.start_time.date() < dt.date():
             raise CustomExceptionHandler(

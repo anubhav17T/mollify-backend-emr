@@ -226,7 +226,6 @@ async def update_doctor_details(doctor_update: DoctorUpdateInformation, id: int)
             else:
                 pass
 
-
     if doctor_update.full_name is not None:
         slug_object = get_part_of_string(input_string=doctor_update.full_name, character="space")
         find_first_specialisation_name = await get_first_specialisation_of_doctor(doctor_id=id)

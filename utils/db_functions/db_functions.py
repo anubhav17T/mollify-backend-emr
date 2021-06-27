@@ -6,7 +6,7 @@ from utils.db_functions.raw_queries import QUERY_FOR_REGISTER_DOCTOR, QUERY_FOR_
     QUERY_FOR_DOCTORS_QUALIFICATIONS_SELECT, QUERY_FOR_SPECIFIC_DOCTORS_DETAILS, QUERY_FOR_SAVE_TIMESLOT_CONFIG, \
     QUERY_FOR_DOCTOR_SCHEDULE, QUERY_FOR_DOCTOR_EXIST_IN_TIMESLOT_CONFIG, QUERY_FOR_DOCTOR_END_TIME, \
     QUERY_FOR_DOCTOR_START_TIME, QUERY_FOR_FIND_TIME, QUERY_FOR_FIND_BOOKED_SLOTS, QUERY_FOR_ALL_DAYS_TIME, \
-    QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS
+    QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS, QUERY_FOR_EXISTING_TIMESLOT
 from utils.logger.logger import logger
 from utils.connection_configuration.db_object import db
 from datetime import datetime, timezone
@@ -516,7 +516,7 @@ def update_time_slot(query_object: str, update_value_map):
 
 
 async def update_time_slot_for_doctor(query_object_for_update: str, update_value_map: dict,
-                                      map_array_objects: list = None, time_slot_configuration=None, doctor_id=None):
+                                      ):
     async with db.transaction():
         transaction = await db.transaction()
         try:
@@ -750,3 +750,7 @@ def time_slot_for_all_days(doctor_id: int):
 
 def find_booked_time_slots(doctor_id:int):
     return db.fetch_all(query=QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS,values={"doctor_id": doctor_id})
+
+
+def find_if_time_slot_exist(doctor_id:int,time):
+    return db.fetch_all(query=QUERY_FOR_EXISTING_TIMESLOT,values={"doctor_id":doctor_id,"time":time})
