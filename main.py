@@ -40,6 +40,8 @@ def connections():
     doctor_language_mapping()
 
 
+connections()
+
 app = FastAPI(title="Mollify RestApi's Version 1.0",
               description="HTTP CALLS For EMR Service, Developer=Anubhav Tyagi (anubhav1tyagi@gmail.com)",
               version="1.0.0"
@@ -53,23 +55,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-def configure_routing():
-    """:ROUTES CONFIGURATIONS FOR THE VIEWS/API'S DONT CHANGE IT"""
-    app.include_router(app_v1, prefix="/api/v1")
-    app.include_router(doctor_routes, prefix="/api/v1")
-    app.include_router(doctor_time_slot_routes, prefix="/api/v1")
-    app.include_router(doctor_feedback, prefix="/api/v1")
-    app.include_router(doctor_consultation, prefix="/api/v1")
-    app.include_router(doctor_specialisation, prefix="/api/v1")
-    app.include_router(doctor_languages, prefix="/api/v1")
-    app.include_router(doctor_qualification_router, prefix="/api/v2")
-    app.include_router(app_v2_filters, prefix="/api/v2")
-
-
-def configure():
-    connections()
-    configure_routing()
+""":ROUTES CONFIGURATIONS FOR THE VIEWS/API'S DON'T CHANGE IT"""
+app.include_router(app_v1, prefix="/api/v1")
+app.include_router(doctor_routes, prefix="/api/v1")
+app.include_router(doctor_time_slot_routes, prefix="/api/v1")
+app.include_router(doctor_feedback, prefix="/api/v1")
+app.include_router(doctor_consultation, prefix="/api/v1")
+app.include_router(doctor_specialisation, prefix="/api/v1")
+app.include_router(doctor_languages, prefix="/api/v1")
+app.include_router(doctor_qualification_router, prefix="/api/v2")
+app.include_router(app_v2_filters, prefix="/api/v2")
 
 
 @app.get("/")
@@ -97,7 +92,7 @@ async def unicorn_exception_handler(request: Request, e: CustomException):
 
 
 @app.exception_handler(CustomExceptionHandler)
-async def NotFoundException(request: Request,exception: CustomExceptionHandler):
+async def NotFoundException(request: Request, exception: CustomExceptionHandler):
     """:return custom exceptions """
     return JSONResponse(status_code=exception.code,
                         content={"error": {"message": exception.message,
@@ -118,9 +113,8 @@ async def middleware(request: Request, call_next):
     return response
 
 
-if __name__ == "__main__":
-    try:
-        configure()
-        """ADD MULTIPLE PROCESSING IN CREATING DATABASE TABLE FOR FAST EXECUTION """
-    except Exception as e:
-        logger.error("###### EXCEPTION IN MAIN FILE IS {} ####### ".format(e))
+# if __name__ == "__main__":
+#     try:
+#         """ADD MULTIPLE PROCESSING IN CREATING DATABASE TABLE FOR FAST EXECUTION """
+#     except Exception as e:
+#         logger.error("###### EXCEPTION IN MAIN FILE IS {} ####### ".format(e))
