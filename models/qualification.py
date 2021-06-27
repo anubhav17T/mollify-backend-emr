@@ -12,3 +12,10 @@ class UpdateQualification(BaseModel):
     qualification_name: str = None
     institute_name: str = None
     year: str = None
+
+
+class QualificationDoctorUpdate(BaseModel):
+    qualification_id:int = None
+    qualification_name: str = None
+    institute_name: str = None
+    year: str = None

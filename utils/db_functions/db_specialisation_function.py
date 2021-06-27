@@ -1,4 +1,5 @@
-from utils.db_functions.raw_queries import QUERY_FOR_DOCTOR_SPECIALISATION_MAP
+from utils.db_functions.raw_queries import QUERY_FOR_DOCTOR_SPECIALISATION_MAP, \
+    QUERY_FOR_FIND_FIRST_DOCTOR_SPECIALISATION
 from utils.logger.logger import logger
 from utils.connection_configuration.db_object import db
 from datetime import datetime, timezone
@@ -35,7 +36,6 @@ def update_doctor_status(query, values):
         logger.info("###### DB METHOD FOR DOCTOR_STATUS UPDATE IS FINISHED ##########")
 
 
-
 def update_specialisation_table(var_id, name, is_active):
     if name is None:
         query = "UPDATE specialisations SET is_active=:is_active WHERE id=:id RETURNING id"
@@ -60,5 +60,9 @@ def update_specialisation_table(var_id, name, is_active):
         logger.info("##### UPDATE SPECIALISATION TABLE METHOD OVER ####")
 
 
-def get_specialisation_of_doctor(doctor_id:int):
-    return db.fetch_all(query=QUERY_FOR_DOCTOR_SPECIALISATION_MAP,values={"doctor_id":doctor_id})
+def get_specialisation_of_doctor(doctor_id: int):
+    return db.fetch_all(query=QUERY_FOR_DOCTOR_SPECIALISATION_MAP, values={"doctor_id": doctor_id})
+
+
+def get_first_specialisation_of_doctor(doctor_id: int):
+    return db.fetch_one(query=QUERY_FOR_FIND_FIRST_DOCTOR_SPECIALISATION, values={"doctor_id": doctor_id})

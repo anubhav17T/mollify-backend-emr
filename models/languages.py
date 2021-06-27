@@ -26,3 +26,9 @@ class Languages(BaseModel):
 class LanguagesUpdate(BaseModel):
     name: LanguagesName
     is_active: bool = None
+
+
+
+class LanguageUpdateModel(BaseModel):
+    name:LanguagesName
+    is_active:bool = None

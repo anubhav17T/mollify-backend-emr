@@ -1,9 +1,13 @@
+from datetime import datetime, timezone
+
 from starlette import status
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from utils.db_functions.db_functions import find_exist_user_id, find_exist_user, check_if_time_slot_id_exist, \
-    doctor_by_name
+    doctor_by_name, check_for_end_time, check_for_start_time
 from utils.db_functions.db_specialisation_function import check_if_id_exists
 from utils.logger.logger import logger
+
+dt = datetime.now(timezone.utc)
 
 
 class CheckUserExistence(object):
@@ -87,3 +91,71 @@ class DoctorByName(object):
         else:
             logger.info("##### FOUND THE USER ######")
             return response
+
+
+class TimeslotConfiguration(object):
+    def __init__(self, start_time: datetime = None, end_time: datetime = None, doctor_id: int = None):
+        self.start_time = start_time
+        self.end_time = end_time
+        self.doctor_id = doctor_id
+
+    def time_slot_configuration_checks(self):
+        if self.start_time >= self.end_time:
+            logger.error("##### ERROR = ENDTIME IS LESS THAN START TIME #####")
+            raise CustomExceptionHandler(message="Your end time is less than start time!!",
+                                         success=False,
+                                         target="Save Timeslot",
+                                         code=status.HTTP_400_BAD_REQUEST)
+        if self.start_time.day != self.end_time.day:
+            logger.error("##### ERROR, YOU CANNOT PROVIDE END TIME GREATER THAN 24 HOURS #####")
+            raise CustomExceptionHandler(
+                message="End time provided for greater than 24 hours for doctor id {}".format(str(self.doctor_id)),
+                success=False,
+                target="Save Timeslot",
+                code=status.HTTP_400_BAD_REQUEST)
+
+        if self.start_time.date() < dt.date():
+            raise CustomExceptionHandler(
+                message="Earlier date cannot be provided, Exception in doctor having id= {}".format(
+                    str(self.doctor_id)),
+                success=False,
+                target="Save Timeslot",
+                code=status.HTTP_400_BAD_REQUEST)
+        return True
+
+
+class CheckForConsultation(object):
+    def __init__(self, time_slot_id: int, doctor_id: int, doctor_time_map: dict):
+        self.time_slot_id = time_slot_id
+        self.doctor_id = doctor_id
+        self.doctor_time_map = doctor_time_map
+
+    async def end_time(self):
+        check_if_end_time_exist = await check_for_end_time(time_slot_config_id=self.time_slot_id,
+                                                           doctor_id=self.doctor_id,
+                                                           end_time=self.doctor_time_map["end_time"]
+                                                           )
+        if check_if_end_time_exist is not None:
+            raise CustomExceptionHandler(
+                message="You have consultation booked, so we can't update the timeslots {}".format(
+                    self.time_slot_id),
+                code=status.HTTP_400_BAD_REQUEST,
+                success=False,
+                target="PUT-TIMESLOT-CONFIG[HAS TIMESLOT ID]"
+            )
+        return True
+
+    async def start_time(self):
+        check_if_start_time_exist = await check_for_start_time(time_slot_config_id=self.time_slot_id,
+                                                               doctor_id=self.doctor_id,
+                                                               start_time=self.doctor_time_map["start_time"]
+                                                               )
+        if check_if_start_time_exist is not None:
+            raise CustomExceptionHandler(
+                message="You have consultation booked, so we can't update the timeslot for timeslot id {}".format(
+                    self.time_slot_id),
+                code=status.HTTP_400_BAD_REQUEST,
+                success=False,
+                target="PUT-TIMESLOT-CONFIG[HAS TIMESLOT ID]"
+            )
+        return True

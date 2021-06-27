@@ -23,7 +23,8 @@ async def create_consultations(consultation: ConsultationTable):
         if consultation.cancel_reason is None:
             raise CustomExceptionHandler(message="please specify reschedule reason", code=status.HTTP_400_BAD_REQUEST,
                                          success=False, target="SAVE-CONSULTATION")
-    check_response = await save_consultation(consultation=consultation)
+    day = consultation.start_time.strftime("%A").upper()
+    check_response = await save_consultation(consultation=consultation,day=day)
     if not check_response:
         raise CustomExceptionHandler(message="unable to insert in consultations table",
                                      code=status.HTTP_400_BAD_REQUEST,

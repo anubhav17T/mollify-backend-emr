@@ -2,8 +2,10 @@ from fastapi import status, APIRouter, HTTPException, Depends, Path
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from utils.db_functions.db_language_function import get_language_doctor
 from utils.db_functions.db_qualifications_function import get_doc_qualifications
-from utils.db_functions.db_specialisation_function import update_doctor_status, get_specialisation_of_doctor
-from utils.db_functions.raw_queries import WHERE_ID_DOCTORS, UPDATE_DOCTORS_SET
+from utils.db_functions.db_specialisation_function import update_doctor_status, get_specialisation_of_doctor, \
+    get_first_specialisation_of_doctor
+from utils.db_functions.raw_queries import WHERE_ID_DOCTORS, QUERY_FOR_UPDATE_DOCTORS_INFORMATION
+from utils.helper_function.string_character_finder import get_part_of_string, specific_string
 from utils.security.security import verify_password, hash_password
 from models.doctor import Doctor, ChangePassword, ChannelName, DoctorStatus, DoctorUpdateInformation
 from utils.jwt_utils.jwt_utils import get_current_user, get_token_user
@@ -12,9 +14,9 @@ from conferencing.RtcTokenBuilder import RtcTokenBuilder, Role_Attendee, Role_Pu
 import time
 from constants import const
 from utils.random_generator.random_digits import random_with_N_digits
-from utils.db_functions.db_functions import find_exist_user, get_doctor_information, get_all_doctor, find_exist_user_id, \
-    combined_results, specific_results_doctor
-from utils.db_functions.doctor_crud import change_password_user, save_black_list_token
+from utils.db_functions.db_functions import find_exist_user, get_all_doctor, specific_results_doctor, \
+    find_slug_therapist
+from utils.db_functions.doctor_crud import change_password_user, save_black_list_token, update_doctor_information
 from utils.utils_classes.classes_for_checks import CheckUserExistence, DoctorByName
 
 expireTimeInSeconds = 3600 * 3600
@@ -51,14 +53,18 @@ async def videoConferencing(request: ChannelName, current_user: Doctor = Depends
         }
 
 
-@doctor_routes.get("/doctors/profile", tags=['DOCTORS/RESTRICTED'])
+@doctor_routes.get("/doctors/profile/", tags=['DOCTORS/RESTRICTED'])
 async def get_user_profile(current_user: Doctor = Depends(get_current_user)):
     try:
         result_db = {"mail": current_user.mail, "full_name": current_user.full_name,
                      "phone_number": current_user.phone_number}
-        return result_db
     except Exception as e:
         logger.error("#### ERROR IN GET USER PROFILE ROUTE {} ##### ".format(e))
+        return False
+    else:
+        return result_db
+    finally:
+        logger.info("###### GET DOCTOR PROFILE METHOD FINISHED #########")
 
 
 @doctor_routes.patch("/doctors/change-password", tags=['DOCTORS/RESTRICTED'])
@@ -108,7 +114,7 @@ async def logout(token: str = Depends(get_token_user), current_user: Doctor = De
     }
 
 
-@doctor_routes.get("/doctors/", tags=["DOCTORS/CRUD"])
+@doctor_routes.get("/doctors", tags=["DOCTORS/CRUD"])
 async def get_all_doctors():
     logger.info("#### GET ALL DOCTORS ####")
     return await get_all_doctor()
@@ -123,16 +129,25 @@ async def get_specific_doctor_by_id(id: int):
         raise CustomExceptionHandler(message="Unable to fetch the results",
                                      target="GET DOCTOR BY ID",
                                      code=status.HTTP_400_BAD_REQUEST, success=False)
+    logger.info("###### FETCHING INFORMATION OF DOCTOR ###############")
     doc_or_therapist_results = await specific_results_doctor(id=id)
     doc_or_therapist_results = dict(doc_or_therapist_results)
-
-    doc_or_therapist_information = {
-        "languages": await get_language_doctor(id=id),
-        "qualification": await get_doc_qualifications(id=id),
-        "specialisation": await get_specialisation_of_doctor(doctor_id=id)
-    }
-    doc_or_therapist_results.update(doc_or_therapist_information)
-    return doc_or_therapist_results
+    try:
+        logger.info("#### GOING TO FIND DOCTORS LANGUAGES,QUALIFICATIONS AND SPECIALISATION ###########")
+        doc_or_therapist_information = {
+            "languages": await get_language_doctor(id=id),
+            "qualification": await get_doc_qualifications(id=id),
+            "specialisation": await get_specialisation_of_doctor(doctor_id=id)
+        }
+    except Exception as WHY:
+        logger.error("####### EXCEPTION IN GETTING USER DETAILS IS {} ###########".format(WHY))
+        raise CustomExceptionHandler(message="Unable to fetch the results",
+                                     target="GET DOCTOR INFORMATION BY ID",
+                                     code=status.HTTP_400_BAD_REQUEST, success=False)
+    else:
+        logger.info("######## UPDATING FINAL DOCTOR_RESULT MAP ############")
+        doc_or_therapist_results.update(doc_or_therapist_information)
+        return doc_or_therapist_results
 
 
 @doctor_routes.patch("/doctors/status/{id}", tags=["DOCTORS/CRUD"], description="Patch call for doctor status")
@@ -168,51 +183,31 @@ async def update_status(doctor: DoctorStatus, id: int = Path(..., description="S
                 "code": status.HTTP_201_CREATED}
 
 
-# @doctor_routes.get("/doctors/{mail}", tags=["DOCTORS/CRUD"])
-# async def get_doctor(mail: str):
-#     logger.info("#### FIND SPECIFIC DOCTOR USING MAIL ####")
-#     try:
-#         result_ = await find_exist_user(mail)
-#         if result_ is None:
-#             return {"error": {
-#                 "message": "cannot able to find the doctor/therapist",
-#                 "code": status.HTTP_404_NOT_FOUND,
-#                 "success": False,
-#                 "target": "GET-DOCTOR"
-#             }}
-#         else:
-#             return {"info": result_, "success": True}
-#     except Exception as e:
-#         logger.error("### ERROR IN GET SPECIFIC DOCTOR ID IS {} ####".format(e))
-#         return {"error": {
-#             "message": "Unable to get doctor information {}".format(e),
-#             "code": status.HTTP_400_BAD_REQUEST,
-#             "success": False
-#         }}
-
-
 @doctor_routes.get("/doctors/search/{name}", tags=['DOCTORS/CRUD'])
 async def find_doctor_by_name(name: str = Path(None, description="NAME OF DOCTOR TO GET THE RESULT")):
     logger.info("##### SEARCH DOCTOR BY NAME METHOD IS CALLED #######")
     if not name:
         return await get_all_doctor()
     logger.info("#### NAME OF THE DOCTOR IS {}".format(name))
-    name = name.lower()
     result = DoctorByName(name=name, target='FIND DOCTOR BY NAME')
     return await result.find_doctor_by_name()
 
 
+global slug_object
+
+
 @doctor_routes.patch("/doctors/{id}", tags=['DOCTORS/CRUD'], description="Patch call for doctor status")
 async def update_doctor_details(doctor_update: DoctorUpdateInformation, id: int):
+    global slug_object
     logger.info("####### UPDATE DOCTOR DETAILS API CALLED #############")
-    logger.info("####### CHECKING THE ID OF THE DOCTOR ########")
-    response = CheckUserExistence(_id=id, target="DOCTORS-CRUD-PATCH-DOCTOR-STATUS")
-    await response.check_if_user_id_exist()
-    logger.info("######## USER EXIST ###########")
+    if id is not None:
+        logger.info("####### CHECKING THE ID OF THE DOCTOR ########")
+        response = CheckUserExistence(_id=id, target="DOCTORS-CRUD-PATCH-DOCTOR-STATUS")
+        await response.check_if_user_id_exist()
+        logger.info("######## USER EXIST IN THE DATABASE ###########")
 
     # todo check for username and add functionality of name change and slug
-
-    query_for_update = UPDATE_DOCTORS_SET
+    query_for_update = QUERY_FOR_UPDATE_DOCTORS_INFORMATION
     values_map = {}
     for key in doctor_update:
         if key[1] is None:
@@ -222,7 +217,43 @@ async def update_doctor_details(doctor_update: DoctorUpdateInformation, id: int)
     query_for_update = query_for_update.rstrip(",")
     query_for_update = query_for_update + WHERE_ID_DOCTORS
     values_map["id"] = id
-    check_response = await update_doctor_status(query=query_for_update, values=values_map)
+
+    query_for_qualification_update = ""
+    if doctor_update.qualification is not None:
+        for update in doctor_update.qualification:
+            if update.qualification_id is not None:
+                pass
+            else:
+                pass
+
+
+    if doctor_update.full_name is not None:
+        slug_object = get_part_of_string(input_string=doctor_update.full_name, character="space")
+        find_first_specialisation_name = await get_first_specialisation_of_doctor(doctor_id=id)
+        if find_first_specialisation_name is None:
+            raise CustomExceptionHandler(
+                message="cannot able to find the specialisation for the doctor having id {}".format(str(id)),
+                code=status.HTTP_400_BAD_REQUEST,
+                success=False,
+                target="STATUS UPDATE")
+        speciality = dict(find_first_specialisation_name)
+        slug_object = slug_object + "-" + str(speciality["name"]).lower()
+        result_slug = await find_slug_therapist(slug=slug_object)
+        if result_slug is not None:
+            logger.info(
+                "###### NAME WITH SAME SLUG NAME IS ALREADY THERE THEREFORE ADDING SOME IDENTFIER ##### ")
+            slug_object = slug_object + "-" + str(specific_string(length=4)).lower()
+        check_response = await update_doctor_information(doctor_update=doctor_update, doctor_id=id,
+                                                         query_for_update=query_for_update,
+                                                         update_value_map=values_map,
+                                                         slug_object=slug_object)
+
+    else:
+        check_response = await update_doctor_information(doctor_update=doctor_update,
+                                                         doctor_id=id,
+                                                         query_for_update=query_for_update,
+                                                         update_value_map=values_map)
+
     if not check_response:
         raise CustomExceptionHandler(message="cannot able to update in doctor details",
                                      code=status.HTTP_400_BAD_REQUEST,

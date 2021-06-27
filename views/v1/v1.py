@@ -1,31 +1,29 @@
 from fastapi import Request, BackgroundTasks
 import re
 from fastapi import status, APIRouter, HTTPException, Depends
-from mail.sendgrid_email_configuration import send_email
-from models.languages import Languages, LanguagesUpdate
+from mail.sendgrid_services.sendgrid_email_configuration import send_email
 from utils.db_functions.db_language_function import get_language_doctor
 from utils.db_functions.db_qualifications_function import get_doc_qualifications
 from utils.db_functions.db_specialisation_function import get_specialisation_of_doctor
+from utils.helper_function.string_helpers import string_to_lower, string_concatenation_with_years
+from utils.helper_function.unique_characters_array import find_unique_element
 from utils.logger.logger import logger
-from utils.db_functions.db_functions import find_exist_username_email, find_exist_user, find_exist_username, \
-    find_exist_user_phone, find_slug_therapist, save_doctor, create_reset_code, check_reset_password_token, \
-    reset_password_user, disable_reset_code, save_qualification, \
-    save_specialisation_map, \
-    find_specialisation, find_doctor_information, \
-    save_languages_map, save_languages, get_true_languages, get_false_languages, get_all_languages, \
-    check_if_language_id_exist, update_language, register_user_combined
+from utils.db_functions.db_functions import find_exist_username_email, find_exist_user_phone, find_slug_therapist, \
+    create_reset_code, check_reset_password_token, \
+    reset_password_user, disable_reset_code, find_specialisation, find_doctor_information, \
+    register_user_combined
 from models.doctor import Doctor, ForgotPassword, ResetPassword
 from utils.random_generator.random_digits import random_with_N_digits
 from utils.security.security import hash_password, verify_password
-from constants.const import PHONE_REGEX
+from constants.const import PHONE_REGEX, ADDING_YEARS
 from utils.jwt_utils import jwt_utils
 from constants.const import JWT_EXPIRATION_TIME
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 import uuid
 import cloudinary
 from fastapi import File
 from cloudinary import uploader
-from fastapi import Query, Path
+from fastapi import Path
 from constants.const import CLOUD_NAME, API_KEY, API_SECRET
 from utils.helper_function.string_character_finder import get_part_of_string, specific_string
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
@@ -105,6 +103,18 @@ async def register_user(user: Doctor):
                                      target="doctor/registration",
                                      success=False
                                      )
+    is_array_unique = find_unique_element(specialisation_array=user.specialisation,
+                                          languages_array=user.languages)
+    if not is_array_unique:
+        raise CustomExceptionHandler(message="Duplicate Entry in specialisation and languages",
+                                     code=status.HTTP_400_BAD_REQUEST,
+                                     target="doctor/registration",
+                                     success=False
+                                     )
+
+    user.mail = string_to_lower(string_value=user.mail)
+    user.experience = string_concatenation_with_years(string_value=user.experience)
+
     """ TO-DO -> FOR NOW, RANDOMLY GENERATING THE DOCTOR/THERAPIST PASSWORD"""
     user.password = str(random_with_N_digits(n=5))
     user.password = hash_password(password=user.password)
@@ -125,7 +135,7 @@ async def register_user(user: Doctor):
             "###### NAME WITH SAME SLUG NAME IS ALREADY THERE THEREFORE ADDING SOME IDENTFIER ##### ")
         slug_object = slug_object + "-" + str(specific_string(length=4)).lower()
     if user.is_active is None:
-        user.is_active = True
+        user.is_active = False
     if user.is_online is None:
         user.is_online = False
     success_ = await register_user_combined(doctor=user, slug=slug_object)
@@ -141,12 +151,12 @@ async def register_user(user: Doctor):
             return {
                 "access_token": access_token,
                 "token_type": "bearer",
+                "success": True,
                 "user_info": {
                     "email": user.mail,
                     "fullname": user.full_name,
                     "message": "Doctor/Therapist created successfully",
                     "code": status.HTTP_201_CREATED,
-                    "success": True
                 }
             }
     else:
@@ -161,6 +171,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     # check if user exist or not
     global result, through_access_token
     logger.info("###### LOGGING IN THROUGH MAIL ###### ")
+    form_data.username = form_data.username.lower()
     result = await find_exist_username_email(check=form_data.username)
     if not result:
         return {"status": 404, "message": "User not found", "success": False}
@@ -178,8 +189,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         expire_delta=access_token_expires
     )
     if not access_token:
-        raise CustomExceptionHandler(message="cannot able to create token",success=False,
-                                     code=status.HTTP_400_BAD_REQUEST,target="CREATE-DOCTOR")
+        raise CustomExceptionHandler(message="cannot able to create token", success=False,
+                                     code=status.HTTP_400_BAD_REQUEST, target="CREATE-DOCTOR")
     else:
         return {
             "access_token": access_token,
@@ -254,8 +265,10 @@ async def reset_password(request: ResetPassword):
     # Check if both new & confirm password are same
     if request.new_password != request.confirm_password:
         logger.error("###### NEW PASSWORD AND CONFIRM PASSWORD ARE NOT A MATCH ######### ")
-        raise CustomExceptionHandler(message="PASSWORD DIDN'T MATCH", success=False,
-                                     code=status.HTTP_409_CONFLICT, target="RESET-PASSWORD")
+        raise CustomExceptionHandler(message="PASSWORD DIDN'T MATCH",
+                                     success=False,
+                                     code=status.HTTP_409_CONFLICT,
+                                     target="RESET-PASSWORD")
 
     # Reset new password
     forgot_password_object = ForgotPassword(**reset_token)

@@ -323,7 +323,8 @@ def consultation():
                 sqlalchemy.Column("time_slot_config_id", Integer),
                 sqlalchemy.Column("status", sqlalchemy.String(10)),
                 sqlalchemy.Column("cancel_reason", sqlalchemy.String(200)),
-                sqlalchemy.Column("created_on", DateTime)
+                sqlalchemy.Column("created_on", DateTime),
+                sqlalchemy.Column("day",sqlalchemy.String(10))
             )
             engine = sqlalchemy.create_engine(
                 DB_URL, pool_size=3)

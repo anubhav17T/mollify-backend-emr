@@ -1,10 +1,12 @@
 import json
-
 from models.doctor import Doctor
 from models.languages import LanguagesUpdate
 from utils.db_functions.raw_queries import QUERY_FOR_REGISTER_DOCTOR, QUERY_FOR_SAVE_SPECIALISATION, \
     QUERY_FOR_SAVE_LANGUAGE, QUERY_FOR_SAVE_QUALIFICATION, QUERY_FOR_SPECIALISATION_MAP, INSERT_QUERY_FOR_TIMESLOT, \
-    QUERY_FOR_DOCTORS_QUALIFICATIONS_SELECT
+    QUERY_FOR_DOCTORS_QUALIFICATIONS_SELECT, QUERY_FOR_SPECIFIC_DOCTORS_DETAILS, QUERY_FOR_SAVE_TIMESLOT_CONFIG, \
+    QUERY_FOR_DOCTOR_SCHEDULE, QUERY_FOR_DOCTOR_EXIST_IN_TIMESLOT_CONFIG, QUERY_FOR_DOCTOR_END_TIME, \
+    QUERY_FOR_DOCTOR_START_TIME, QUERY_FOR_FIND_TIME, QUERY_FOR_FIND_BOOKED_SLOTS, QUERY_FOR_ALL_DAYS_TIME, \
+    QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS
 from utils.logger.logger import logger
 from utils.connection_configuration.db_object import db
 from datetime import datetime, timezone
@@ -383,40 +385,40 @@ def update_profile_picture(username, url):
         logger.info("##### UPDATE PROFILE PICTURE FUNCTION OVER ###### ")
 
 
-def save_time_slot_config(val):
-    try:
-        query = " INSERT INTO doctors_time_slot VALUES (nextval('doctors_time_slot_id_seq'),:day,:video,:audio,:chat,:start_time,:end_time,:video_frequency,:audio_frequency,:chat_frequency,:is_available,:non_availability_reason,:is_active,now() at time zone 'UTC') RETURNING id; "
-        logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF SAVE TIMESLOT QUERY")
-        return db.execute(query=query, values={"day": val.day,
-                                               "video": val.video,
-                                               "audio": val.audio,
-                                               "chat": val.chat,
-                                               "start_time": val.start_time,
-                                               "end_time": val.end_time,
-                                               "video_frequency": val.video_frequency,
-                                               "audio_frequency": val.audio_frequency,
-                                               "chat_frequency": val.chat_frequency,
-                                               "is_available": val.is_available,
-                                               "non_availability_reason": val.non_availability_reason,
-                                               "is_active": val.is_active
-                                               })
-    except Exception as e:
-        logger.error("####### EXCEPTION IN SAVE_TIME_SLOT IS = {}".format(e))
-        return {"error":
-                    {"message": "error in time slot configuration",
-                     "code": 400,
-                     "success": False
-                     }
-                }
-    finally:
-        logger.info("#### TIMESLOT CONFIGURATION  FUNCTION COMPLETED ####")
+# def save_time_slot_config(val):
+#     try:
+#         query = " INSERT INTO doctors_time_slot VALUES (nextval('doctors_time_slot_id_seq'),:day,:video,:audio,:chat,:start_time,:end_time,:video_frequency,:audio_frequency,:chat_frequency,:is_available,:non_availability_reason,:is_active,now() at time zone 'UTC') RETURNING id; "
+#         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF SAVE TIMESLOT QUERY")
+#         return db.execute(query=query, values={"day": val.day,
+#                                                "video": val.video,
+#                                                "audio": val.audio,
+#                                                "chat": val.chat,
+#                                                "start_time": val.start_time,
+#                                                "end_time": val.end_time,
+#                                                "video_frequency": val.video_frequency,
+#                                                "audio_frequency": val.audio_frequency,
+#                                                "chat_frequency": val.chat_frequency,
+#                                                "is_available": val.is_available,
+#                                                "non_availability_reason": val.non_availability_reason,
+#                                                "is_active": val.is_active
+#                                                })
+#     except Exception as e:
+#         logger.error("####### EXCEPTION IN SAVE_TIME_SLOT IS = {}".format(e))
+#         return {"error":
+#                     {"message": "error in time slot configuration",
+#                      "code": 400,
+#                      "success": False
+#                      }
+#                 }
+#     finally:
+#         logger.info("#### TIMESLOT CONFIGURATION  FUNCTION COMPLETED ####")
 
 
 def save_timeSlot_doctor_map(map_array_object):
     try:
         logger.info("##### GOING FOR SAVING TIME_SLOT AND DOCTOR_ID QUERY ####### ")
         query = "INSERT INTO doctors_timeSlot_map VALUES (nextval('doctors_timeSlot_map_id_seq'),:doctor_id,:time_slot_id,now() at time zone 'UTC')"
-        return db.execute_many(query, values=map_array_object)
+        return db.execute(query, values=map_array_object)
     except Exception as e:
         logger.error("##### EXCEPTION IN TIME_SLOT AND DOCTOR_ID MAP QUERY {} #########".format(e))
         return {"error": {"message": "error occured due to {}".format(e),
@@ -473,16 +475,6 @@ def get_time_slot_configuration(doctor_id: int):
         logger.info("#### ALL_TIME_SLOT_CONFIGURATION FUNCTION COMPLETED ####")
 
 
-def find_booked_time_slot(doctor_id: int):
-    query = """SELECT start_time,end_time,time_slot_config_id FROM consultations where doctor_id=:doctor_id"""
-    try:
-        return db.fetch_all(query=query, values={"doctor_id": doctor_id})
-    except Exception as e:
-        logger.error("####### EXCEPTION IN FIND_BOOKED_TIMESLOTS FROM CONSULTATION TABLE FUNCTION IS = {}".format(e))
-    finally:
-        logger.info("#### FIND_BOOKED_TIMESLOTS FUNCTION COMPLETED ####")
-
-
 def check_if_language_id_exist(id: int):
     query = "SELECT * FROM languages WHERE id=:id"
     try:
@@ -523,6 +515,26 @@ def update_time_slot(query_object: str, update_value_map):
         logger.info("##### UPDATE SPECIALISATION METHOD OVER ####")
 
 
+async def update_time_slot_for_doctor(query_object_for_update: str, update_value_map: dict,
+                                      map_array_objects: list = None, time_slot_configuration=None, doctor_id=None):
+    async with db.transaction():
+        transaction = await db.transaction()
+        try:
+            logger.info("###### PROCEEDNG FOR THE UPDATE TIMESLOT CONFIGURATION ##########")
+            await db.execute(query=query_object_for_update, values=update_value_map)
+            logger.info("#### SUCCESS IN UPDATE CALL #####")
+        except Exception as WHY:
+            logger.error("######### ERROR IN THE QUERY BECAUSE {} ".format(WHY))
+            logger.info("########## ROLLING BACK TRANSACTIONS #################")
+            await transaction.rollback()
+            return False
+        else:
+            logger.info("##### ALL WENT WELL COMMITTING TRANSACTION ########")
+            await transaction.commit()
+            logger.info("###### TRANSACTION COMMITTED AND SUCCESS TRUE #######")
+            return True
+
+
 async def register_user_combined(doctor, slug):
     async with db.transaction():
         transaction = await db.transaction()
@@ -553,7 +565,6 @@ async def register_user_combined(doctor, slug):
                               "specialisation_id": get_index
                               }
                 map_object.append(object_map)
-            print(map_object)
             logger.info("####### GOING FOR EXECUTION OF DOCTOR SPECIALISATION MAP ########### ")
             await db.execute_many(query=QUERY_FOR_SPECIALISATION_MAP, values=map_object)
             logger.info("####### SUCCESSFULLY EXECUTED DOCTOR SPECIALISATION MAP ########### ")
@@ -621,12 +632,12 @@ async def add_timeslot_combined_function(val, doctor_id, map_array_objects):
             map_object = {"doctor_id": doctor_id,
                           "time_slot_id": object_id
                           }
-            map_array_objects.append(map_object)
+            # map_array_objects.append(map_object)
             logger.info(
                 "### TIME SLOT CONFIGURATION FOR THE DOCTOR ID {} HAS BEEN UPDATED SUCCESSFULLY WITH OBJECT ID  "
                 "####".format(
                     str(doctor_id)))
-            await save_timeSlot_doctor_map(map_array_objects)
+            await save_timeSlot_doctor_map(map_object)
         except Exception as WHY:
             logger.error("######### ERROR IN THE QUERY OF MAKING TIMESLOTS BECAUSE {} ".format(WHY))
             logger.info("########## ROLLING BACK TRANSACTIONS #################")
@@ -649,7 +660,7 @@ async def save_timeSlot_doctor_map_(map_array_object):
             await db.execute_many(query, values=map_array_object)
         except Exception as e:
             logger.error("##### EXCEPTION IN TIME_SLOT AND DOCTOR_ID MAP QUERY {} #########".format(e))
-            return {"error": {"message": "error occured due to {}".format(e),
+            return {"error": {"message": "error occurred due to {}".format(e),
                               "code": 400,
                               "success": False
                               }}
@@ -663,10 +674,79 @@ def combined_results(id: int):
 
 def specific_results_doctor(id):
     try:
-        query = """SELECT id,username,full_name,mail,phone_number,gender,experience,econsultation_fee,is_active,url,
-        is_online,follow_up_fee,about,slug FROM doctors WHERE id=:id """
         logger.info("### PROCEEDING FURTHER FOR EXECUTION OF QUERY OF GET SPECIFIC DOCTOR")
-        return db.fetch_one(query, values={"id": id})
+        return db.fetch_one(QUERY_FOR_SPECIFIC_DOCTORS_DETAILS, values={"id": id})
     except Exception as e:
         logger.error("#### EXCEPTION IN GET SPECIFIC DOCTOR IS {} #####".format(e))
 
+
+def save_time_slot_config(val):
+    try:
+        query = "INSERT INTO doctors_time_slot VALUES (nextval('doctors_time_slot_id_seq'),:day,:video,:audio,:chat," \
+                ":start_time,:end_time,:video_frequency,:audio_frequency,:chat_frequency,:is_available," \
+                ":non_availability_reason,:is_active,now() at time zone 'UTC') RETURNING id; "
+        logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF SAVE TIMESLOT QUERY")
+        return db.execute(query=query, values={"day": val.day,
+                                               "video": val.video,
+                                               "audio": val.audio,
+                                               "chat": val.chat,
+                                               "start_time": val.start_time,
+                                               "end_time": val.end_time,
+                                               "video_frequency": val.video_frequency,
+                                               "audio_frequency": val.audio_frequency,
+                                               "chat_frequency": val.chat_frequency,
+                                               "is_available": val.is_available,
+                                               "non_availability_reason": val.non_availability_reason,
+                                               "is_active": val.is_active
+                                               })
+    except Exception as e:
+        logger.error("####### EXCEPTION IN SAVE_TIME_SLOT IS = {}".format(e))
+        return {"error":
+                    {"message": "error in time slot configuration",
+                     "code": 400,
+                     "success": False
+                     }
+                }
+    finally:
+        logger.info("#### TIMESLOT CONFIGURATION  FUNCTION COMPLETED ####")
+
+
+def find_doctors_timeslot_schedule(doctor_id: int):
+    return db.fetch_all(query=QUERY_FOR_DOCTOR_SCHEDULE, values={"doctor_id": doctor_id})
+
+
+def find_if_doctor_exist_in_timeslot(doctor_id: int):
+    return db.fetch_one(query=QUERY_FOR_DOCTOR_EXIST_IN_TIMESLOT_CONFIG, values={"doctor_id": doctor_id})
+
+
+def check_for_end_time(time_slot_config_id: int, doctor_id: int, end_time: datetime):
+    return db.fetch_one(query=QUERY_FOR_DOCTOR_END_TIME,
+                        values={"time_slot_config_id": time_slot_config_id, "doctor_id": doctor_id,
+                                "end_time": end_time})
+
+
+def check_for_start_time(time_slot_config_id: int, doctor_id: int, start_time: datetime):
+    return db.fetch_one(query=QUERY_FOR_DOCTOR_START_TIME,
+                        values={"time_slot_config_id": time_slot_config_id, "doctor_id": doctor_id,
+                                "start_time": start_time})
+
+
+def time_slot_for_day(doctor_id: int, day):
+    return db.fetch_all(query=QUERY_FOR_FIND_TIME, values={"doctor_id": doctor_id, "day": day})
+
+
+def find_booked_time_slot(doctor_id: int, day):
+    try:
+        return db.fetch_all(query=QUERY_FOR_FIND_BOOKED_SLOTS, values={"doctor_id": doctor_id, "day": day})
+    except Exception as e:
+        logger.error("####### EXCEPTION IN FIND_BOOKED_TIMESLOTS FROM CONSULTATION TABLE FUNCTION IS = {}".format(e))
+    finally:
+        logger.info("#### FIND_BOOKED_TIMESLOTS FUNCTION COMPLETED ####")
+
+
+def time_slot_for_all_days(doctor_id: int):
+    return db.fetch_all(query=QUERY_FOR_ALL_DAYS_TIME, values={"doctor_id": doctor_id})
+
+
+def find_booked_time_slots(doctor_id:int):
+    return db.fetch_all(query=QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS,values={"doctor_id": doctor_id})
