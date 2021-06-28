@@ -21,12 +21,11 @@ class CustomException(Exception):
 
 
 class CustomExceptionHandler(Exception):
-    def __init__(self,message:str,target:str,success:bool,code:int):
-        self.message=message
+    def __init__(self, message: str, target: str, success: bool, code: int):
+        self.message = message
         self.target = target
         self.success = success
         self.code = code
-
 
 
 class BadRequestCustomException(Exception):

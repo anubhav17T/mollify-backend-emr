@@ -1,7 +1,7 @@
+from constants.const import UPDATE, TIME_SLOT_ID_KEY, WHERE
 from models.doctor import Doctor, DoctorUpdate, ChangePassword, DoctorUpdateInformation
 from fastapi import Depends
-
-from utils.db_functions.raw_queries import QUERY_FOR_UPDATE_SLUG
+from utils.db_functions.raw_queries import QUERY_FOR_UPDATE_SLUG, INSERT_QUERY_FOR_TIMESLOT
 from utils.jwt_utils.jwt_utils import get_current_user
 from utils.connection_configuration.db_object import db
 from utils.logger.logger import logger
@@ -39,8 +39,6 @@ async def update_doctor_information(doctor_update: DoctorUpdateInformation,
                 await db.execute(query=QUERY_FOR_UPDATE_SLUG, values={"slug": slug_object, "id": doctor_id})
             logger.info(
                 "##### SUCCESSFULLY UPDATED IN THE DOCTOR TABLE FOR THE ID {} ###########".format(str(doctor_id)))
-
-
         except Exception as WHY:
             logger.error("######### ERROR IN THE QUERY BECAUSE {} ".format(WHY))
             logger.info("########## ROLLING BACK TRANSACTIONS #################")
@@ -51,3 +49,4 @@ async def update_doctor_information(doctor_update: DoctorUpdateInformation,
             await transaction.commit()
             logger.info("###### TRANSACTION COMMITTED AND SUCCESS TRUE FOR DOCTOR UPDATE #######")
             return True
+

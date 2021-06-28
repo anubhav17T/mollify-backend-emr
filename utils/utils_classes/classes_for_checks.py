@@ -94,34 +94,26 @@ class DoctorByName(object):
 
 
 class TimeslotConfiguration(object):
-    def __init__(self, start_time: datetime = None, end_time: datetime = None, doctor_id: int = None):
+    def __init__(self, start_time: datetime, end_time: datetime, doctor_id: int):
         self.start_time = start_time
         self.end_time = end_time
         self.doctor_id = doctor_id
 
-    def time_slot_configuration_checks(self):
-        if self.start_time is not None and self.end_time is not None:
-            if self.start_time >= self.end_time:
-                logger.error("##### ERROR = ENDTIME IS LESS THAN START TIME #####")
-                raise CustomExceptionHandler(message="Your end time is less than start time!!",
-                                             success=False,
-                                             target="Save Timeslot",
-                                             code=status.HTTP_400_BAD_REQUEST)
-            if self.start_time.day != self.end_time.day:
-                logger.error("##### ERROR, YOU CANNOT PROVIDE END TIME GREATER THAN 24 HOURS #####")
-                raise CustomExceptionHandler(
-                    message="End time provided for greater than 24 hours for doctor id {}".format(str(self.doctor_id)),
-                    success=False,
-                    target="Save Timeslot",
-                    code=status.HTTP_400_BAD_REQUEST)
+    def check_if_start_time_greater_than_end_time(self):
+        if self.start_time >= self.end_time:
+            logger.error("##### ERROR = END_TIME IS LESS THAN START TIME #####")
+            raise Exception("You have provided start time which is greater than end time please check")
+        return True
 
+    def check_if_start_date_greater_than_end_date(self):
+        if self.start_time.day != self.end_time.day:
+            logger.error("##### ERROR, YOU CANNOT PROVIDE END TIME GREATER THAN 24 HOURS #####")
+            raise Exception("Start date is greater than end date, please check")
+        return True
+
+    def check_if_start_date_valid(self):
         if self.start_time.date() < dt.date():
-            raise CustomExceptionHandler(
-                message="Earlier date cannot be provided, Exception in doctor having id= {}".format(
-                    str(self.doctor_id)),
-                success=False,
-                target="Save Timeslot",
-                code=status.HTTP_400_BAD_REQUEST)
+            raise Exception("Date is not valid, please specify current or future date")
         return True
 
 
@@ -137,13 +129,7 @@ class CheckForConsultation(object):
                                                            end_time=self.doctor_time_map["end_time"]
                                                            )
         if check_if_end_time_exist is not None:
-            raise CustomExceptionHandler(
-                message="You have consultation booked, so we can't update the timeslots {}".format(
-                    self.time_slot_id),
-                code=status.HTTP_400_BAD_REQUEST,
-                success=False,
-                target="PUT-TIMESLOT-CONFIG[HAS TIMESLOT ID]"
-            )
+            raise Exception("You have consultation booked, so we can't update the timeslots")
         return True
 
     async def start_time(self):
@@ -152,11 +138,5 @@ class CheckForConsultation(object):
                                                                start_time=self.doctor_time_map["start_time"]
                                                                )
         if check_if_start_time_exist is not None:
-            raise CustomExceptionHandler(
-                message="You have consultation booked, so we can't update the timeslot for timeslot id {}".format(
-                    self.time_slot_id),
-                code=status.HTTP_400_BAD_REQUEST,
-                success=False,
-                target="PUT-TIMESLOT-CONFIG[HAS TIMESLOT ID]"
-            )
+            raise Exception("You have consultation booked, so we can't update the timeslot")
         return True

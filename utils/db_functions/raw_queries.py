@@ -81,3 +81,6 @@ QUERY_FOR_EXISTING_TIMESLOT = "SELECT doctors_timeslot_map.doctor_id,doctors_tim
                               "doctors_time_slot.start_time FROM doctors_time_slot INNER JOIN doctors_timeslot_map ON " \
                               "doctors_timeslot_map.time_slot_id=doctors_time_slot.id WHERE doctor_id=:doctor_id AND " \
                               "date(doctors_time_slot.start_time)=:time "
+
+QUERY_FOR_DOCTOR_TIMESLOT_MAP = "INSERT INTO doctors_timeSlot_map VALUES (nextval('doctors_timeSlot_map_id_seq')," \
+                                ":doctor_id,:time_slot_id,now() at time zone 'UTC') "

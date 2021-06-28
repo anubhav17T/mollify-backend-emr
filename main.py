@@ -116,5 +116,7 @@ async def middleware(request: Request, call_next):
 # if __name__ == "__main__":
 #     try:
 #         """ADD MULTIPLE PROCESSING IN CREATING DATABASE TABLE FOR FAST EXECUTION """
+#         import uvicorn
+#         uvicorn.run(app)
 #     except Exception as e:
 #         logger.error("###### EXCEPTION IN MAIN FILE IS {} ####### ".format(e))

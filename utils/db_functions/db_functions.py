@@ -6,7 +6,7 @@ from utils.db_functions.raw_queries import QUERY_FOR_REGISTER_DOCTOR, QUERY_FOR_
     QUERY_FOR_DOCTORS_QUALIFICATIONS_SELECT, QUERY_FOR_SPECIFIC_DOCTORS_DETAILS, QUERY_FOR_SAVE_TIMESLOT_CONFIG, \
     QUERY_FOR_DOCTOR_SCHEDULE, QUERY_FOR_DOCTOR_EXIST_IN_TIMESLOT_CONFIG, QUERY_FOR_DOCTOR_END_TIME, \
     QUERY_FOR_DOCTOR_START_TIME, QUERY_FOR_FIND_TIME, QUERY_FOR_FIND_BOOKED_SLOTS, QUERY_FOR_ALL_DAYS_TIME, \
-    QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS, QUERY_FOR_EXISTING_TIMESLOT
+    QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS, QUERY_FOR_EXISTING_TIMESLOT, QUERY_FOR_DOCTOR_TIMESLOT_MAP
 from utils.logger.logger import logger
 from utils.connection_configuration.db_object import db
 from datetime import datetime, timezone
@@ -417,8 +417,7 @@ def update_profile_picture(username, url):
 def save_timeSlot_doctor_map(map_array_object):
     try:
         logger.info("##### GOING FOR SAVING TIME_SLOT AND DOCTOR_ID QUERY ####### ")
-        query = "INSERT INTO doctors_timeSlot_map VALUES (nextval('doctors_timeSlot_map_id_seq'),:doctor_id,:time_slot_id,now() at time zone 'UTC')"
-        return db.execute(query, values=map_array_object)
+        return db.execute(QUERY_FOR_DOCTOR_TIMESLOT_MAP, values=map_array_object)
     except Exception as e:
         logger.error("##### EXCEPTION IN TIME_SLOT AND DOCTOR_ID MAP QUERY {} #########".format(e))
         return {"error": {"message": "error occured due to {}".format(e),
@@ -506,13 +505,13 @@ def check_if_time_slot_id_exist(id):
         logger.info("##### FINDING TIMESLOT ID METHOD OVER ####")
 
 
-def update_time_slot(query_object: str, update_value_map):
-    try:
-        return db.execute(query=query_object, values=update_value_map)
-    except Exception as e:
-        logger.error("### ERROR IN UPDATING SPECIALISATION {} #####".format(e))
-    finally:
-        logger.info("##### UPDATE SPECIALISATION METHOD OVER ####")
+# def update_time_slot(query_object: str, update_value_map):
+#     try:
+#         return db.execute(query=query_object, values=update_value_map)
+#     except Exception as e:
+#         logger.error("### ERROR IN UPDATING SPECIALISATION {} #####".format(e))
+#     finally:
+#         logger.info("##### UPDATE SPECIALISATION METHOD OVER ####")
 
 
 async def update_time_slot_for_doctor(query_object_for_update: str, update_value_map: dict,
@@ -520,7 +519,7 @@ async def update_time_slot_for_doctor(query_object_for_update: str, update_value
     async with db.transaction():
         transaction = await db.transaction()
         try:
-            logger.info("###### PROCEEDNG FOR THE UPDATE TIMESLOT CONFIGURATION ##########")
+            logger.info("###### PROCEEDING FOR THE UPDATE TIMESLOT CONFIGURATION ##########")
             await db.execute(query=query_object_for_update, values=update_value_map)
             logger.info("#### SUCCESS IN UPDATE CALL #####")
         except Exception as WHY:
@@ -609,45 +608,6 @@ def find_particular_specialisation(name):
         logger.error("##### EXCEPTION IN SAVE_LANGUAGE FUNCTION IS {}".format(e))
     finally:
         logger.info("#### FIND PARTICULAR_LANGUAGE FUNCTION COMPLETED ####")
-
-
-async def add_timeslot_combined_function(val, doctor_id, map_array_objects):
-    async with db.transaction():
-        transaction = await db.transaction()
-        try:
-            logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY TIMESLOT ADD CALL #######")
-            object_id = await db.execute(INSERT_QUERY_FOR_TIMESLOT, values={"day": val.day,
-                                                                            "video": val.video,
-                                                                            "audio": val.audio,
-                                                                            "chat": val.chat,
-                                                                            "start_time": val.start_time,
-                                                                            "end_time": val.end_time,
-                                                                            "video_frequency": val.video_frequency,
-                                                                            "audio_frequency": val.audio_frequency,
-                                                                            "chat_frequency": val.chat_frequency,
-                                                                            "is_available": val.is_available,
-                                                                            "non_availability_reason": val.non_availability_reason,
-                                                                            "is_active": val.is_active
-                                                                            })
-            map_object = {"doctor_id": doctor_id,
-                          "time_slot_id": object_id
-                          }
-            # map_array_objects.append(map_object)
-            logger.info(
-                "### TIME SLOT CONFIGURATION FOR THE DOCTOR ID {} HAS BEEN UPDATED SUCCESSFULLY WITH OBJECT ID  "
-                "####".format(
-                    str(doctor_id)))
-            await save_timeSlot_doctor_map(map_object)
-        except Exception as WHY:
-            logger.error("######### ERROR IN THE QUERY OF MAKING TIMESLOTS BECAUSE {} ".format(WHY))
-            logger.info("########## ROLLING BACK TRANSACTIONS #################")
-            await transaction.rollback()
-            return False
-        else:
-            logger.info("##### ALL WENT WELL COMMITTING TRANSACTION ########")
-            await transaction.commit()
-            logger.info("###### TRANSACTION COMMITTED AND SUCCESS TRUE #######")
-            return True
 
 
 async def save_timeSlot_doctor_map_(map_array_object):
@@ -748,9 +708,28 @@ def time_slot_for_all_days(doctor_id: int):
     return db.fetch_all(query=QUERY_FOR_ALL_DAYS_TIME, values={"doctor_id": doctor_id})
 
 
-def find_booked_time_slots(doctor_id:int):
-    return db.fetch_all(query=QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS,values={"doctor_id": doctor_id})
+def find_booked_time_slots(doctor_id: int):
+    return db.fetch_all(query=QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS, values={"doctor_id": doctor_id})
 
 
-def find_if_time_slot_exist(doctor_id:int,time):
-    return db.fetch_all(query=QUERY_FOR_EXISTING_TIMESLOT,values={"doctor_id":doctor_id,"time":time})
+def find_if_time_slot_exist(doctor_id: int, time):
+    return db.fetch_all(query=QUERY_FOR_EXISTING_TIMESLOT, values={"doctor_id": doctor_id, "time": time})
+
+
+def execute_insertion_for_timeslot(configuration_hash_map):
+    return db.execute(query=INSERT_QUERY_FOR_TIMESLOT, values={"day": configuration_hash_map.day,
+                                                               "video": configuration_hash_map.video,
+                                                               "audio": configuration_hash_map.audio,
+                                                               "chat": configuration_hash_map.chat,
+                                                               "start_time": configuration_hash_map.start_time,
+                                                               "end_time": configuration_hash_map.end_time,
+                                                               "video_frequency": configuration_hash_map.video_frequency,
+                                                               "audio_frequency": configuration_hash_map.audio_frequency,
+                                                               "chat_frequency": configuration_hash_map.chat_frequency,
+                                                               "is_available": configuration_hash_map.is_available,
+                                                               "non_availability_reason": configuration_hash_map.non_availability_reason,
+                                                               "is_active": configuration_hash_map.is_active
+                                                               }
+                      )
+def execute_insertion_in_doctor_time_slot_map(configuration_map:dict):
+    return db.execute(query=QUERY_FOR_DOCTOR_TIMESLOT_MAP,values=configuration_map)

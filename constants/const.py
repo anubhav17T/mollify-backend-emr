@@ -72,7 +72,6 @@ FORGOT_PASSWORD_BODY = """<html>
     </html> """
 
 """ ============== MISCELLANEOUS ============="""
-import os
 
 TESTING = False
 IS_LOAD_TEST = False
@@ -109,3 +108,5 @@ AWS_SECRET_KEY = "8Fj2+bgHHLjS/Nfn55GBEQQZxDvFH/1a1xmuSsPY"
 
 
 TIME_SLOT_ID_KEY = "time_slot_id"
+
+DOCTOR_ID_KEY = "doctor_id"
