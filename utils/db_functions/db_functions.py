@@ -1,3 +1,4 @@
+import asyncio
 import json
 from models.doctor import Doctor
 from models.languages import LanguagesUpdate
@@ -6,7 +7,8 @@ from utils.db_functions.raw_queries import QUERY_FOR_REGISTER_DOCTOR, QUERY_FOR_
     QUERY_FOR_DOCTORS_QUALIFICATIONS_SELECT, QUERY_FOR_SPECIFIC_DOCTORS_DETAILS, QUERY_FOR_SAVE_TIMESLOT_CONFIG, \
     QUERY_FOR_DOCTOR_SCHEDULE, QUERY_FOR_DOCTOR_EXIST_IN_TIMESLOT_CONFIG, QUERY_FOR_DOCTOR_END_TIME, \
     QUERY_FOR_DOCTOR_START_TIME, QUERY_FOR_FIND_TIME, QUERY_FOR_FIND_BOOKED_SLOTS, QUERY_FOR_ALL_DAYS_TIME, \
-    QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS, QUERY_FOR_EXISTING_TIMESLOT, QUERY_FOR_DOCTOR_TIMESLOT_MAP
+    QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS, QUERY_FOR_EXISTING_TIMESLOT, QUERY_FOR_DOCTOR_TIMESLOT_MAP, \
+    QUERY_FOR_DOCTOR_DETAILS_AND_QUALIFICATIONS
 from utils.logger.logger import logger
 from utils.connection_configuration.db_object import db
 from datetime import datetime, timezone
@@ -728,8 +730,14 @@ def execute_insertion_for_timeslot(configuration_hash_map):
                                                                "chat_frequency": configuration_hash_map.chat_frequency,
                                                                "is_available": configuration_hash_map.is_available,
                                                                "non_availability_reason": configuration_hash_map.non_availability_reason,
-                                                               "is_active": configuration_hash_map.is_active
+                                                               "is_active": configuration_hash_map.is_active,
+                                                               "buffer_time":configuration_hash_map.buffer_time
                                                                }
                       )
-def execute_insertion_in_doctor_time_slot_map(configuration_map:dict):
-    return db.execute(query=QUERY_FOR_DOCTOR_TIMESLOT_MAP,values=configuration_map)
+
+
+def execute_insertion_in_doctor_time_slot_map(configuration_map: dict):
+    return db.execute(query=QUERY_FOR_DOCTOR_TIMESLOT_MAP, values=configuration_map)
+
+def execute_sample():
+    return db.fetch_one(query=QUERY_FOR_DOCTOR_DETAILS_AND_QUALIFICATIONS)

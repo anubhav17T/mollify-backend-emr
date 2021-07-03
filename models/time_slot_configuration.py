@@ -10,7 +10,7 @@ class Status(str, Enum):
     monday = "MONDAY"
     tuesday = "TUESDAY"
     wednesday = "WEDNESDAY"
-    thrusday = "THRUSDAY"
+    thrusday = "THURSDAY"
     friday = "FRIDAY"
     saturday = "SATURDAY"
 
@@ -28,6 +28,7 @@ class TimeSlot(BaseModel):
     is_available: bool = None
     non_availability_reason: str = None
     is_active: bool = None
+    buffer_time:int = Field(...)
 
 
 class TimeSlotUpdate(BaseModel):

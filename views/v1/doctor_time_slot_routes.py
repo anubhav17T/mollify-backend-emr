@@ -2,10 +2,10 @@ from fastapi import status, APIRouter
 from constants.const import UPDATE, WHERE, TIME_SLOT_ID_KEY, DOCTOR_ID_KEY
 from utils.db_functions.raw_queries import INSERT_QUERY_FOR_TIMESLOT, QUERY_FOR_DOCTOR_TIMESLOT_MAP
 from utils.logger.logger import logger
-from utils.db_functions.db_functions import find_booked_time_slot,find_if_doctor_exist_in_timeslot, \
+from utils.db_functions.db_functions import find_booked_time_slot, find_if_doctor_exist_in_timeslot, \
     update_time_slot_for_doctor, time_slot_for_day, time_slot_for_all_days, find_booked_time_slots, \
     find_if_time_slot_exist, execute_insertion_for_timeslot, \
-    execute_insertion_in_doctor_time_slot_map
+    execute_insertion_in_doctor_time_slot_map, execute_sample
 from fastapi import Body
 from models.time_slot_configuration import TimeSlot, TimeSlotUpdate, Status
 from fastapi import Path, Query
@@ -98,12 +98,11 @@ async def time_slot_mapping(time_slot_config: List[TimeSlot], doctor_id: int = B
 
 @doctor_time_slot_routes.get("/doctors/time-slot/{doctor_id}", tags=["DOCTOR/TIME-SLOT"])
 async def get_timeslot_specific_doctor(doctor_id: int = Path(...),
-                                       day: Status = Query(None, description="Query parameter for days")):
+                                       day: List[Status] = Query(None, description="Query parameter for days")):
     response = CheckUserExistence(_id=doctor_id, target="GET-AVAILABLE-TIMESLOT FOR SPECIFIC DOCTOR")
     await response.check_if_user_id_exist()
-
     try:
-        if day:
+        if len(day) == 1:
             return {"doctor_slots": await time_slot_for_day(doctor_id=doctor_id, day=day),
                     "booked": {day: await find_booked_time_slot(doctor_id=doctor_id, day=day)}
                     }
@@ -121,6 +120,11 @@ async def get_timeslot_specific_doctor(doctor_id: int = Path(...),
             code=status.HTTP_400_BAD_REQUEST)
     finally:
         logger.info("####### METHOD TO GET TIMESLOTS IS FINISHED ##########")
+
+
+@doctor_time_slot_routes.get("/doctors/sample/", tags=["DOCTOR/TIME-SLOT"])
+async def return_sample():
+    return await execute_sample()
 
 
 @doctor_time_slot_routes.put("/doctors/time-slot", tags=["DOCTOR/TIME-SLOT"])
@@ -205,7 +209,8 @@ async def time_slot_update(time_slot_config: List[TimeSlotUpdate],
                     if time_slot_exist:
                         raise Exception(
                             "Timeslot already exist for the date provided for doctorId = {}".format(doctor_id))
-                    id_for_timeslot_config = await execute_insertion_for_timeslot(configuration_hash_map=configuration_for_time)
+                    id_for_timeslot_config = await execute_insertion_for_timeslot(
+                        configuration_hash_map=configuration_for_time)
                     if id_for_timeslot_config is None:
                         raise Exception("cannot find the id for the doctor")
                     map_object = {DOCTOR_ID_KEY: doctor_id,

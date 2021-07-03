@@ -74,7 +74,6 @@ QUERY_FOR_ALL_DAYS_TIME = "SELECT doctors_time_slot.id,doctors_time_slot.day,doc
                           "doctors_time_slot.start_time >= now() at time zone 'UTC' AND " \
                           "doctors_time_slot.is_available=True "
 
-
 QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS = """SELECT start_time,end_time,time_slot_config_id FROM consultations where doctor_id=:doctor_id AND start_time>=now() at time zone 'UTC' """
 
 QUERY_FOR_EXISTING_TIMESLOT = "SELECT doctors_timeslot_map.doctor_id,doctors_time_slot.day," \
@@ -84,3 +83,11 @@ QUERY_FOR_EXISTING_TIMESLOT = "SELECT doctors_timeslot_map.doctor_id,doctors_tim
 
 QUERY_FOR_DOCTOR_TIMESLOT_MAP = "INSERT INTO doctors_timeSlot_map VALUES (nextval('doctors_timeSlot_map_id_seq')," \
                                 ":doctor_id,:time_slot_id,now() at time zone 'UTC') "
+
+QUERY_FOR_DOCTOR_DETAILS_AND_QUALIFICATIONS = "SELECT doctors.id,doctors.full_name,doctors.username,doctors.mail," \
+                                              "doctors.gender,doctors.experience,doctors.econsultation_fee," \
+                                              "doctors.follow_up_fee,doctors.about,doctors.slug,ARRAY_AGG(" \
+                                              "qualifications.qualification_name) AS qualificaion_name," \
+                                              "ARRAY_AGG(qualifications.year) AS year FROM doctors INNER JOIN " \
+                                              "qualifications ON doctors.id=qualifications.doctor_id WHERE doctor_id=69 " \
+                                              "AND doctors.is_active=True GROUP BY doctors.id "
