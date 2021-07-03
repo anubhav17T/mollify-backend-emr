@@ -102,7 +102,7 @@ async def get_timeslot_specific_doctor(doctor_id: int = Path(...),
     response = CheckUserExistence(_id=doctor_id, target="GET-AVAILABLE-TIMESLOT FOR SPECIFIC DOCTOR")
     await response.check_if_user_id_exist()
     try:
-        if len(day) == 1:
+        if day:
             return {"doctor_slots": await time_slot_for_day(doctor_id=doctor_id, day=day),
                     "booked": {day: await find_booked_time_slot(doctor_id=doctor_id, day=day)}
                     }

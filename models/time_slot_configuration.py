@@ -45,3 +45,4 @@ class TimeSlotUpdate(BaseModel):
     is_available: bool = None
     non_availability_reason: str = None
     is_active: bool = None
+    buffer_time: int = None
