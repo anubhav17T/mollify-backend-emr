@@ -224,7 +224,7 @@ def doctors_time_slot():
                 sqlalchemy.Column("non_availability_reason", sqlalchemy.String(300)),
                 sqlalchemy.Column("is_active", sqlalchemy.Boolean),
                 sqlalchemy.Column("buffer_time", sqlalchemy.Integer),
-            sqlalchemy.Column("created_on", DateTime),
+                sqlalchemy.Column("created_on", DateTime)
             )
             engine = sqlalchemy.create_engine(
                 DB_URL, pool_size=3)
