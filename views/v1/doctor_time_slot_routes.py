@@ -49,6 +49,9 @@ async def time_slot_mapping(time_slot_config: List[TimeSlot], doctor_id: int = B
                 if time_values.start_time is None or time_values.end_time is None:
                     raise Exception("Please specify start time and end time value!")
 
+                if time_values.buffer_time <= 5:
+                    raise Exception("Buffer time should be greater than 5")
+
                 time_configuration_object = TimeslotConfiguration(start_time=time_values.start_time,
                                                                   end_time=time_values.end_time,
                                                                   doctor_id=doctor_id)
@@ -148,6 +151,9 @@ async def time_slot_update(time_slot_config: List[TimeSlotUpdate],
                                                                       doctor_id=doctor_id)
                     if configuration_for_time.start_time is None or configuration_for_time.end_time is None:
                         raise Exception("Please specify start time and end time value!")
+
+                    if configuration_for_time.buffer_time <= 5:
+                        raise Exception("Buffer time should be greater than 5")
 
                     time_configuration_object = TimeslotConfiguration(start_time=configuration_for_time.start_time,
                                                                       end_time=configuration_for_time.end_time,
