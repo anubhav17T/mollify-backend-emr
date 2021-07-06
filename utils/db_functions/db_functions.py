@@ -714,8 +714,8 @@ def find_booked_time_slots(doctor_id: int):
     return db.fetch_all(query=QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS, values={"doctor_id": doctor_id})
 
 
-def find_if_time_slot_exist(doctor_id: int, time):
-    return db.fetch_all(query=QUERY_FOR_EXISTING_TIMESLOT, values={"doctor_id": doctor_id, "time": time})
+def find_if_time_slot_exist(doctor_id: int, day):
+    return db.fetch_all(query=QUERY_FOR_EXISTING_TIMESLOT, values={"doctor_id": doctor_id, "day": day})
 
 
 def execute_insertion_for_timeslot(configuration_hash_map):

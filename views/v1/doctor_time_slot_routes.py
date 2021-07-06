@@ -62,10 +62,10 @@ async def time_slot_mapping(time_slot_config: List[TimeSlot], doctor_id: int = B
 
                 logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY TIMESLOT ADD CALL #######")
                 time_slot_exist = await find_if_time_slot_exist(doctor_id=doctor_id,
-                                                                time=time_values.start_time.date())
+                                                                day=time_values.day)
                 if time_slot_exist:
                     raise Exception(
-                        "Timeslot already exist for the date provided for doctorId = {}".format(doctor_id))
+                        "Timeslot already exist for the day provided for doctorId = {}".format(doctor_id))
                 id_for_timeslot_config = await execute_insertion_for_timeslot(configuration_hash_map=time_values)
                 if id_for_timeslot_config is None:
                     raise Exception("cannot find the id for the doctor")
@@ -211,7 +211,7 @@ async def time_slot_update(time_slot_config: List[TimeSlotUpdate],
                     time_configuration_object.check_if_start_date_valid()
 
                     time_slot_exist = await find_if_time_slot_exist(doctor_id=doctor_id,
-                                                                    time=configuration_for_time.start_time.date())
+                                                                    day=configuration_for_time.day)
                     if time_slot_exist:
                         raise Exception(
                             "Timeslot already exist for the date provided for doctorId = {}".format(doctor_id))
