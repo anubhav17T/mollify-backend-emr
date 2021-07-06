@@ -143,16 +143,13 @@ async def time_slot_update(time_slot_config: List[TimeSlotUpdate],
         transaction = await db.transaction()
         try:
             for configuration_for_time in time_slot_config:
-                if configuration_for_time.time_slot_id:
-                    response = CheckTimeSlotId(_id=configuration_for_time.time_slot_id, target="PUT-TIMESLOT-HAS_ID")
+                if configuration_for_time.id:
+                    response = CheckTimeSlotId(_id=configuration_for_time.id, target="PUT-TIMESLOT-HAS_ID")
                     await response.check_id_exist()
-                    time_configuration_object = TimeslotConfiguration(start_time=configuration_for_time.start_time,
-                                                                      end_time=configuration_for_time.end_time,
-                                                                      doctor_id=doctor_id)
+
                     if configuration_for_time.start_time is None or configuration_for_time.end_time is None:
                         raise Exception("Please specify start time and end time value!")
-
-                    if configuration_for_time.buffer_time <= 5:
+                    if configuration_for_time.buffer_time is not None and configuration_for_time.buffer_time <= 5:
                         raise Exception("Buffer time should be greater than 5")
 
                     time_configuration_object = TimeslotConfiguration(start_time=configuration_for_time.start_time,
@@ -167,7 +164,7 @@ async def time_slot_update(time_slot_config: List[TimeSlotUpdate],
                     doctor_time_map = {"start_time": configuration_for_time.start_time,
                                        "end_time": configuration_for_time.end_time}
                     consultation_check_object = CheckForConsultation(doctor_id=doctor_id,
-                                                                     time_slot_id=configuration_for_time.time_slot_id,
+                                                                     time_slot_id=configuration_for_time.id,
                                                                      doctor_time_map=doctor_time_map)
                     await consultation_check_object.end_time()
                     await consultation_check_object.start_time()
@@ -188,7 +185,7 @@ async def time_slot_update(time_slot_config: List[TimeSlotUpdate],
                     await db.execute(query=query_for_update, values=update_values_map)
                     logger.info("#### SUCCESS IN UPDATE CALL #####")
 
-                if not configuration_for_time.time_slot_id:
+                if not configuration_for_time.id:
                     days = []
                     for check_unique_day in time_slot_config:
                         if check_unique_day in days:

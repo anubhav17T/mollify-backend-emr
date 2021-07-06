@@ -32,7 +32,7 @@ class TimeSlot(BaseModel):
 
 
 class TimeSlotUpdate(BaseModel):
-    time_slot_id: int = None
+    id: int = None
     day: Status = None
     video: bool = None
     audio: bool = None
