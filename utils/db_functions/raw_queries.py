@@ -56,28 +56,30 @@ QUERY_FOR_DOCTOR_END_TIME = "SELECT id,patient_id,doctor_id FROM consultations W
 QUERY_FOR_DOCTOR_START_TIME = "SELECT id,patient_id,doctor_id FROM consultations WHERE doctor_id=:doctor_id AND " \
                               "time_slot_config_id=:time_slot_config_id AND start_time<=:start_time"
 
-QUERY_FOR_FIND_TIME = "SELECT doctors_time_slot.id,doctors_time_slot.day,doctors_time_slot.video,doctors_time_slot.audio," \
+QUERY_FOR_FIND_TIME = "SELECT doctors_time_slot.id,doctors_time_slot.day,doctors_time_slot.video," \
+                      "doctors_time_slot.audio," \
                       "doctors_time_slot.chat,doctors_time_slot.start_time,doctors_time_slot.end_time," \
                       "doctors_time_slot.video_frequency,doctors_time_slot.audio_frequency," \
-                      "doctors_time_slot.chat_frequency FROM doctors_time_slot INNER JOIN doctors_timeslot_map ON " \
+                      "doctors_time_slot.chat_frequency,doctors_time_slot.buffer_time FROM doctors_time_slot INNER JOIN doctors_timeslot_map ON " \
                       "doctors_time_slot.id = doctors_timeslot_map.time_slot_id WHERE " \
                       "doctors_timeslot_map.doctor_id=:doctor_id AND doctors_time_slot.day=:day AND " \
-                      "doctors_time_slot.start_time >= now() at time zone 'UTC' AND " \
                       "doctors_time_slot.is_available=True "
 
-QUERY_FOR_FIND_BOOKED_SLOTS = """SELECT start_time,end_time,time_slot_config_id FROM consultations where doctor_id=:doctor_id AND day=:day AND start_time>=now() at time zone 'UTC' """
+QUERY_FOR_FIND_BOOKED_SLOTS = """SELECT start_time,end_time,time_slot_config_id,day FROM consultations where 
+doctor_id=:doctor_id AND day=:day AND start_time>=now() at time zone 'UTC' """
 
 QUERY_FOR_ALL_DAYS_TIME = "SELECT doctors_time_slot.id,doctors_time_slot.day,doctors_time_slot.video," \
                           "doctors_time_slot.audio," \
                           "doctors_time_slot.chat,doctors_time_slot.start_time,doctors_time_slot.end_time," \
                           "doctors_time_slot.video_frequency,doctors_time_slot.audio_frequency," \
-                          "doctors_time_slot.chat_frequency FROM doctors_time_slot INNER JOIN doctors_timeslot_map ON " \
+                          "doctors_time_slot.chat_frequency,doctors_time_slot.buffer_time FROM doctors_time_slot " \
+                          "INNER JOIN doctors_timeslot_map ON " \
                           "doctors_time_slot.id = doctors_timeslot_map.time_slot_id WHERE " \
                           "doctors_timeslot_map.doctor_id=:doctor_id AND " \
-                          "doctors_time_slot.start_time >= now() at time zone 'UTC' AND " \
                           "doctors_time_slot.is_available=True "
 
-QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS = """SELECT start_time,end_time,time_slot_config_id FROM consultations where doctor_id=:doctor_id AND start_time>=now() at time zone 'UTC' """
+QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS = """SELECT start_time,end_time,time_slot_config_id,day FROM consultations 
+where doctor_id=:doctor_id AND start_time>=now() at time zone 'UTC' """
 
 QUERY_FOR_EXISTING_TIMESLOT = "SELECT doctors_timeslot_map.doctor_id,doctors_time_slot.day," \
                               "doctors_time_slot.start_time FROM doctors_time_slot INNER JOIN doctors_timeslot_map ON " \

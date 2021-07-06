@@ -101,13 +101,13 @@ async def time_slot_mapping(time_slot_config: List[TimeSlot], doctor_id: int = B
 
 @doctor_time_slot_routes.get("/doctors/time-slot/{doctor_id}", tags=["DOCTOR/TIME-SLOT"])
 async def get_timeslot_specific_doctor(doctor_id: int = Path(...),
-                                       day: List[Status] = Query(None, description="Query parameter for days")):
+                                       day: Status = Query(None, description="Query parameter for days")):
     response = CheckUserExistence(_id=doctor_id, target="GET-AVAILABLE-TIMESLOT FOR SPECIFIC DOCTOR")
     await response.check_if_user_id_exist()
     try:
         if day:
             return {"doctor_slots": await time_slot_for_day(doctor_id=doctor_id, day=day),
-                    "booked": {day: await find_booked_time_slot(doctor_id=doctor_id, day=day)}
+                    "booked": await find_booked_time_slot(doctor_id=doctor_id, day=day)
                     }
         else:
             return {"doctor_slots": await time_slot_for_all_days(doctor_id=doctor_id),
