@@ -58,7 +58,7 @@ async def time_slot_mapping(time_slot_config: List[TimeSlot], doctor_id: int = B
 
                 time_configuration_object.check_if_start_time_greater_than_end_time()
                 # time_configuration_object.check_if_start_date_greater_than_end_date()
-                time_configuration_object.check_if_start_date_valid()
+                # time_configuration_object.check_if_start_date_valid()
 
                 logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY TIMESLOT ADD CALL #######")
                 time_slot_exist = await find_if_time_slot_exist(doctor_id=doctor_id,
@@ -204,8 +204,8 @@ async def time_slot_update(time_slot_config: List[TimeSlotUpdate],
                                                                       doctor_id=doctor_id)
 
                     time_configuration_object.check_if_start_time_greater_than_end_time()
-                    time_configuration_object.check_if_start_date_greater_than_end_date()
-                    time_configuration_object.check_if_start_date_valid()
+                    # time_configuration_object.check_if_start_date_greater_than_end_date()
+                    # time_configuration_object.check_if_start_date_valid()
 
                     time_slot_exist = await find_if_time_slot_exist(doctor_id=doctor_id,
                                                                     day=configuration_for_time.day)
