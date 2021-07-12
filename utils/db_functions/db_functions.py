@@ -730,7 +730,7 @@ def execute_insertion_for_timeslot(configuration_hash_map):
                                                                "chat_frequency": configuration_hash_map.chat_frequency,
                                                                "is_available": configuration_hash_map.is_available,
                                                                "non_availability_reason": configuration_hash_map.non_availability_reason,
-                                                               "is_active": configuration_hash_map.is_active,
+                                                               "is_active": True,
                                                                "buffer_time":configuration_hash_map.buffer_time
                                                                }
                       )
