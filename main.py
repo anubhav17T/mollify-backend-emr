@@ -19,7 +19,8 @@ from views.v1.doctor_routes import doctor_routes
 from views.v1.doctor_time_slot_routes import doctor_time_slot_routes
 from views.v1.doctor_feedback_routes import doctor_feedback
 from views.v1.doctor_consultation_routes import doctor_consultation
-from constants.const import V1_PREFIX,V2_PREFIX
+from constants.const import V1_PREFIX, V2_PREFIX
+
 origins = ["*"]
 conn = DatabaseConfiguration()
 
@@ -67,7 +68,6 @@ app.include_router(doctor_qualification_router, prefix=V2_PREFIX)
 app.include_router(app_v2_filters, prefix=V2_PREFIX)
 
 
-@app.get("/")
 async def home():
     """:return MOLLIFY HOME"""
     return {"API": "MOLLIFY DOCTOR-EMR SERVICE"}
@@ -113,10 +113,11 @@ async def middleware(request: Request, call_next):
     return response
 
 
-# if __name__ == "__main__":
-#     try:
-#         """ADD MULTIPLE PROCESSING IN CREATING DATABASE TABLE FOR FAST EXECUTION """
-#         import uvicorn
-#         uvicorn.run(app)
-#     except Exception as e:
-#         logger.error("###### EXCEPTION IN MAIN FILE IS {} ####### ".format(e))
+if __name__ == "__main__":
+    try:
+        """ADD MULTIPLE PROCESSING IN CREATING DATABASE TABLE FOR FAST EXECUTION """
+        # import uvicorn
+        #
+        # uvicorn.run(app)
+    except Exception as e:
+        logger.error("###### EXCEPTION IN MAIN FILE IS {} ####### ".format(e))

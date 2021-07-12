@@ -1,10 +1,10 @@
-from fastapi import status, APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi import status, APIRouter
 from utils.db_functions.db_feedback_function import save_feedback, get_feedbacks, get_specific_doctor_feedback, \
     get_all_feedbacks
 from utils.logger.logger import logger
 from models.feedback import Feedback
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
-from utils.utils_classes.classes_for_checks import CheckUserExistence
+from utils.utils_classes.classes_for_checks import CheckUserExistence, ConsultationValidity
 
 doctor_feedback = APIRouter()
 
@@ -12,9 +12,11 @@ doctor_feedback = APIRouter()
 @doctor_feedback.post("/doctors/feedbacks", tags=["DOCTORS/FEEDBACKS"], description="POST CALL FOR DOCTOR FEEDBACK")
 async def create_feedback(feedback: Feedback):
     logger.info("##### CREATE FEEDBACK METHOD CALLED ########")
-    # Check to see if doctor exist by that id
-    response = CheckUserExistence(_id=feedback.doctor_id, target="SAVE-FEEDBACK")
-    await response.check_if_user_id_exist()
+
+    response = ConsultationValidity(consultation_id=feedback.consultation_id,
+                                    doctor_id=feedback.doctor_id,
+                                    patient_id=feedback.patient_id)
+    await response.consultation_utils()
 
     save_feedback_resp_id = await save_feedback(feedback)
     if not save_feedback_resp_id:
@@ -37,3 +39,5 @@ async def get_feedbacks_doctor(id: int):
         raise CustomExceptionHandler(message="No Feedbacks For Specific Doctor", code=status.HTTP_400_BAD_REQUEST,
                                      success=False, target="GET-SPECIFIC-FEEDBACK")
     return response
+
+# get feedback for all doctor

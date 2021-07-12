@@ -4,7 +4,7 @@ from utils.db_functions.db_consultation_function import save_consultation, fetch
 from utils.db_functions.db_functions import find_exist_user_id, get_doctor_id
 from utils.logger.logger import logger
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
-from models.consultation_table import ConsultationTable
+from models.consultation import ConsultationTable
 from fastapi import Query, Path
 from utils.utils_classes.classes_for_checks import CheckUserExistence
 
@@ -15,6 +15,9 @@ global doctor_id
 @doctor_consultation.post("/doctors/consultations", tags=["DOCTORS/CONSULTATIONS"],
                           description="POST CALL FOR CONSULTATIONS")
 async def create_consultations(consultation: ConsultationTable):
+    # check 1 if start time and end time is old, start time is less than end time
+    # start time and end time checks
+    # cannot book consultation twice
     logger.info("###### BOOK CONSULTATION METHOD CALLED ######")
     # CHECK IF USER EXIST OR NOT
     response = CheckUserExistence(_id=consultation.doctor_id, target="DOCTORS-CONSULTATION-POST")
@@ -24,7 +27,7 @@ async def create_consultations(consultation: ConsultationTable):
             raise CustomExceptionHandler(message="please specify reschedule reason", code=status.HTTP_400_BAD_REQUEST,
                                          success=False, target="SAVE-CONSULTATION")
     day = consultation.start_time.strftime("%A").upper()
-    check_response = await save_consultation(consultation=consultation,day=day)
+    check_response = await save_consultation(consultation=consultation, day=day)
     if not check_response:
         raise CustomExceptionHandler(message="unable to insert in consultations table",
                                      code=status.HTTP_400_BAD_REQUEST,

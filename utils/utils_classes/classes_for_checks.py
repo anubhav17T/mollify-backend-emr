@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
-
 from starlette import status
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
+from utils.db_functions.db_consultation_function import fetch_feedback_utils
 from utils.db_functions.db_functions import find_exist_user_id, find_exist_user, check_if_time_slot_id_exist, \
     doctor_by_name, check_for_end_time, check_for_start_time
 from utils.db_functions.db_specialisation_function import check_if_id_exists
@@ -117,6 +117,7 @@ class TimeslotConfiguration(object):
         return True
 
 
+
 class CheckForConsultation(object):
     def __init__(self, time_slot_id: int, doctor_id: int, doctor_time_map: dict):
         self.time_slot_id = time_slot_id
@@ -140,3 +141,19 @@ class CheckForConsultation(object):
         if check_if_start_time_exist is not None:
             raise Exception("You have consultation booked, so we can't update the timeslot")
         return True
+
+
+class ConsultationValidity(object):
+    def __init__(self, doctor_id: int, patient_id: int, consultation_id: int):
+        self.doctor_id = doctor_id
+        self.patient_id = patient_id
+        self.consultation_id = consultation_id
+
+    async def consultation_utils(self):
+        response = await fetch_feedback_utils(doctor_id=self.doctor_id,patient_id=self.patient_id,consultation_id=self.consultation_id)
+        if response is None:
+            logger.error("##### CANNOT ABLE TO FIND THE CONSULTATION OR DOCTOR OR PATIENT ID #####")
+            raise CustomExceptionHandler(message="Sorry,Either Consultation is not booked or doctor is not found",
+                                         code=status.HTTP_400_BAD_REQUEST,
+                                         success=False,
+                                         target="Consultation Utils")
