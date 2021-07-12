@@ -728,7 +728,7 @@ def execute_insertion_for_timeslot(configuration_hash_map):
                                                                "video_frequency": configuration_hash_map.video_frequency,
                                                                "audio_frequency": configuration_hash_map.audio_frequency,
                                                                "chat_frequency": configuration_hash_map.chat_frequency,
-                                                               "is_available": configuration_hash_map.is_available,
+                                                               "is_available": True,
                                                                "non_availability_reason": configuration_hash_map.non_availability_reason,
                                                                "is_active": True,
                                                                "buffer_time":configuration_hash_map.buffer_time
