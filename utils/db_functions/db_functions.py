@@ -175,7 +175,7 @@ def find_exist_user(mail: str):
 
 def find_exist_user_id(id: int):
     try:
-        query = "select * from doctors where id=:id"
+        query = "select mail,full_name from doctors where id=:id"
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY")
         return db.fetch_one(query=query, values={"id": id})
     except Exception as e:
@@ -186,7 +186,7 @@ def find_exist_user_id(id: int):
 
 def find_exist_username_email(check: str):
     try:
-        query = "select * from doctors where mail=:mail or username=:username"
+        query = "select mail,full_name from doctors where mail=:mail or username=:username"
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY")
         return db.fetch_one(query=query, values={"mail": check, "username": check})
     except Exception as e:
@@ -197,7 +197,7 @@ def find_exist_username_email(check: str):
 
 def find_exist_username(username: str):
     try:
-        query = "select * from doctors where username=:username"
+        query = "select mail,full_name from doctors where username=:username"
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY")
         return db.fetch_one(query=query, values={"username": username})
     except Exception as e:

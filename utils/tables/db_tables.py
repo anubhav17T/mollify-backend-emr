@@ -284,9 +284,11 @@ def feedback():
                 sqlalchemy.Column("id", Integer, Sequence("feedbacks_id_seq"), primary_key=True),
                 sqlalchemy.Column("consultation_id", Integer),
                 sqlalchemy.Column("doctor_id", Integer),
-                sqlalchemy.Column("rating", sqlalchemy.FLOAT),
-                sqlalchemy.Column("description", sqlalchemy.String(300)),
                 sqlalchemy.Column("patient_id", Integer),
+                sqlalchemy.Column("wait_time_rating", sqlalchemy.FLOAT),
+                sqlalchemy.Column("overall_rating", sqlalchemy.FLOAT),
+                sqlalchemy.Column("review", sqlalchemy.String(400)),
+                sqlalchemy.Column("is_doctor_recommended", sqlalchemy.Boolean),
                 sqlalchemy.Column("created_on", DateTime),
             )
             engine = sqlalchemy.create_engine(

@@ -5,7 +5,7 @@ from models.feedback import Feedback
 
 
 def save_feedback(feedback: Feedback):
-    logger.info("##### SAVING FEEDBACK FUNCTION CALLED #####")
+    logger.info("###### SAVING FEEDBACK FUNCTION CALLED ######")
     query = """INSERT INTO feedbacks VALUES (nextval('feedbacks_id_seq'),:consultation_id,:doctor_id,:rating,
     :description,:patient_id,now() at time zone 'UTC') RETURNING id; """
     logger.info("##### EXECUTION OF QUERY OF SAVE FEEDBACK")
@@ -60,5 +60,6 @@ def get_all_feedbacks(doctor_id:int):
         return False
     finally:
         logger.info("######## GET_FEEDBACK FUNCTION COMPLETED #########")
+
 
 

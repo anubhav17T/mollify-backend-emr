@@ -14,6 +14,12 @@ class Gender(str, Enum):
     other = "OTHER"
 
 
+class ConsultationSpecificFee(BaseModel):
+    chat:int
+    audio:int
+    video:int
+
+
 class Doctor(BaseModel):
     username: str = Field(None, example="username")
     full_name: str = Field(..., example="name + surname")
@@ -31,6 +37,8 @@ class Doctor(BaseModel):
     qualification: List[Qualification] = None
     specialisation: List[int] = None
     languages: List[int]
+    consultation_charges: List[ConsultationSpecificFee]
+
 
 
 class DoctorResponse(BaseModel):

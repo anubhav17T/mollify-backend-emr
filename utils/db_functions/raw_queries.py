@@ -96,3 +96,7 @@ QUERY_FOR_DOCTOR_DETAILS_AND_QUALIFICATIONS = "SELECT doctors.id,doctors.full_na
                                               "ARRAY_AGG(qualifications.year) AS year FROM doctors INNER JOIN " \
                                               "qualifications ON doctors.id=qualifications.doctor_id WHERE doctor_id=69 " \
                                               "AND doctors.is_active=True GROUP BY doctors.id "
+
+QUERY_FOR_CONSULTATION_UTILS = "SELECT id,patient_id,doctor_id FROM consultations WHERE id=:id AND " \
+                               "doctor_id:doctor_id AND patient_id:patient_id "
+
