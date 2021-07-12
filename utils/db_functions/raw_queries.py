@@ -75,8 +75,7 @@ QUERY_FOR_ALL_DAYS_TIME = "SELECT doctors_time_slot.id,doctors_time_slot.day,doc
                           "doctors_time_slot.chat_frequency,doctors_time_slot.buffer_time FROM doctors_time_slot " \
                           "INNER JOIN doctors_timeslot_map ON " \
                           "doctors_time_slot.id = doctors_timeslot_map.time_slot_id WHERE " \
-                          "doctors_timeslot_map.doctor_id=:doctor_id AND " \
-                          "doctors_time_slot.is_available=True "
+                          "doctors_timeslot_map.doctor_id=:doctor_id"
 
 QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS = """SELECT start_time,end_time,time_slot_config_id,day FROM consultations 
 where doctor_id=:doctor_id AND start_time>=now() at time zone 'UTC' """

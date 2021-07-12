@@ -57,6 +57,8 @@ async def time_slot_mapping(time_slot_config: List[TimeSlot], doctor_id: int = B
                                                                   doctor_id=doctor_id)
 
                 time_configuration_object.check_if_start_time_greater_than_end_time()
+                #add check for valid time and all time related checks
+
                 # time_configuration_object.check_if_start_date_greater_than_end_date()
                 # time_configuration_object.check_if_start_date_valid()
 
@@ -106,6 +108,7 @@ async def get_timeslot_specific_doctor(doctor_id: int = Path(...),
     await response.check_if_user_id_exist()
     try:
         if day:
+            #days to be completed
             return {"doctor_slots": await time_slot_for_day(doctor_id=doctor_id, day=day),
                     "booked": await find_booked_time_slot(doctor_id=doctor_id, day=day)
                     }
