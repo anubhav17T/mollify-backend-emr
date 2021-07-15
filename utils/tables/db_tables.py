@@ -287,8 +287,9 @@ def feedback():
                 sqlalchemy.Column("patient_id", Integer),
                 sqlalchemy.Column("wait_time_rating", sqlalchemy.FLOAT),
                 sqlalchemy.Column("overall_rating", sqlalchemy.FLOAT),
-                sqlalchemy.Column("review", sqlalchemy.String(400)),
+                sqlalchemy.Column("review", sqlalchemy.String(500)),
                 sqlalchemy.Column("is_doctor_recommended", sqlalchemy.Boolean),
+                sqlalchemy.Column("is_doctor_active", sqlalchemy.Boolean),
                 sqlalchemy.Column("created_on", DateTime),
             )
             engine = sqlalchemy.create_engine(

@@ -693,13 +693,13 @@ def check_for_start_time(time_slot_config_id: int, doctor_id: int, start_time: d
                                 "start_time": start_time})
 
 
-def time_slot_for_day(doctor_id: int, day):
-    return db.fetch_all(query=QUERY_FOR_FIND_TIME, values={"doctor_id": doctor_id, "day": day})
+def time_slot_for_day(doctor_id: int, days):
+    return db.fetch_all(query=QUERY_FOR_FIND_TIME+"("+days+")", values={"doctor_id": doctor_id})
 
 
-def find_booked_time_slot(doctor_id: int, day):
+def find_booked_time_slot(doctor_id: int, days):
     try:
-        return db.fetch_all(query=QUERY_FOR_FIND_BOOKED_SLOTS, values={"doctor_id": doctor_id, "day": day})
+        return db.fetch_all(query=QUERY_FOR_FIND_BOOKED_SLOTS+'('+days+')', values={"doctor_id": doctor_id})
     except Exception as e:
         logger.error("####### EXCEPTION IN FIND_BOOKED_TIMESLOTS FROM CONSULTATION TABLE FUNCTION IS = {}".format(e))
     finally:

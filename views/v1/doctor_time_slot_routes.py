@@ -1,11 +1,22 @@
 from fastapi import status, APIRouter
 from constants.const import UPDATE, WHERE, TIME_SLOT_ID_KEY, DOCTOR_ID_KEY
 from utils.db_functions.raw_queries import INSERT_QUERY_FOR_TIMESLOT, QUERY_FOR_DOCTOR_TIMESLOT_MAP
+from utils.helper_function.string_helpers import (make_days_query_from_string,
+                                                  QUERY_FOR_TIME_SLOT_DAYS, \
+                                                  QUERY_FOR_TIME_SLOT_DAYS_HELPER
+                                                  )
 from utils.logger.logger import logger
-from utils.db_functions.db_functions import find_booked_time_slot, find_if_doctor_exist_in_timeslot, \
-    update_time_slot_for_doctor, time_slot_for_day, time_slot_for_all_days, find_booked_time_slots, \
-    find_if_time_slot_exist, execute_insertion_for_timeslot, \
-    execute_insertion_in_doctor_time_slot_map, execute_sample
+from utils.db_functions.db_functions import (find_booked_time_slot,
+                                             find_if_doctor_exist_in_timeslot, \
+                                             update_time_slot_for_doctor,
+                                             time_slot_for_day,
+                                             time_slot_for_all_days,
+                                             find_booked_time_slots, \
+                                             find_if_time_slot_exist,
+                                             execute_insertion_for_timeslot, \
+                                             execute_insertion_in_doctor_time_slot_map,
+                                             execute_sample
+                                             )
 from fastapi import Body
 from models.time_slot_configuration import TimeSlot, TimeSlotUpdate, Status
 from fastapi import Path, Query
@@ -57,10 +68,7 @@ async def time_slot_mapping(time_slot_config: List[TimeSlot], doctor_id: int = B
                                                                   doctor_id=doctor_id)
 
                 time_configuration_object.check_if_start_time_greater_than_end_time()
-                #add check for valid time and all time related checks
-
-                # time_configuration_object.check_if_start_date_greater_than_end_date()
-                # time_configuration_object.check_if_start_date_valid()
+                time_configuration_object.end_time_should_not_exceed()
 
                 logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY TIMESLOT ADD CALL #######")
                 time_slot_exist = await find_if_time_slot_exist(doctor_id=doctor_id,
@@ -103,14 +111,16 @@ async def time_slot_mapping(time_slot_config: List[TimeSlot], doctor_id: int = B
 
 @doctor_time_slot_routes.get("/doctors/time-slot/{doctor_id}", tags=["DOCTOR/TIME-SLOT"])
 async def get_timeslot_specific_doctor(doctor_id: int = Path(...),
-                                       day: Status = Query(None, description="Query parameter for days")):
+                                       days=Query(None, description="Query parameter for days")):
     response = CheckUserExistence(_id=doctor_id, target="GET-AVAILABLE-TIMESLOT FOR SPECIFIC DOCTOR")
     await response.check_if_user_id_exist()
     try:
-        if day:
-            #days to be completed
-            return {"doctor_slots": await time_slot_for_day(doctor_id=doctor_id, day=day),
-                    "booked": await find_booked_time_slot(doctor_id=doctor_id, day=day)
+        if days:
+            days = make_days_query_from_string(days=days,
+                                               query=QUERY_FOR_TIME_SLOT_DAYS,
+                                               query_helper=QUERY_FOR_TIME_SLOT_DAYS_HELPER)
+            return {"doctor_slots": await time_slot_for_day(doctor_id=doctor_id, days=days),
+                    "booked":await find_booked_time_slot(doctor_id=doctor_id,days=days)
                     }
         else:
             return {"doctor_slots": await time_slot_for_all_days(doctor_id=doctor_id),
@@ -160,8 +170,7 @@ async def time_slot_update(time_slot_config: List[TimeSlotUpdate],
                                                                       doctor_id=doctor_id)
 
                     time_configuration_object.check_if_start_time_greater_than_end_time()
-                    # time_configuration_object.check_if_start_date_greater_than_end_date()
-                    # time_configuration_object.check_if_start_date_valid()
+                    time_configuration_object.end_time_should_not_exceed()
 
                     # TODO: DAY CHECKS REMAINING
                     doctor_time_map = {"start_time": configuration_for_time.start_time,
@@ -207,8 +216,7 @@ async def time_slot_update(time_slot_config: List[TimeSlotUpdate],
                                                                       doctor_id=doctor_id)
 
                     time_configuration_object.check_if_start_time_greater_than_end_time()
-                    # time_configuration_object.check_if_start_date_greater_than_end_date()
-                    # time_configuration_object.check_if_start_date_valid()
+                    time_configuration_object.end_time_should_not_exceed()
 
                     time_slot_exist = await find_if_time_slot_exist(doctor_id=doctor_id,
                                                                     day=configuration_for_time.day)

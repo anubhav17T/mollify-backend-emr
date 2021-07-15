@@ -18,6 +18,7 @@ async def create_consultations(consultation: ConsultationTable):
     # check 1 if start time and end time is old, start time is less than end time
     # start time and end time checks
     # cannot book consultation twice
+    # all checks
     logger.info("###### BOOK CONSULTATION METHOD CALLED ######")
     # CHECK IF USER EXIST OR NOT
     response = CheckUserExistence(_id=consultation.doctor_id, target="DOCTORS-CONSULTATION-POST")
@@ -62,3 +63,9 @@ async def get_consultations(id: int = Path(..., description="id of the doctor"),
                                          code=status.HTTP_400_BAD_REQUEST,
                                          success=False, target="GET-CONSULTATION")
         return check_response
+
+
+@doctor_consultation.put("/doctors/consultations/{id}", tags=["DOCTORS/CONSULTATIONS"],
+                         description="POST CALL FOR CONSULTATIONS")
+async def update_consultation():
+    pass

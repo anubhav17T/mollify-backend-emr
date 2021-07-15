@@ -1,4 +1,4 @@
-from utils.db_functions.raw_queries import QUERY_FOR_CONSULTATION_UTILS
+from utils.db_functions.raw_queries import QUERY_FOR_CONSULTATION_UTILS, QUERY_IF_REVIEW_ALREADY_EXIST
 from utils.logger.logger import logger
 from utils.connection_configuration.db_object import db
 from datetime import datetime, timezone
@@ -61,3 +61,14 @@ def fetch_feedback_utils(doctor_id:int,patient_id:int,consultation_id:int):
         logger.error("#### SOMETHING WENT WRONG IN FETCH-FEEDBACK-UTILS {}".format(e))
     finally:
         logger.info("### EXECUTED THE FETCH-CONSULTATION-STATUS METHOD ###")
+
+
+def find_if_review_exist(consultation_id:int):
+    logger.info("######### FIND IF ALREADY REVIEW EXIST METHOD CALLED ###############")
+    try:
+        return db.fetch_one(query=QUERY_IF_REVIEW_ALREADY_EXIST,values={"consultation_id":consultation_id})
+    except Exception as e:
+        logger.error("#### SOMETHING WENT WRONG IN FIND-REVIEW-ALREADY-EXIST {}".format(e))
+    finally:
+        logger.info("##### EXECUTED THE FETCH-CONSULTATION-STATUS METHOD #####")
+

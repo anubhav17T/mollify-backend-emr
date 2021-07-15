@@ -1,11 +1,12 @@
 from datetime import datetime, timezone
 from starlette import status
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
-from utils.db_functions.db_consultation_function import fetch_feedback_utils
+from utils.db_functions.db_consultation_function import fetch_feedback_utils, find_if_review_exist
 from utils.db_functions.db_functions import find_exist_user_id, find_exist_user, check_if_time_slot_id_exist, \
     doctor_by_name, check_for_end_time, check_for_start_time
 from utils.db_functions.db_specialisation_function import check_if_id_exists
 from utils.logger.logger import logger
+from datetime import timedelta
 
 dt = datetime.now(timezone.utc)
 
@@ -116,6 +117,12 @@ class TimeslotConfiguration(object):
             raise Exception("Date is not valid, please specify current or future date")
         return True
 
+    def end_time_should_not_exceed(self):
+        end = timedelta(hours=self.end_time.time().hour,
+                        minutes=self.end_time.time().minute)
+        max_end = timedelta(hours=23, minutes=59,seconds=50)
+        if end > max_end:
+            raise Exception("You have provided end time for the next date, please keep it less than 23:55")
 
 
 class CheckForConsultation(object):
@@ -150,10 +157,22 @@ class ConsultationValidity(object):
         self.consultation_id = consultation_id
 
     async def consultation_utils(self):
-        response = await fetch_feedback_utils(doctor_id=self.doctor_id,patient_id=self.patient_id,consultation_id=self.consultation_id)
+        response = await fetch_feedback_utils(doctor_id=self.doctor_id, patient_id=self.patient_id,
+                                              consultation_id=self.consultation_id)
         if response is None:
             logger.error("##### CANNOT ABLE TO FIND THE CONSULTATION OR DOCTOR OR PATIENT ID #####")
             raise CustomExceptionHandler(message="Sorry,Either Consultation is not booked or doctor is not found",
+                                         code=status.HTTP_400_BAD_REQUEST,
+                                         success=False,
+                                         target="Consultation Utils")
+
+    async def review_exist(self):
+        logger.info("####### INFO FIND IF REVIEW ALREADY EXIST ##############")
+        response = await find_if_review_exist(consultation_id=self.consultation_id)
+        if response:
+            logger.error("##### REVIEW ALREADY THERE, YOU CANNOT ADD NEW ONE!!!! #####")
+            raise CustomExceptionHandler(message="You have already provided the review for the doctor,please update "
+                                                 "the previous one",
                                          code=status.HTTP_400_BAD_REQUEST,
                                          success=False,
                                          target="Consultation Utils")
