@@ -26,7 +26,7 @@ DB_PASSWORD = "a63ffcd21fa58bf0619dd063e87da51afa3b665b4c1305ea73014dbad828f59e"
 DB_NAME = "d42op193oij6q"
 DB_PORT = 5432
 DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
-
+#
 
 """ ============= JWT TOKEN =================="""
 JWT_SECRET_KEY = "ef0a1569207bcb280212eb1a0e5948fed64f948049b531574c95813edd8c745c"
@@ -85,28 +85,28 @@ APPLICATION_CERTIFICATE = "f04e1c68506c4d309deb06ffff8e0088"
 "============== ALEMBIC LOCAL CONFIGURATION =========="
 URL = "postgresql://postgres:mollify@123@localhost/mollify"
 
-
 SENDGRID_API_KEY = "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"
-
 
 """ QUERIES FOR UPDATE TIMESLOTS """
 UPDATE = "UPDATE doctors_time_slot SET "
 WHERE = " WHERE id=:id Returning id"
 
-
 """ STRING FUNCTIONS """
-ADDING_YEARS = "+" +" years"
+ADDING_YEARS = "+" + " years"
 
 """ V1 PREFIX """
 
 V1_PREFIX = "/api/v1"
 V2_PREFIX = "/api/v2"
 
-
 AWS_ACCESS_KEY = "AKIAQXR2EI3CXO3QVUF5"
 AWS_SECRET_KEY = "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"
-
 
 TIME_SLOT_ID_KEY = "time_slot_id"
 
 DOCTOR_ID_KEY = "doctor_id"
+
+""""PAYMENT DETAILS RAZORPAY """
+
+RAZORPAY_ID = "rzp_test_dbc2aKRI7wEo8J"
+RAZORPAY_AUTH_KEY = "2OO3EaOgCxwSoc4kWnxBoJH2"

@@ -1,4 +1,5 @@
-from utils.db_functions.raw_queries import QUERY_FOR_CONSULTATION_UTILS, QUERY_IF_REVIEW_ALREADY_EXIST
+from utils.db_functions.raw_queries import QUERY_FOR_CONSULTATION_UTILS, QUERY_IF_REVIEW_ALREADY_EXIST, \
+    QUERY_IF_CLIENT_EXIST_IN_DB
 from utils.logger.logger import logger
 from utils.connection_configuration.db_object import db
 from datetime import datetime, timezone
@@ -72,3 +73,12 @@ def find_if_review_exist(consultation_id:int):
     finally:
         logger.info("##### EXECUTED THE FETCH-CONSULTATION-STATUS METHOD #####")
 
+
+def client_exist(client_id:int):
+    logger.info("######## CHECK IF CLINT EXIST IN THE DATABASE #######")
+    try:
+        return db.fetch_one(query=QUERY_IF_CLIENT_EXIST_IN_DB,values={"id":client_id})
+    except Exception as e:
+        logger.error("#### SOMETHING WENT WRONG IN FIND-CLIENT FROM DB {}".format(e))
+    finally:
+        logger.info("##### EXECUTED THE FETCH-CONSULTATION-STATUS METHOD #####")

@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from starlette import status
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
-from utils.db_functions.db_consultation_function import fetch_feedback_utils, find_if_review_exist
+from utils.db_functions.db_consultation_function import fetch_feedback_utils, find_if_review_exist, client_exist
 from utils.db_functions.db_functions import find_exist_user_id, find_exist_user, check_if_time_slot_id_exist, \
     doctor_by_name, check_for_end_time, check_for_start_time
 from utils.db_functions.db_specialisation_function import check_if_id_exists
@@ -30,7 +30,7 @@ class CheckUserExistence(object):
     async def check_if_user_id_exist(self):
         response = await find_exist_user_id(id=self._id)
         if response is None:
-            logger.error("########### NO USER IS FOUND FOR GIVED ID ############")
+            logger.error("########### NO USER IS FOUND FOR GIVEN ID ############")
             raise CustomExceptionHandler(message="User not found for the given id",
                                          code=status.HTTP_400_BAD_REQUEST,
                                          success=False,
@@ -120,7 +120,7 @@ class TimeslotConfiguration(object):
     def end_time_should_not_exceed(self):
         end = timedelta(hours=self.end_time.time().hour,
                         minutes=self.end_time.time().minute)
-        max_end = timedelta(hours=23, minutes=59,seconds=50)
+        max_end = timedelta(hours=23, minutes=59, seconds=50)
         if end > max_end:
             raise Exception("You have provided end time for the next date, please keep it less than 23:55")
 
@@ -176,3 +176,19 @@ class ConsultationValidity(object):
                                          code=status.HTTP_400_BAD_REQUEST,
                                          success=False,
                                          target="Consultation Utils")
+
+
+class FindClient:
+    def __init__(self, client_id: int):
+        self.client_id = client_id
+
+    async def find_if_client_exit(self):
+        response = await client_exist(client_id=self.client_id)
+        if response is None:
+            logger.error("##### SORRY CLIENT DOESN'T EXIST WITH THIS ID!!!! #####")
+            raise CustomExceptionHandler(message="User not found for the given id",
+                                         code=status.HTTP_400_BAD_REQUEST,
+                                         success=False,
+                                         target="FIND-CLIENT-ID"
+                                         )
+        return True

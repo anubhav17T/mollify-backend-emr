@@ -15,9 +15,9 @@ class Status(str, Enum):
 class ConsultationTable(BaseModel):
     patient_id: int
     doctor_id: int
-    parent_id: Optional[int]
+    parent_id: int = Field(None,description="CHILD ID FOR CONSULTATION BOOKING")
     start_time: datetime
     end_time: datetime
     time_slot_config_id: int
     status: Status
-    cancel_reason: Optional[str]
+    cancel_reason: str= Field(None,description="WHY BOOKING IS CANCELLED")
