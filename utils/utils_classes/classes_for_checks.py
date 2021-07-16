@@ -1,7 +1,10 @@
 from datetime import datetime, timezone
 from starlette import status
+
+from constants.variable_constants import CONSULTATION_STATUS_OPEN
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
-from utils.db_functions.db_consultation_function import fetch_feedback_utils, find_if_review_exist, client_exist
+from utils.db_functions.db_consultation_function import fetch_feedback_utils, find_if_review_exist, client_exist, \
+    check_for_duplicate_consultation_booking
 from utils.db_functions.db_functions import find_exist_user_id, find_exist_user, check_if_time_slot_id_exist, \
     doctor_by_name, check_for_end_time, check_for_start_time, check_if_doctor_has_timeslot_id
 from utils.db_functions.db_specialisation_function import check_if_id_exists
@@ -125,14 +128,12 @@ class TimeslotConfiguration(object):
             raise Exception("You have provided end time for the next date, please keep it less than 23:55")
 
     @staticmethod
-    async def check_if_timeslot_id_exist(timeslot_id:int,doctor_id:int):
+    async def check_if_timeslot_id_exist(timeslot_id: int, doctor_id: int):
         logger.info("####### CHECKING IF TIMESLOT CONFIG ID EXIST OR NOT #################")
-        response = await check_if_doctor_has_timeslot_id(doctor_id=doctor_id,timeslot_id=timeslot_id)
+        response = await check_if_doctor_has_timeslot_id(doctor_id=doctor_id, timeslot_id=timeslot_id)
         if response is None:
             raise Exception("DOCTOR DO NOT SEEMS TO BE AVAILABLE AT SPECIFIED TIMESLOT ")
         return True
-
-
 
 
 class CheckForConsultation(object):
@@ -202,3 +203,31 @@ class FindClient:
                                          target="FIND-CLIENT-ID"
                                          )
         return True
+
+
+class OpenConsultationStatus:
+    def __init__(self, state: str, parent_id: int = None):
+        self.state = state
+        self.parent_id = parent_id
+
+    def id_exist(self):
+        logger.info("########## CHECKING IF STATUS IS OPEN AND PARENT ID IS NONE #########")
+        if self.state == CONSULTATION_STATUS_OPEN and self.parent_id is not None:
+            raise CustomExceptionHandler(
+                message="BOOKING ID(PARENT_ID) SHOULD BE NONE WHILE BOOKING CONSULTATION",
+                code=status.HTTP_400_BAD_REQUEST,
+                success=False, target="CONSULTATION(STATUS_OPEN AND PARENT_ID CHECK)")
+        return True
+
+    def duplicate_open_consultation(self, doctor_id: int, start_time: datetime, end_time: datetime):
+        if self.state == CONSULTATION_STATUS_OPEN and self.parent_id is None:
+            duplicate = check_for_duplicate_consultation_booking(doctor_id=doctor_id,
+                                                                 start_time=start_time,
+                                                                 end_time=end_time
+                                                                 )
+            if duplicate is not None:
+                raise CustomExceptionHandler(
+                    message="BOOKING ALREADY EXIST FOR THE SPECIFIED DOCTOR AT GIVEN TIME",
+                    code=status.HTTP_400_BAD_REQUEST,
+                    success=False, target="CONSULTATION(STATUS_OPEN AND PARENT_ID DUPLICATE CHECK)")
+            return True
