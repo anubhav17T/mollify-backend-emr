@@ -66,7 +66,7 @@ QUERY_FOR_FIND_TIME = "SELECT doctors_time_slot.id,doctors_time_slot.day,doctors
                       "doctors_time_slot.is_available=True AND "
 
 QUERY_FOR_FIND_BOOKED_SLOTS = """SELECT start_time,end_time,time_slot_config_id,day FROM consultations where 
-doctor_id=:doctor_id AND start_time>=now() at time zone 'UTC' AND """
+doctor_id=:doctor_id AND status='OPEN' AND start_time>=now() at time zone 'UTC' AND """
 
 QUERY_FOR_ALL_DAYS_TIME = "SELECT doctors_time_slot.id,doctors_time_slot.day,doctors_time_slot.video," \
                           "doctors_time_slot.audio," \
@@ -78,7 +78,7 @@ QUERY_FOR_ALL_DAYS_TIME = "SELECT doctors_time_slot.id,doctors_time_slot.day,doc
                           "doctors_timeslot_map.doctor_id=:doctor_id"
 
 QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS = """SELECT start_time,end_time,time_slot_config_id,day FROM consultations 
-where doctor_id=:doctor_id AND start_time>=now() at time zone 'UTC' """
+where doctor_id=:doctor_id AND start_time>=now() at time zone 'UTC' AND status='OPEN'"""
 
 QUERY_FOR_EXISTING_TIMESLOT = "SELECT doctors_timeslot_map.doctor_id,doctors_time_slot.day," \
                               "doctors_time_slot.start_time FROM doctors_time_slot INNER JOIN doctors_timeslot_map ON " \
@@ -106,3 +106,10 @@ QUERY_FOR_FEEDBACK_UPDATE = "UPDATE feedbacks SET "
 WHERE_ID_FEEDBACKS = " WHERE id=:id RETURNING id;"
 
 QUERY_IF_CLIENT_EXIST_IN_DB = "SELECT id FROM users WHERE id=:id"
+
+QUERY_FOR_CONSULTATION_STATES_AND_PARENT_ID = "SELECT id,patient_id,doctor_id,parent_id,status FROM consultations " \
+                                              "WHERE id=:id AND patient_id=:patient_id AND doctor_id=:doctor_id AND status=:status"
+
+
+QUERY_TO_FIND_DOCTOR_TIMESLOT_ID = "SELECT doctor_id,time_slot_id FROM doctors_timeslot_map WHERE " \
+                                   "doctor_id=:doctor_id AND time_slot_id=:time_slot_id "

@@ -1,19 +1,26 @@
-import asyncio
-import json
 from models.doctor import Doctor
 from models.languages import LanguagesUpdate
-from utils.db_functions.raw_queries import QUERY_FOR_REGISTER_DOCTOR, QUERY_FOR_SAVE_SPECIALISATION, \
-    QUERY_FOR_SAVE_LANGUAGE, QUERY_FOR_SAVE_QUALIFICATION, QUERY_FOR_SPECIALISATION_MAP, INSERT_QUERY_FOR_TIMESLOT, \
-    QUERY_FOR_DOCTORS_QUALIFICATIONS_SELECT, QUERY_FOR_SPECIFIC_DOCTORS_DETAILS, QUERY_FOR_SAVE_TIMESLOT_CONFIG, \
-    QUERY_FOR_DOCTOR_SCHEDULE, QUERY_FOR_DOCTOR_EXIST_IN_TIMESLOT_CONFIG, QUERY_FOR_DOCTOR_END_TIME, \
-    QUERY_FOR_DOCTOR_START_TIME, QUERY_FOR_FIND_TIME, QUERY_FOR_FIND_BOOKED_SLOTS, QUERY_FOR_ALL_DAYS_TIME, \
-    QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS, QUERY_FOR_EXISTING_TIMESLOT, QUERY_FOR_DOCTOR_TIMESLOT_MAP, \
-    QUERY_FOR_DOCTOR_DETAILS_AND_QUALIFICATIONS
+from utils.db_functions.raw_queries import (QUERY_FOR_REGISTER_DOCTOR, QUERY_FOR_SAVE_SPECIALISATION, \
+                                            QUERY_FOR_SAVE_LANGUAGE, QUERY_FOR_SAVE_QUALIFICATION,
+                                            QUERY_FOR_SPECIALISATION_MAP, INSERT_QUERY_FOR_TIMESLOT, \
+                                            QUERY_FOR_DOCTORS_QUALIFICATIONS_SELECT,
+                                            QUERY_FOR_SPECIFIC_DOCTORS_DETAILS,
+                                            QUERY_FOR_SAVE_TIMESLOT_CONFIG, \
+                                            QUERY_FOR_DOCTOR_SCHEDULE, QUERY_FOR_DOCTOR_EXIST_IN_TIMESLOT_CONFIG,
+                                            QUERY_FOR_DOCTOR_END_TIME, \
+                                            QUERY_FOR_DOCTOR_START_TIME,
+                                            QUERY_FOR_FIND_TIME,
+                                            QUERY_FOR_FIND_BOOKED_SLOTS,
+                                            QUERY_FOR_ALL_DAYS_TIME, \
+                                            QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS,
+                                            QUERY_FOR_EXISTING_TIMESLOT,
+                                            QUERY_FOR_DOCTOR_TIMESLOT_MAP, \
+                                            QUERY_FOR_DOCTOR_DETAILS_AND_QUALIFICATIONS,
+                                            QUERY_TO_FIND_DOCTOR_TIMESLOT_ID)
 from utils.logger.logger import logger
 from utils.connection_configuration.db_object import db
 from datetime import datetime, timezone
 from models.specialisation import Specialisation
-from models.doctor_specialisation import DoctorSpecialisation
 
 
 def save_specialisation(specailisations: Specialisation):
@@ -694,12 +701,12 @@ def check_for_start_time(time_slot_config_id: int, doctor_id: int, start_time: d
 
 
 def time_slot_for_day(doctor_id: int, days):
-    return db.fetch_all(query=QUERY_FOR_FIND_TIME+"("+days+")", values={"doctor_id": doctor_id})
+    return db.fetch_all(query=QUERY_FOR_FIND_TIME + "(" + days + ")", values={"doctor_id": doctor_id})
 
 
 def find_booked_time_slot(doctor_id: int, days):
     try:
-        return db.fetch_all(query=QUERY_FOR_FIND_BOOKED_SLOTS+'('+days+')', values={"doctor_id": doctor_id})
+        return db.fetch_all(query=QUERY_FOR_FIND_BOOKED_SLOTS + '(' + days + ')', values={"doctor_id": doctor_id})
     except Exception as e:
         logger.error("####### EXCEPTION IN FIND_BOOKED_TIMESLOTS FROM CONSULTATION TABLE FUNCTION IS = {}".format(e))
     finally:
@@ -731,7 +738,7 @@ def execute_insertion_for_timeslot(configuration_hash_map):
                                                                "is_available": True,
                                                                "non_availability_reason": configuration_hash_map.non_availability_reason,
                                                                "is_active": True,
-                                                               "buffer_time":configuration_hash_map.buffer_time
+                                                               "buffer_time": configuration_hash_map.buffer_time
                                                                }
                       )
 
@@ -739,5 +746,11 @@ def execute_insertion_for_timeslot(configuration_hash_map):
 def execute_insertion_in_doctor_time_slot_map(configuration_map: dict):
     return db.execute(query=QUERY_FOR_DOCTOR_TIMESLOT_MAP, values=configuration_map)
 
+
 def execute_sample():
     return db.fetch_one(query=QUERY_FOR_DOCTOR_DETAILS_AND_QUALIFICATIONS)
+
+
+def check_if_doctor_has_timeslot_id(doctor_id: int, timeslot_id: int):
+    return db.fetch_one(query=QUERY_TO_FIND_DOCTOR_TIMESLOT_ID,
+                        values={"doctor_id": doctor_id, "time_slot_id": timeslot_id})

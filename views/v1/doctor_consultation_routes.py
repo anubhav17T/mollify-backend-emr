@@ -1,12 +1,16 @@
 from fastapi import status, APIRouter
+from constants.variable_constants import CONSULTATION_STATUS_OPEN, CONSULTATION_STATUS_CANCELLED, \
+    CONSULTATION_STATUS_COMPLETED, CONSULTATION_STATUS_PROGRESS, CONSULTATION_STATUS_RESCHEDULED
 from utils.db_functions.db_consultation_function import save_consultation, fetch_consultation_status, \
-    fetch_all_consultation
+    fetch_all_consultation, check_for_consultation_states, check_for_consultation_existence, check_for_multiple_states, \
+    check_for_duplicate_consultation_booking
 from utils.db_functions.db_functions import find_exist_user_id, get_doctor_id
 from utils.logger.logger import logger
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from models.consultation import ConsultationTable
 from fastapi import Query, Path
-from utils.utils_classes.classes_for_checks import CheckUserExistence
+from utils.utils_classes.classes_for_checks import CheckUserExistence, TimeslotConfiguration, FindClient
+from utils.utils_classes.consultation_return_message import ConsultationStatusMessage
 
 doctor_consultation = APIRouter()
 global doctor_id
@@ -15,25 +19,181 @@ global doctor_id
 @doctor_consultation.post("/doctors/consultations", tags=["DOCTORS/CONSULTATIONS"],
                           description="POST CALL FOR CONSULTATIONS")
 async def create_consultations(consultation: ConsultationTable):
-    # check 1 if start time and end time is old, start time is less than end time
-    # start time and end time checks
-    # cannot book consultation twice
-    # all checks
     logger.info("###### BOOK CONSULTATION METHOD CALLED ######")
-    # CHECK IF USER EXIST OR NOT
+
+    # run multiple process for all checks
     response = CheckUserExistence(_id=consultation.doctor_id, target="DOCTORS-CONSULTATION-POST")
     await response.check_if_user_id_exist()
-    if consultation.status == "RESCHEDULED":
-        if consultation.cancel_reason is None:
-            raise CustomExceptionHandler(message="please specify reschedule reason", code=status.HTTP_400_BAD_REQUEST,
-                                         success=False, target="SAVE-CONSULTATION")
+    response_user = FindClient(client_id=consultation.patient_id)
+    await response_user.find_if_client_exit()
+    try:
+        time_configuration_object = TimeslotConfiguration(start_time=consultation.start_time,
+                                                          end_time=consultation.end_time,
+                                                          doctor_id=consultation.doctor_id)
+        time_configuration_object.check_if_start_time_greater_than_end_time()
+        time_configuration_object.check_if_start_date_greater_than_end_date()
+        time_configuration_object.check_if_start_date_valid()
+        await time_configuration_object.check_if_timeslot_id_exist(timeslot_id=consultation.time_slot_config_id,
+                                                                   doctor_id=consultation.doctor_id)
+    except Exception as why:
+        logger.error("######### ERROR IN TIMESLOT CONFIGURATION CHECKS BECAUSE {} ##############".format(why))
+        raise CustomExceptionHandler(
+            message="CANNOT ABLE TO VALIDATE DOCTOR TIMESLOT CONFIGURATIONS BECAUSE: {},FOR DOCTOR_ID {} ".format(
+                why, consultation.doctor_id),
+            success=False,
+            code=status.HTTP_400_BAD_REQUEST,
+            target="CONSULTATION(DOCTOR-TIMESLOT-CHECK)"
+        )
+
+    if consultation.status == CONSULTATION_STATUS_OPEN and consultation.parent_id is not None:
+        raise CustomExceptionHandler(
+            message="BOOKING ID(PARENT_ID) IS NOT NONE",
+            code=status.HTTP_400_BAD_REQUEST,
+            success=False, target="CONSULTATION(STATUS_OPEN AND PARENT_ID CHECK)")
+
+    if consultation.status == CONSULTATION_STATUS_OPEN and consultation.parent_id is None:
+        duplicate = await check_for_duplicate_consultation_booking(doctor_id=consultation.doctor_id,
+                                                                   start_time=consultation.start_time,
+                                                                   end_time=consultation.end_time
+                                                                   )
+        if duplicate is not None:
+            raise CustomExceptionHandler(
+                message="BOOKING ALREADY EXIST FOR THE SPECIFIED DOCTOR AT GIVEN TIME",
+                code=status.HTTP_400_BAD_REQUEST,
+                success=False, target="CONSULTATION(STATUS_OPEN AND PARENT_ID DUPLICATE CHECK)")
+
+    if (consultation.status == CONSULTATION_STATUS_CANCELLED or
+        consultation.status == CONSULTATION_STATUS_COMPLETED or
+        consultation.status == CONSULTATION_STATUS_PROGRESS or
+        consultation.status == CONSULTATION_STATUS_RESCHEDULED) \
+            and consultation.parent_id is None:
+        raise CustomExceptionHandler(
+            message="BOOKING ID(PARENT_ID) IS NONE",
+            code=status.HTTP_400_BAD_REQUEST,
+            success=False, target="CONSULTATION(PARENT_ID NONE FOR OTHER STATES)")
+
+    if consultation.parent_id is not None:
+        if consultation.status == CONSULTATION_STATUS_PROGRESS:
+            logger.info(
+                "########## REQUESTED CONSULTATION STATE IS PROGRESS SO PREVIOUS STATE HAS TO BE OPEN #############")
+            response = await check_for_consultation_states(parent_id=consultation.parent_id,
+                                                           doctor_id=consultation.doctor_id,
+                                                           patient_id=consultation.patient_id,
+                                                           status="OPEN"
+                                                           )
+            if not response:
+                logger.error("########## PREVIOUS STATE IS NOT OPEN OR ERROR WITH BOOKING_ID/PARENT_ID #############")
+                raise CustomExceptionHandler(
+                    message="BOOKING_ID(PARENT_ID) DIDN'T MATCH OR CONSULTATION STATUS IS NOT OPEN,PLEASE CHECK "
+                            "IF CONSULTATION IS BOOKED/OPEN OR NOT !!!",
+                    code=status.HTTP_400_BAD_REQUEST,
+                    success=False, target="CONSULTATION(STATUS_PROGRESS)")
+
+            for config in response:
+                temp = dict(config)
+                if temp["id"] == consultation.parent_id and temp["status"] == "OPEN":
+                    logger.info("###### STAGE-1 PARENT_ID AND STATUS-> OPEN IS VALIDATED")
+                    check = await check_for_consultation_existence(parent_id=consultation.parent_id,
+                                                                   patient_id=consultation.patient_id,
+                                                                   doctor_id=consultation.doctor_id,
+                                                                   status=CONSULTATION_STATUS_PROGRESS
+                                                                   )
+                    if check is not None:
+                        raise CustomExceptionHandler(
+                            message="CONSULTATION IS ALREADY IN PROGRESS,DUPLICATE ENTRY?",
+                            code=status.HTTP_400_BAD_REQUEST,
+                            success=False, target="CONSULTATION(STATUS_PROGRESS)")
+
+        if consultation.status == CONSULTATION_STATUS_COMPLETED:
+            logger.info(
+                "########## REQUESTED CONSULTATION STATE IS COMPLETED SO PREVIOUS STATE HAS TO BE INPROGRESS "
+                "#############")
+            response = await check_for_consultation_states(parent_id=consultation.parent_id,
+                                                           doctor_id=consultation.doctor_id,
+                                                           patient_id=consultation.patient_id,
+                                                           status="INPROGRESS")
+            if not response:
+                logger.error("########## PREVIOUS STATE IS NOT INPROGRESS OR ERROR WITH BOOKING_ID/PARENT_ID "
+                             "#############")
+                raise CustomExceptionHandler(
+                    message="BOOKING ID(PARENT_ID) DIDN'T MATCH OR CONSULTATION STATUS IS NOT INPROGRESS,PLEASE CHECK "
+                            "IF CONSULTATION IS BOOKED/OPEN OR NOT !!!",
+                    code=status.HTTP_400_BAD_REQUEST,
+                    success=False, target="CONSULTATION(STATUS_COMPLETED)")
+
+            for config in response:
+                temp = dict(config)
+                print(temp)
+                if temp["id"] == consultation.parent_id and temp["status"] == "INPROGRESS":
+                    logger.info("###### STAGE-1 PARENT_ID AND STATUS-> INPROGRESS IS VALIDATED")
+                    check = await check_for_consultation_existence(parent_id=consultation.parent_id,
+                                                                   patient_id=consultation.patient_id,
+                                                                   doctor_id=consultation.doctor_id,
+                                                                   status=CONSULTATION_STATUS_COMPLETED
+                                                                   )
+                    if check is not None:
+                        raise CustomExceptionHandler(
+                            message="CONSULTATION IS ALREADY COMPLETED, DUPLICATE ENTRY?",
+                            code=status.HTTP_400_BAD_REQUEST,
+                            success=False, target="CONSULTATION(STATUS_COMPLETED)")
+
+        if consultation.status == CONSULTATION_STATUS_CANCELLED:
+            logger.info(
+                "########## REQUESTED CONSULTATION STATE IS CANCELLED SO PREVIOUS STATE HAS TO BE OPEN "
+                "#############")
+            response = await check_for_consultation_states(parent_id=consultation.parent_id,
+                                                           doctor_id=consultation.doctor_id,
+                                                           patient_id=consultation.patient_id,
+                                                           status="OPEN")
+            if not response:
+                logger.error("########## PREVIOUS STATE IS NOT INPROGRESS OR ERROR WITH BOOKING_ID/PARENT_ID "
+                             "#############")
+                raise CustomExceptionHandler(
+                    message="BOOKING ID(PARENT_ID) DIDN'T MATCH OR CONSULTATION STATUS IS NOT OPEN,PLEASE CHECK "
+                            "IF CONSULTATION IS BOOKED/OPEN OR NOT !!!",
+                    code=status.HTTP_400_BAD_REQUEST,
+                    success=False, target="GET-CONSULTATION")
+
+            logger.info("########## CHECKING IF PREVIOUS STATE IS ASSOCIATED WITH ANY STATE ##########")
+            response_for_states = await check_for_multiple_states(parent_id=consultation.parent_id)
+            if response_for_states:
+                raise CustomExceptionHandler(
+                    message="BOOKING CANNOT BE CANCELLED BECAUSE IT IS EITHER COMPLETED OR INPROGRESS",
+                    code=status.HTTP_400_BAD_REQUEST,
+                    success=False,
+                    target="CONSULTATION(STATUS_CANCELLED)"
+                )
+            for config in response:
+                temp = dict(config)
+                if temp["id"] == consultation.parent_id and temp["status"] == "OPEN":
+                    logger.info("###### STAGE-1 PARENT_ID AND STATUS-> INPROGRESS IS VALIDATED")
+                    if consultation.cancel_reason is None:
+                        raise CustomExceptionHandler(
+                            message="Can you please specify cancellation reason",
+                            code=status.HTTP_400_BAD_REQUEST,
+                            success=False,
+                            target="CONSULTATION(STATUS_CANCELLED)"
+                        )
+
+                    check = await check_for_consultation_existence(parent_id=consultation.parent_id,
+                                                                   patient_id=consultation.patient_id,
+                                                                   doctor_id=consultation.doctor_id,
+                                                                   status=CONSULTATION_STATUS_CANCELLED
+                                                                   )
+                    if check is not None:
+                        raise CustomExceptionHandler(
+                            message="CONSULTATION IS ALREADY CANCELLED, DUPLICATE ENTRY?",
+                            code=status.HTTP_400_BAD_REQUEST,
+                            success=False, target="CONSULTATION(STATUS_CANCELLED)")
+
     day = consultation.start_time.strftime("%A").upper()
     check_response = await save_consultation(consultation=consultation, day=day)
     if not check_response:
         raise CustomExceptionHandler(message="unable to insert in consultations table",
                                      code=status.HTTP_400_BAD_REQUEST,
                                      success=False, target="SAVE-CONSULTATION")
-    return {"message": "Cheers!! Your consultation has been booked", "code": status.HTTP_201_CREATED, "success": True}
+    message = ConsultationStatusMessage(status=consultation.status)
+    return message.message()
 
 
 @doctor_consultation.get("/doctors/consultations/{id}", tags=["DOCTORS/CONSULTATIONS"],
@@ -63,9 +223,3 @@ async def get_consultations(id: int = Path(..., description="id of the doctor"),
                                          code=status.HTTP_400_BAD_REQUEST,
                                          success=False, target="GET-CONSULTATION")
         return check_response
-
-
-@doctor_consultation.put("/doctors/consultations/{id}", tags=["DOCTORS/CONSULTATIONS"],
-                         description="POST CALL FOR CONSULTATIONS")
-async def update_consultation():
-    pass

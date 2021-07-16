@@ -1,5 +1,4 @@
 from typing import List
-
 from constants.const import ADDING_YEARS
 
 QUERY_FOR_TIME_SLOT_DAYS = "day="

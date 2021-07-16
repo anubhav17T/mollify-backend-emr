@@ -3,7 +3,7 @@ from starlette import status
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from utils.db_functions.db_consultation_function import fetch_feedback_utils, find_if_review_exist, client_exist
 from utils.db_functions.db_functions import find_exist_user_id, find_exist_user, check_if_time_slot_id_exist, \
-    doctor_by_name, check_for_end_time, check_for_start_time
+    doctor_by_name, check_for_end_time, check_for_start_time, check_if_doctor_has_timeslot_id
 from utils.db_functions.db_specialisation_function import check_if_id_exists
 from utils.logger.logger import logger
 from datetime import timedelta
@@ -124,6 +124,16 @@ class TimeslotConfiguration(object):
         if end > max_end:
             raise Exception("You have provided end time for the next date, please keep it less than 23:55")
 
+    @staticmethod
+    async def check_if_timeslot_id_exist(timeslot_id:int,doctor_id:int):
+        logger.info("####### CHECKING IF TIMESLOT CONFIG ID EXIST OR NOT #################")
+        response = await check_if_doctor_has_timeslot_id(doctor_id=doctor_id,timeslot_id=timeslot_id)
+        if response is None:
+            raise Exception("DOCTOR DO NOT SEEMS TO BE AVAILABLE AT SPECIFIED TIMESLOT ")
+        return True
+
+
+
 
 class CheckForConsultation(object):
     def __init__(self, time_slot_id: int, doctor_id: int, doctor_time_map: dict):
@@ -186,7 +196,7 @@ class FindClient:
         response = await client_exist(client_id=self.client_id)
         if response is None:
             logger.error("##### SORRY CLIENT DOESN'T EXIST WITH THIS ID!!!! #####")
-            raise CustomExceptionHandler(message="User not found for the given id",
+            raise CustomExceptionHandler(message="Client not found for the given id",
                                          code=status.HTTP_400_BAD_REQUEST,
                                          success=False,
                                          target="FIND-CLIENT-ID"
