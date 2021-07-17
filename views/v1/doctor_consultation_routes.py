@@ -9,7 +9,8 @@ from utils.db_functions.db_consultation_function import (save_consultation,
                                                          fetch_all_consultation,
                                                          check_for_consultation_states,
                                                          check_for_consultation_existence,
-                                                         check_for_multiple_states, \
+                                                         check_for_multiple_states,
+                                                         check_for_duplicate_consultation_booking, \
                                                          )
 from utils.logger.logger import logger
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
@@ -53,13 +54,30 @@ async def create_consultations(consultation: ConsultationTable):
             code=status.HTTP_400_BAD_REQUEST,
             target="CONSULTATION(DOCTOR-TIMESLOT-CHECK)"
         )
+    if consultation.status == CONSULTATION_STATUS_OPEN and consultation.parent_id is not None:
+        raise CustomExceptionHandler(
+            message="BOOKING ID(PARENT_ID) IS NOT NONE",
+            code=status.HTTP_400_BAD_REQUEST,
+            success=False, target="CONSULTATION(STATUS_OPEN AND PARENT_ID CHECK)")
 
-    open_status_object = OpenConsultationStatus(state=CONSULTATION_STATUS_OPEN, parent_id=consultation.parent_id)
-    await open_status_object.id_exist()
-    await open_status_object.duplicate_open_consultation(doctor_id=consultation.doctor_id,
-                                                         start_time=consultation.start_time,
-                                                         end_time=consultation.end_time
-                                                         )
+    if consultation.status == CONSULTATION_STATUS_OPEN and consultation.parent_id is None:
+        duplicate = await check_for_duplicate_consultation_booking(doctor_id=consultation.doctor_id,
+                                                                   start_time=consultation.start_time,
+                                                                   end_time=consultation.end_time
+                                                                   )
+        if duplicate is not None:
+            raise CustomExceptionHandler(
+                message="BOOKING ALREADY EXIST FOR THE SPECIFIED DOCTOR AT GIVEN TIME",
+                code=status.HTTP_400_BAD_REQUEST,
+                success=False, target="CONSULTATION(STATUS_OPEN AND PARENT_ID DUPLICATE CHECK)")
+
+
+    # open_status_object = OpenConsultationStatus(state=CONSULTATION_STATUS_OPEN, parent_id=consultation.parent_id)
+    # await open_status_object.id_exist()
+    # await open_status_object.duplicate_open_consultation(doctor_id=consultation.doctor_id,
+    #                                                      start_time=consultation.start_time,
+    #                                                      end_time=consultation.end_time
+    #                                                      )
 
     if (consultation.status == CONSULTATION_STATUS_CANCELLED or
         consultation.status == CONSULTATION_STATUS_COMPLETED or
