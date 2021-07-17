@@ -210,7 +210,7 @@ class OpenConsultationStatus:
         self.state = state
         self.parent_id = parent_id
 
-    def id_exist(self):
+    async def id_exist(self):
         logger.info("########## CHECKING IF STATUS IS OPEN AND PARENT ID IS NONE #########")
         if self.state == CONSULTATION_STATUS_OPEN and self.parent_id is not None:
             raise CustomExceptionHandler(
@@ -219,9 +219,9 @@ class OpenConsultationStatus:
                 success=False, target="CONSULTATION(STATUS_OPEN AND PARENT_ID CHECK)")
         return True
 
-    def duplicate_open_consultation(self, doctor_id: int, start_time: datetime, end_time: datetime):
+    async def duplicate_open_consultation(self, doctor_id: int, start_time: datetime, end_time: datetime):
         if self.state == CONSULTATION_STATUS_OPEN and self.parent_id is None:
-            duplicate = check_for_duplicate_consultation_booking(doctor_id=doctor_id,
+            duplicate = await check_for_duplicate_consultation_booking(doctor_id=doctor_id,
                                                                  start_time=start_time,
                                                                  end_time=end_time
                                                                  )

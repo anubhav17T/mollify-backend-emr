@@ -11,13 +11,14 @@ from utils.db_functions.db_consultation_function import (save_consultation,
                                                          check_for_consultation_existence,
                                                          check_for_multiple_states, \
                                                          )
-from utils.db_functions.db_functions import find_exist_user_id, get_doctor_id
 from utils.logger.logger import logger
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from models.consultation import ConsultationTable
 from fastapi import Query, Path
-from utils.utils_classes.classes_for_checks import CheckUserExistence, TimeslotConfiguration, FindClient, \
-    OpenConsultationStatus
+from utils.utils_classes.classes_for_checks import (CheckUserExistence,
+                                                    TimeslotConfiguration,
+                                                    FindClient, \
+                                                    OpenConsultationStatus)
 from utils.utils_classes.consultation_return_message import ConsultationStatusMessage
 
 doctor_consultation = APIRouter()
@@ -54,11 +55,11 @@ async def create_consultations(consultation: ConsultationTable):
         )
 
     open_status_object = OpenConsultationStatus(state=CONSULTATION_STATUS_OPEN, parent_id=consultation.parent_id)
-    open_status_object.id_exist()
-    open_status_object.duplicate_open_consultation(doctor_id=consultation.doctor_id,
-                                                   start_time=consultation.start_time,
-                                                   end_time=consultation.end_time
-                                                   )
+    await open_status_object.id_exist()
+    await open_status_object.duplicate_open_consultation(doctor_id=consultation.doctor_id,
+                                                         start_time=consultation.start_time,
+                                                         end_time=consultation.end_time
+                                                         )
 
     if (consultation.status == CONSULTATION_STATUS_CANCELLED or
         consultation.status == CONSULTATION_STATUS_COMPLETED or
