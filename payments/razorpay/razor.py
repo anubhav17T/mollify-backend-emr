@@ -13,4 +13,3 @@ class Singleton(type):
 
 class PaymentRazorpay(metaclass=Singleton):
     razorpay_client = razorpay.Client(auth=(RAZORPAY_ID, RAZORPAY_AUTH_KEY))
-

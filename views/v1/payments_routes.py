@@ -9,7 +9,7 @@ payment_router = APIRouter()
 async def razorpay_payment(payment: Payment):
     razorpay_client = PaymentRazorpay()
     try:
-        razorpay_client.razorpay_client.payment.capture(payment.payment_id, payment.amount)
-        return {"result":razorpay_client.razorpay_client.fetch(payment.payment_id)}
+        success = razorpay_client.razorpay_client.order.create(dict(amount=payment.amount, currency=payment.order_currency))
+        return success
     except Exception as WHY:
         return {"exception is":str(WHY)}
