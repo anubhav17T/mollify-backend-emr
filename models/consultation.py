@@ -12,6 +12,12 @@ class Status(str, Enum):
     rescheduled = "RESCHEDULED"
 
 
+class SessionType(str, Enum):
+    chat = "CHAT"
+    audio = "AUDIO"
+    video = "VIDEO"
+
+
 class ConsultationTable(BaseModel):
     patient_id: int
     doctor_id: int
@@ -21,3 +27,4 @@ class ConsultationTable(BaseModel):
     time_slot_config_id: int
     status: Status
     cancel_reason: str = Field(None, description="WHY BOOKING IS CANCELLED")
+    session_type: SessionType

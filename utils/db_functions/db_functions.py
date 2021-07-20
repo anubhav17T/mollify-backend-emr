@@ -449,8 +449,8 @@ def get_doctor_id(slug: str):
 
 
 def find_doctor_information(slug: str):
-    query = """SELECT id,username,full_name,mail,phone_number,gender,experience,econsultation_fee,is_active,url,
-        is_online,follow_up_fee,about,slug FROM doctors WHERE slug=:slug"""
+    query = """SELECT id,username,full_name,mail,phone_number,gender,experience,is_active,url,
+        is_online,about,slug,audio,video,chat FROM doctors WHERE slug=:slug"""
     try:
         return db.fetch_one(query, values={"slug": slug})
     except Exception as e:

@@ -34,7 +34,7 @@ class ConsultationStatusMessage:
                     "success": True}
 
         if self.status == "RESCHEDULED":
-            return {"message": "Your Confirmation has been rescheduled to your preferrable time",
+            return {"message": "Your Confirmation has been rescheduled to your preferable time",
                     "code": status.HTTP_200_OK,
                     "id": self.id,
                     "success": True}

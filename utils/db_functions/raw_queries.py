@@ -106,7 +106,7 @@ WHERE_ID_FEEDBACKS = " WHERE id=:id RETURNING id;"
 
 QUERY_IF_CLIENT_EXIST_IN_DB = "SELECT id FROM users WHERE id=:id"
 
-QUERY_FOR_CONSULTATION_STATES_AND_PARENT_ID = "SELECT id,patient_id,doctor_id,parent_id,status FROM consultations " \
+QUERY_FOR_CONSULTATION_STATES_AND_PARENT_ID = "SELECT id,patient_id,doctor_id,parent_id,status,session_type FROM consultations " \
                                               "WHERE patient_id=:patient_id AND doctor_id=:doctor_id AND " \
                                               "parent_id=:parent_id AND status=:status "
 

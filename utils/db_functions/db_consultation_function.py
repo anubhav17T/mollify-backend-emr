@@ -9,7 +9,7 @@ from models.consultation import ConsultationTable
 def save_consultation(consultation: ConsultationTable, day):
     logger.info("##### SAVING CONSULTATIONS FUNCTION CALLED #####")
     query = """INSERT INTO consultations VALUES (nextval('consultations_id_seq'),:patient_id,:doctor_id,:parent_id,
-    :start_time,:end_time,:time_slot_config_id,:status,:cancel_reason,now() at time zone 'UTC',:day)RETURNING id; """
+    :start_time,:end_time,:time_slot_config_id,:status,:cancel_reason,now() at time zone 'UTC',:day,:session_type)RETURNING id; """
     logger.info("#### EXECUTING SAVE CONSULTATION #####")
     try:
         return db.execute(query=query, values={"patient_id": consultation.patient_id,
@@ -20,7 +20,8 @@ def save_consultation(consultation: ConsultationTable, day):
                                                "time_slot_config_id": consultation.time_slot_config_id,
                                                "status": consultation.status,
                                                "cancel_reason": consultation.cancel_reason,
-                                               "day": day
+                                               "day": day,
+                                               "session_type":consultation.session_type
                                                })
     except Exception as e:
         logger.error("#### ERROR IN EXECUTING DB QUERY IS {}".format(e))
@@ -126,7 +127,7 @@ def check_for_duplicate_consultation_booking(doctor_id: int, start_time: datetim
 
 
 def check_for_open_status(parent_id: int, doctor_id: int, patient_id: int):
-    query = "SELECT id,patient_id,doctor_id,parent_id,status FROM consultations " \
+    query = "SELECT id,patient_id,doctor_id,parent_id,status,session_type FROM consultations " \
             "WHERE patient_id=:patient_id AND doctor_id=:doctor_id AND " \
             "id=:parent_id AND status='OPEN' "
     return db.fetch_one(query=query,
