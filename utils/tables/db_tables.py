@@ -38,6 +38,9 @@ def creating_doctor_table():
                 sqlalchemy.Column("follow_up_fee", sqlalchemy.Integer),
                 sqlalchemy.Column("about", sqlalchemy.String(300)),
                 sqlalchemy.Column("slug", sqlalchemy.String(150)),
+                sqlalchemy.Column("chat", sqlalchemy.Integer),
+                sqlalchemy.Column("audio", sqlalchemy.Integer),
+                sqlalchemy.Column("video", sqlalchemy.Integer),
                 sqlalchemy.Column("created_on", DateTime),
             )
             engine = sqlalchemy.create_engine(

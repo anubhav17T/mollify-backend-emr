@@ -563,6 +563,9 @@ async def register_user_combined(doctor, slug):
                                                                                   "follow_up_fee": doctor.follow_up_fee,
                                                                                   "about": doctor.about,
                                                                                   "slug": slug,
+                                                                                  "chat":doctor.consultation_charges.chat,
+                                                                                  "audio": doctor.consultation_charges.audio,
+                                                                                  "video": doctor.consultation_charges.video,
                                                                                   "created_on": dt.utcnow()
                                                                                   }
                                          )

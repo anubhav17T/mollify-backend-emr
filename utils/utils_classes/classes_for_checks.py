@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
-from starlette import status
-
-from constants.variable_constants import CONSULTATION_STATUS_OPEN
+from fastapi import status
+from constants.variable_constants import CONSULTATION_STATUS_OPEN, CONSULTATION_STATUS_CANCELLED, \
+    CONSULTATION_STATUS_COMPLETED, CONSULTATION_STATUS_PROGRESS, CONSULTATION_STATUS_RESCHEDULED
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from utils.db_functions.db_consultation_function import fetch_feedback_utils, find_if_review_exist, client_exist, \
     check_for_duplicate_consultation_booking
@@ -10,7 +10,7 @@ from utils.db_functions.db_functions import find_exist_user_id, find_exist_user,
 from utils.db_functions.db_specialisation_function import check_if_id_exists
 from utils.logger.logger import logger
 from datetime import timedelta
-
+import fastapi
 dt = datetime.now(timezone.utc)
 
 
@@ -205,29 +205,17 @@ class FindClient:
         return True
 
 
-class OpenConsultationStatus:
-    def __init__(self, state: str, parent_id: int = None):
-        self.state = state
-        self.parent_id = parent_id
-
-    async def id_exist(self):
-        logger.info("########## CHECKING IF STATUS IS OPEN AND PARENT ID IS NONE #########")
-        if self.state == CONSULTATION_STATUS_OPEN and self.parent_id is not None:
+class ConsultationChecks:
+    @staticmethod
+    async def duplicate_consultation_for_doctor(doctor_id:int, start_time:datetime, end_time:datetime):
+        duplicate = await check_for_duplicate_consultation_booking(doctor_id=doctor_id,
+                                                                   start_time=start_time,
+                                                                   end_time=end_time
+                                                                   )
+        if duplicate is not None:
             raise CustomExceptionHandler(
-                message="BOOKING ID(PARENT_ID) SHOULD BE NONE WHILE BOOKING CONSULTATION",
+                message="BOOKING ALREADY EXIST FOR THE SPECIFIED DOCTOR AT GIVEN TIME",
                 code=status.HTTP_400_BAD_REQUEST,
-                success=False, target="CONSULTATION(STATUS_OPEN AND PARENT_ID CHECK)")
-        return True
+                success=False, target="CONSULTATION(STATUS_OPEN AND PARENT_ID DUPLICATE CHECK)")
 
-    async def duplicate_open_consultation(self, doctor_id: int, start_time: datetime, end_time: datetime):
-        if self.state == CONSULTATION_STATUS_OPEN and self.parent_id is None:
-            duplicate = await check_for_duplicate_consultation_booking(doctor_id=doctor_id,
-                                                                 start_time=start_time,
-                                                                 end_time=end_time
-                                                                 )
-            if duplicate is not None:
-                raise CustomExceptionHandler(
-                    message="BOOKING ALREADY EXIST FOR THE SPECIFIED DOCTOR AT GIVEN TIME",
-                    code=status.HTTP_400_BAD_REQUEST,
-                    success=False, target="CONSULTATION(STATUS_OPEN AND PARENT_ID DUPLICATE CHECK)")
-            return True
+

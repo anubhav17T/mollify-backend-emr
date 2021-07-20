@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field, validator
 from fastapi import Query
 from constants.const import EMAIL_REGEX
 from sqlalchemy import DateTime
-from typing import Optional
+from typing import Optional, Dict
 from models.qualification import Qualification, QualificationDoctorUpdate
 from typing import List
 
@@ -15,9 +15,9 @@ class Gender(str, Enum):
 
 
 class ConsultationSpecificFee(BaseModel):
-    chat:int
-    audio:int
-    video:int
+    chat: int
+    audio: int
+    video: int
 
 
 class Doctor(BaseModel):
@@ -37,8 +37,7 @@ class Doctor(BaseModel):
     qualification: List[Qualification] = None
     specialisation: List[int] = None
     languages: List[int]
-    consultation_charges: List[ConsultationSpecificFee]
-
+    consultation_charges: ConsultationSpecificFee
 
 
 class DoctorResponse(BaseModel):

@@ -8,10 +8,6 @@ from utils.db_functions.db_specialisation_function import get_specialisation_of_
 from utils.helper_function.string_helpers import string_to_lower, string_concatenation_with_years
 from utils.helper_function.unique_characters_array import find_unique_element
 from utils.logger.logger import logger
-from utils.db_functions.db_functions import find_exist_username_email, find_exist_user_phone, find_slug_therapist, \
-    create_reset_code, check_reset_password_token, \
-    reset_password_user, disable_reset_code, find_specialisation, find_doctor_information, \
-    register_user_combined
 from models.doctor import Doctor, ForgotPassword, ResetPassword
 from utils.random_generator.random_digits import random_with_N_digits
 from utils.security.security import hash_password, verify_password
@@ -28,6 +24,18 @@ from constants.const import CLOUD_NAME, API_KEY, API_SECRET
 from utils.helper_function.string_character_finder import get_part_of_string, specific_string
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from utils.utils_classes.classes_for_checks import CheckUserByMail
+from utils.db_functions.db_functions import (
+    find_exist_username_email,
+    find_exist_user_phone,
+    find_slug_therapist, \
+    create_reset_code,
+    check_reset_password_token, \
+    reset_password_user,
+    disable_reset_code,
+    find_specialisation,
+    find_doctor_information, \
+    register_user_combined
+)
 
 global object_map
 
@@ -288,40 +296,6 @@ async def reset_password(request: ResetPassword):
         logger.info("###### RESET PASSWORD METHOD COMPLETED ######### ")
 
 
-# @app_v1.put("/doctors/image-upload/{username}", tags=["DOCTORS/GENERAL"])
-# async def uploading_image(username: str, file: bytes = File(...)):
-#     try:
-#         logger.info("######## UPDATING IMAGE FOR THE DOCTOR/THERAPIST {} ####".format(username))
-#         # Check if username exist or not
-#         result_obj = await find_exist_username(username=username)
-#         if result_obj is not None:
-#             logger.info("#### USERNAME IS VALID #####")
-#             result = cloudinary.uploader.upload(file)
-#             url = result.get("url")
-#             # await update_profile_picture(username=username, url=url)
-#             return {
-#                 "status": status.HTTP_201_CREATED,
-#                 "message": "Image uploaded successfully",
-#                 "url":url,
-#                 "success": True
-#             }
-#         else:
-#             return {"error":
-#                 {
-#                     "message": "No user found",
-#                     "code": status.HTTP_404_NOT_FOUND,
-#                     "success": False,
-#                     "target": "Image-Upload[CHECK-USERNAME]"
-#                 }
-#             }
-#     except Exception as e:
-#         logger.error("######## EXCEPTION OCCURED IN IMAGE UPLOAD METHOD {} FOR USER ###### ".format(e, username))
-#     finally:
-#         logger.info("####### UPLOADING IMAGE METHOD COMPLETED ######")
-
-""" =========================== IMAGE UPLOAD ROUTES ========================= """
-
-
 @app_v1.put("/doctors/image-upload", tags=["DOCTORS/GENERAL"])
 async def uploading_image(file: bytes = File(...)):
     try:
@@ -342,9 +316,6 @@ async def uploading_image(file: bytes = File(...)):
                                      )
     finally:
         logger.info("####### UPLOADING IMAGE METHOD COMPLETED ######")
-
-
-""" ================= DOCTOR SLUG INFORMATION ROUTE =================== """
 
 
 @app_v1.get("/doctors/information/{slug}", tags=["DOCTORS/GENERAL"])

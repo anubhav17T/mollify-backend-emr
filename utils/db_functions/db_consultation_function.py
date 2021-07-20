@@ -88,7 +88,7 @@ def client_exist(client_id: int):
 def check_for_consultation_states(parent_id: int, doctor_id: int, patient_id: int, status: str):
     logger.info("######### CHECK IF PARENT ID AND STATUS EXIST IN THE DATABASE(TABLE-CONSULTATION) #########")
     try:
-        return db.fetch_all(query=QUERY_FOR_CONSULTATION_STATES_AND_PARENT_ID, values={"id": parent_id,
+        return db.fetch_all(query=QUERY_FOR_CONSULTATION_STATES_AND_PARENT_ID, values={"parent_id": parent_id,
                                                                                        "doctor_id": doctor_id,
                                                                                        "patient_id": patient_id,
                                                                                        "status": status
@@ -119,7 +119,15 @@ def check_for_multiple_states(parent_id: int):
     return db.fetch_all(query=query, values={"parent_id": parent_id})
 
 
-def check_for_duplicate_consultation_booking(doctor_id:int,start_time:datetime,end_time:datetime):
+def check_for_duplicate_consultation_booking(doctor_id: int, start_time: datetime, end_time: datetime):
     query = "SELECT id,parent_id FROM consultations WHERE doctor_id=:doctor_id AND start_time=:start_time AND " \
             "end_time=:end_time AND status='OPEN'"
-    return db.fetch_one(query=query, values={"doctor_id": doctor_id,"start_time":start_time,"end_time":end_time})
+    return db.fetch_one(query=query, values={"doctor_id": doctor_id, "start_time": start_time, "end_time": end_time})
+
+
+def check_for_open_status(parent_id: int, doctor_id: int, patient_id: int):
+    query = "SELECT id,patient_id,doctor_id,parent_id,status FROM consultations " \
+            "WHERE patient_id=:patient_id AND doctor_id=:doctor_id AND " \
+            "id=:parent_id AND status='OPEN' "
+    return db.fetch_one(query=query,
+                        values={"parent_id": parent_id, "doctor_id": doctor_id, "patient_id": patient_id})

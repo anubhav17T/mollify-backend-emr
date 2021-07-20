@@ -1,6 +1,6 @@
 QUERY_FOR_REGISTER_DOCTOR = """INSERT INTO doctors VALUES (nextval('doctors_id_seq'),:username,:full_name,:mail,:password,
             :phone_number,:gender,:experience,:econsultation_fee,:is_active,:is_online,:url,:follow_up_fee,:about, 
-            :slug, :created_on) RETURNING id """
+            :slug,:chat,:audio,:video,:created_on) RETURNING id """
 
 QUERY_FOR_SAVE_SPECIALISATION = """INSERT INTO specialisations VALUES (nextval('specialisations_id_seq'),:name,:is_active,now() at time zone 'UTC') """
 
@@ -38,7 +38,7 @@ QUERY_FOR_DOCTORS_QUALIFICATIONS_SELECT = "SELECT doctors.id,doctors.full_name,d
 QUERY_FOR_DOCTOR_SPECIALISATION_MAP = "SELECT doctors_specialisations_map.doctor_id,doctors_specialisations_map.specialisation_id,specialisations.name,specialisations.is_active FROM doctors_specialisations_map INNER JOIN specialisations ON doctors_specialisations_map.specialisation_id=specialisations.id WHERE doctor_id=:doctor_id"
 
 QUERY_FOR_SPECIFIC_DOCTORS_DETAILS = """SELECT id,username,full_name,mail,phone_number,gender,experience,econsultation_fee,is_active,url,
-        is_online,follow_up_fee,about,slug FROM doctors WHERE id=:id """
+        is_online,follow_up_fee,about,slug,json_build_object('chat',chat,'audio',audio,'video',video) AS consultation_charges FROM doctors WHERE id=:id """
 
 QUERY_FOR_FIND_FIRST_DOCTOR_SPECIALISATION = "SELECT specialisations.name FROM doctors_specialisations_map INNER JOIN specialisations ON doctors_specialisations_map.specialisation_id=specialisations.id WHERE doctor_id=:doctor_id ORDER BY specialisation_id LIMIT 1"
 
@@ -65,8 +65,8 @@ QUERY_FOR_FIND_TIME = "SELECT doctors_time_slot.id,doctors_time_slot.day,doctors
                       "doctors_timeslot_map.doctor_id=:doctor_id AND " \
                       "doctors_time_slot.is_available=True AND "
 
-QUERY_FOR_FIND_BOOKED_SLOTS = """SELECT start_time,end_time,time_slot_config_id,day FROM consultations where 
-doctor_id=:doctor_id AND status='OPEN' AND start_time>=now() at time zone 'UTC' AND """
+QUERY_FOR_FIND_BOOKED_SLOTS = """SELECT start_time,end_time,time_slot_config_id,day,status FROM consultations where 
+doctor_id=:doctor_id AND (status='OPEN' OR status='RESCHEDULE') AND start_time>=now() at time zone 'UTC' AND """
 
 QUERY_FOR_ALL_DAYS_TIME = "SELECT doctors_time_slot.id,doctors_time_slot.day,doctors_time_slot.video," \
                           "doctors_time_slot.audio," \
@@ -77,8 +77,8 @@ QUERY_FOR_ALL_DAYS_TIME = "SELECT doctors_time_slot.id,doctors_time_slot.day,doc
                           "doctors_time_slot.id = doctors_timeslot_map.time_slot_id WHERE " \
                           "doctors_timeslot_map.doctor_id=:doctor_id"
 
-QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS = """SELECT start_time,end_time,time_slot_config_id,day FROM consultations 
-where doctor_id=:doctor_id AND start_time>=now() at time zone 'UTC' AND status='OPEN'"""
+QUERY_FOR_FIND_BOOKED_TIME_SLOTS_FOR_ALL_DAYS = """SELECT start_time,end_time,time_slot_config_id,day,status FROM consultations 
+where doctor_id=:doctor_id AND (status='OPEN' OR status='RESCHEDULE') AND start_time>=now() at time zone 'UTC' """
 
 QUERY_FOR_EXISTING_TIMESLOT = "SELECT doctors_timeslot_map.doctor_id,doctors_time_slot.day," \
                               "doctors_time_slot.start_time FROM doctors_time_slot INNER JOIN doctors_timeslot_map ON " \
@@ -108,7 +108,8 @@ WHERE_ID_FEEDBACKS = " WHERE id=:id RETURNING id;"
 QUERY_IF_CLIENT_EXIST_IN_DB = "SELECT id FROM users WHERE id=:id"
 
 QUERY_FOR_CONSULTATION_STATES_AND_PARENT_ID = "SELECT id,patient_id,doctor_id,parent_id,status FROM consultations " \
-                                              "WHERE id=:id AND patient_id=:patient_id AND doctor_id=:doctor_id AND status=:status"
+                                              "WHERE patient_id=:patient_id AND doctor_id=:doctor_id AND " \
+                                              "parent_id=:parent_id AND status=:status "
 
 
 QUERY_TO_FIND_DOCTOR_TIMESLOT_ID = "SELECT doctor_id,time_slot_id FROM doctors_timeslot_map WHERE " \
