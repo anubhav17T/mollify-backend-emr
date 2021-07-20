@@ -328,12 +328,18 @@ async def get_doctor_information(slug: str = Path(...)):
                                      target="INFORMATION FROM SLUG", success=False
                                      )
     doc_or_therapist_results = dict(doctor_information)
+    consultation_charges = {"chat": doc_or_therapist_results["chat"], "audio": doc_or_therapist_results["audio"],
+                            "video": doc_or_therapist_results["video"]}
+    doc_or_therapist_results.pop("chat")
+    doc_or_therapist_results.pop("audio")
+    doc_or_therapist_results.pop("video")
     try:
         logger.info("####### FETCHING DOCTOR INFORMAION FROM THE SLUG ###########")
         doc_or_therapist_information = {
             "languages": await get_language_doctor(id=doc_or_therapist_results["id"]),
             "qualification": await get_doc_qualifications(id=doc_or_therapist_results["id"]),
-            "specialisation": await get_specialisation_of_doctor(doctor_id=doc_or_therapist_results["id"])
+            "specialisation": await get_specialisation_of_doctor(doctor_id=doc_or_therapist_results["id"]),
+            "consultation_charges": consultation_charges
         }
     except Exception as WHY:
         logger.error("####### EXCEPTION IN GETTING DOCTOR DETAILS IS {} ###########".format(WHY))

@@ -1,5 +1,5 @@
 QUERY_FOR_REGISTER_DOCTOR = """INSERT INTO doctors VALUES (nextval('doctors_id_seq'),:username,:full_name,:mail,:password,
-            :phone_number,:gender,:experience,:econsultation_fee,:is_active,:is_online,:url,:follow_up_fee,:about, 
+            :phone_number,:gender,:experience,:is_active,:is_online,:url,:about, 
             :slug,:chat,:audio,:video,:created_on) RETURNING id """
 
 QUERY_FOR_SAVE_SPECIALISATION = """INSERT INTO specialisations VALUES (nextval('specialisations_id_seq'),:name,:is_active,now() at time zone 'UTC') """
@@ -33,12 +33,12 @@ INSERT_QUERY_FOR_TIMESLOT = "INSERT INTO doctors_time_slot VALUES (nextval('doct
                             ":is_available,:non_availability_reason,:is_active,:buffer_time,now() at time zone 'UTC') " \
                             "RETURNING id; "
 
-QUERY_FOR_DOCTORS_QUALIFICATIONS_SELECT = "SELECT doctors.id,doctors.full_name,doctors.mail,doctors.gender,doctors.phone_number,doctors.experience,doctors.econsultation_fee,doctors.is_active,doctors.slug,doctors.url,doctors.about,doctors.is_online,qualifications.qualification_name,qualifications.institute_name,qualifications.year FROM doctors INNER JOIN qualifications ON doctors.id = qualifications.doctor_id"
+QUERY_FOR_DOCTORS_QUALIFICATIONS_SELECT = "SELECT doctors.id,doctors.full_name,doctors.mail,doctors.gender,doctors.phone_number,doctors.experience,doctors.is_active,doctors.slug,doctors.url,doctors.about,doctors.is_online,qualifications.qualification_name,qualifications.institute_name,qualifications.year FROM doctors INNER JOIN qualifications ON doctors.id = qualifications.doctor_id"
 
 QUERY_FOR_DOCTOR_SPECIALISATION_MAP = "SELECT doctors_specialisations_map.doctor_id,doctors_specialisations_map.specialisation_id,specialisations.name,specialisations.is_active FROM doctors_specialisations_map INNER JOIN specialisations ON doctors_specialisations_map.specialisation_id=specialisations.id WHERE doctor_id=:doctor_id"
 
-QUERY_FOR_SPECIFIC_DOCTORS_DETAILS = """SELECT id,username,full_name,mail,phone_number,gender,experience,econsultation_fee,is_active,url,
-        is_online,follow_up_fee,about,slug,json_build_object('chat',chat,'audio',audio,'video',video) AS consultation_charges FROM doctors WHERE id=:id """
+QUERY_FOR_SPECIFIC_DOCTORS_DETAILS = """SELECT id,username,full_name,mail,phone_number,gender,experience,is_active,url,
+        is_online,about,slug,chat,audio,video FROM doctors WHERE id=:id """
 
 QUERY_FOR_FIND_FIRST_DOCTOR_SPECIALISATION = "SELECT specialisations.name FROM doctors_specialisations_map INNER JOIN specialisations ON doctors_specialisations_map.specialisation_id=specialisations.id WHERE doctor_id=:doctor_id ORDER BY specialisation_id LIMIT 1"
 
@@ -89,8 +89,7 @@ QUERY_FOR_DOCTOR_TIMESLOT_MAP = "INSERT INTO doctors_timeSlot_map VALUES (nextva
                                 ":doctor_id,:time_slot_id,now() at time zone 'UTC') "
 
 QUERY_FOR_DOCTOR_DETAILS_AND_QUALIFICATIONS = "SELECT doctors.id,doctors.full_name,doctors.username,doctors.mail," \
-                                              "doctors.gender,doctors.experience,doctors.econsultation_fee," \
-                                              "doctors.follow_up_fee,doctors.about,doctors.slug,ARRAY_AGG(" \
+                                              "doctors.gender,doctors.experience,doctors.about,doctors.slug,ARRAY_AGG(" \
                                               "qualifications.qualification_name) AS qualificaion_name," \
                                               "ARRAY_AGG(qualifications.year) AS year FROM doctors INNER JOIN " \
                                               "qualifications ON doctors.id=qualifications.doctor_id WHERE doctor_id=69 " \

@@ -28,11 +28,9 @@ class Doctor(BaseModel):
     phone_number: str
     gender: Gender
     experience: str
-    econsultation_fee: int
     is_active: bool = None
     is_online: bool = None
     url: str = None
-    follow_up_fee: int
     about: str = Field(..., example="about yourself in less than 300 words", max_length=300)
     qualification: List[Qualification] = None
     specialisation: List[int] = None

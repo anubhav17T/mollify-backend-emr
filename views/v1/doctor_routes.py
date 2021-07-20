@@ -132,12 +132,18 @@ async def get_specific_doctor_by_id(id: int):
     logger.info("###### FETCHING INFORMATION OF DOCTOR ###############")
     doc_or_therapist_results = await specific_results_doctor(id=id)
     doc_or_therapist_results = dict(doc_or_therapist_results)
+    consultation_charges = {"chat":doc_or_therapist_results["chat"],"audio":doc_or_therapist_results["audio"],"video":doc_or_therapist_results["video"]}
+    doc_or_therapist_results.pop("chat")
+    doc_or_therapist_results.pop("audio")
+    doc_or_therapist_results.pop("video")
+
     try:
         logger.info("#### GOING TO FIND DOCTORS LANGUAGES,QUALIFICATIONS AND SPECIALISATION ###########")
         doc_or_therapist_information = {
             "languages": await get_language_doctor(id=id),
             "qualification": await get_doc_qualifications(id=id),
-            "specialisation": await get_specialisation_of_doctor(doctor_id=id)
+            "specialisation": await get_specialisation_of_doctor(doctor_id=id),
+            "consultation_charges":consultation_charges
         }
     except Exception as WHY:
         logger.error("####### EXCEPTION IN GETTING DOCTOR DETAILS IS {} ###########".format(WHY))
