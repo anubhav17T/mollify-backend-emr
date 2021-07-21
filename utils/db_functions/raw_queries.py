@@ -18,7 +18,7 @@ QUERY_FOR_GET_SPECIFIC_QUALIFICATION_ID = "SELECT * FROM qualifications WHERE id
 WHERE_ID_QUALIFICATIONS = " WHERE id=:id"
 
 QUERY_FOR_SPECIFIC_DOCTOR_LANGUAGE = "SELECT doctors_languages_map.doctor_id, doctors_languages_map.created_on, " \
-                                     "languages.name,languages.is_active FROM doctors_languages_map INNER JOIN " \
+                                     "languages.name,languages.id,languages.is_active FROM doctors_languages_map INNER JOIN " \
                                      "languages ON doctors_languages_map.languages_id = languages.id WHERE " \
                                      "doctors_languages_map.doctor_id=:doctor_id "
 
@@ -35,7 +35,7 @@ INSERT_QUERY_FOR_TIMESLOT = "INSERT INTO doctors_time_slot VALUES (nextval('doct
 
 QUERY_FOR_DOCTORS_QUALIFICATIONS_SELECT = "SELECT doctors.id,doctors.full_name,doctors.mail,doctors.gender,doctors.phone_number,doctors.experience,doctors.is_active,doctors.slug,doctors.url,doctors.about,doctors.is_online,qualifications.qualification_name,qualifications.institute_name,qualifications.year FROM doctors INNER JOIN qualifications ON doctors.id = qualifications.doctor_id"
 
-QUERY_FOR_DOCTOR_SPECIALISATION_MAP = "SELECT doctors_specialisations_map.doctor_id,doctors_specialisations_map.specialisation_id,specialisations.name,specialisations.is_active FROM doctors_specialisations_map INNER JOIN specialisations ON doctors_specialisations_map.specialisation_id=specialisations.id WHERE doctor_id=:doctor_id"
+QUERY_FOR_DOCTOR_SPECIALISATION_MAP = "SELECT doctors_specialisations_map.doctor_id,specialisations.name,specialisations.id,specialisations.is_active FROM doctors_specialisations_map INNER JOIN specialisations ON doctors_specialisations_map.specialisation_id=specialisations.id WHERE doctor_id=:doctor_id"
 
 QUERY_FOR_SPECIFIC_DOCTORS_DETAILS = """SELECT id,username,full_name,mail,phone_number,gender,experience,is_active,url,
         is_online,about,slug,chat,audio,video FROM doctors WHERE id=:id """
