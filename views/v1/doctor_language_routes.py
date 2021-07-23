@@ -73,7 +73,7 @@ async def edit_doctor_language():
 
 
 
-#
+
 # @app_v1.get("/doctors/languages/", tags=["DOCTORS/LANGUAGES"], description="Get languages")
 # async def get_languages(active_state: str = Query(None, title="Query parameter for search",
 #                                                   description="Provide values in type(string)= true/false/getAll")):

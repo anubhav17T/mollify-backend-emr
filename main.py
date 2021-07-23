@@ -6,26 +6,8 @@ from views.v1.doctor_language_routes import doctor_languages
 from views.v1.doctor_specialisation_routes import doctor_specialisation
 from views.v1.doctors_qualification_routes import doctor_qualification_router
 from views.v2.filters.doctor_filter_routes import app_v2_filters
-from utils.custom_exceptions.custom_exceptions import (
-                                                       CustomException,
-                                                       CustomExceptionHandler
-                                                      )
 from utils.connection_configuration.check_connection import DatabaseConfiguration
 from utils.connection_configuration.db_object import db
-from utils.tables.db_tables import (
-                                    creating_doctor_table,
-                                    creating_blacklist_table,
-                                    creating_codes_table, \
-                                    creating_qualification_table,
-                                    creating_specialisations_table,
-                                    doctor_specialisation_mapping,
-                                    doctors_time_slot, \
-                                    doctors_timeSlot_map,
-                                    feedback,
-                                    consultation,
-                                    creating_language_table,
-                                    doctor_language_mapping
-                                    )
 from utils.logger.logger import logger
 from views.v1.v1 import app_v1
 from views.v1.doctor_routes import doctor_routes
@@ -34,6 +16,25 @@ from views.v1.doctor_feedback_routes import doctor_feedback
 from views.v1.doctor_consultation_routes import doctor_consultation
 from views.v1.payments_routes import payment_router
 from constants.const import V1_PREFIX, V2_PREFIX
+from utils.custom_exceptions.custom_exceptions import (
+    CustomException,
+    CustomExceptionHandler
+)
+from utils.tables.db_tables import (
+    creating_doctor_table,
+    creating_blacklist_table,
+    creating_codes_table, \
+    creating_qualification_table,
+    creating_specialisations_table,
+    doctor_specialisation_mapping,
+    doctors_time_slot, \
+    doctors_timeSlot_map,
+    feedback,
+    consultation,
+    creating_language_table,
+    doctor_language_mapping,
+    create_razorpay_order_status_table
+)
 
 origins = ["*"]
 conn = DatabaseConfiguration()
@@ -53,6 +54,7 @@ def connections():
     feedback()
     creating_language_table()
     doctor_language_mapping()
+    create_razorpay_order_status_table()
 
 
 connections()
@@ -80,7 +82,7 @@ app.include_router(doctor_specialisation, prefix=V1_PREFIX)
 app.include_router(doctor_languages, prefix=V1_PREFIX)
 app.include_router(doctor_qualification_router, prefix=V2_PREFIX)
 app.include_router(app_v2_filters, prefix=V2_PREFIX)
-app.include_router(payment_router,prefix=V1_PREFIX)
+app.include_router(payment_router, prefix=V1_PREFIX)
 
 
 async def home():
@@ -133,6 +135,7 @@ if __name__ == "__main__":
     try:
         """ADD MULTIPLE PROCESSING IN CREATING DATABASE TABLE FOR FAST EXECUTION """
         # import uvicorn
-        # uvicorn.run(app)
+        #
+        # uvicorn.run(app,port=8001)
     except Exception as e:
         logger.error("###### EXCEPTION IN MAIN FILE IS {} ####### ".format(e))

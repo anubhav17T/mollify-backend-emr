@@ -21,7 +21,7 @@ def save_consultation(consultation: ConsultationTable, day):
                                                "status": consultation.status,
                                                "cancel_reason": consultation.cancel_reason,
                                                "day": day,
-                                               "session_type":consultation.session_type
+                                               "session_type": consultation.session_type
                                                })
     except Exception as e:
         logger.error("#### ERROR IN EXECUTING DB QUERY IS {}".format(e))
@@ -45,7 +45,7 @@ def fetch_consultation_status(status, doctor_id):
 def fetch_all_consultation(doctor_id: int):
     logger.info("### CHECK STATUS FOR CONSULTATION STATUS ######")
     query = """SELECT u.full_name patient_name ,d.id doctor_id,d.full_name doctor_full_name,start_time,end_time,
-        status,cancel_reason FROM users u INNER JOIN consultations c ON c.patient_id=u.id INNER JOIN doctors d ON 
+        status,cancel_reason,c.id,c.session_type,c.parent_id FROM users u INNER JOIN consultations c ON c.patient_id=u.id INNER JOIN doctors d ON 
         d.id=c.doctor_id WHERE d.id=:doctor_id ORDER BY end_time """
     try:
         return db.fetch_all(query, values={"doctor_id": doctor_id})
@@ -132,3 +132,8 @@ def check_for_open_status(parent_id: int, doctor_id: int, patient_id: int):
             "id=:parent_id AND status='OPEN' "
     return db.fetch_one(query=query,
                         values={"parent_id": parent_id, "doctor_id": doctor_id, "patient_id": patient_id})
+
+
+def check_if_consultation_parent_id_exist(parent_id: int):
+    query = "SELECT id,doctor_id FROM consultations WHERE parent_id=:parent_id"
+    return db.fetch_one(query=query,values={"parent_id":parent_id})

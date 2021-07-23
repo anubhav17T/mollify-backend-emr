@@ -75,4 +75,6 @@ async def update_doctor_feedbacks(feedback_id: int, feedback_update: FeedbackUpd
                                      code=status.HTTP_400_BAD_REQUEST,
                                      success=False, target="GET-SPECIFIC-FEEDBACK")
     else:
-        return {"message": "Your feedback is updated,thanks !!", "code": status.HTTP_200_OK, "success": True}
+        return {"message": "Your feedback is updated,thanks !!",
+                "code": status.HTTP_200_OK,
+                "success": True}

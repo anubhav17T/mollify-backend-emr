@@ -402,4 +402,35 @@ def doctor_language_mapping():
     finally:
         logger.info("###### CREATE SPECIALISATION TABLE FUNCTION OVER ###### ")
 
-# 2021-05-15 20:20:00
+
+def create_razorpay_order_status_table():
+    logger.info("######## GOING FOR DOCTOR-LANGUAGE-MAP TABLE #########")
+    try:
+        conn = psycopg2.connect(database=DB_NAME, user=DB_USER, host=DB_HOST, password=DB_PASSWORD, port=DB_PORT)
+        cur = conn.cursor()
+        cur.execute("select * from information_schema.tables where table_name=%s", ('razorpay_order_status',))
+        if bool(cur.rowcount):
+            logger.info("#### TABLE ALREADY EXIST IN THE DATABASE PASSING IT")
+            conn.close()
+            return True
+        else:
+            metadata = sqlalchemy.MetaData()
+            razorpay_order_status = sqlalchemy.Table(
+                "razorpay_order_status", metadata,
+                sqlalchemy.Column("id", Integer, Sequence("razorpay_order_status_id_seq"), primary_key=True),
+                sqlalchemy.Column("razorpay_order_id", sqlalchemy.String),
+                sqlalchemy.Column("razorpay_payment_id", sqlalchemy.String),
+                sqlalchemy.Column("razorpay_signature", sqlalchemy.String),
+                sqlalchemy.Column("consultation_id", Integer),
+                sqlalchemy.Column("created_on", DateTime),
+                sqlalchemy.Column("order_status", DateTime),
+            )
+            engine = sqlalchemy.create_engine(
+                DB_URL, pool_size=3)
+            metadata.create_all(engine)
+            conn.close()
+            return razorpay_order_status
+    except Exception as e:
+        logger.error("######## WENT WRONG IN CREATING RAZORPAY-ORDER-STATUS TABLE {} ########".format(e))
+    finally:
+        logger.info("###### CREATE RAZORPAY-ORDER-STATUS TABLE FUNCTION OVER ###### ")
