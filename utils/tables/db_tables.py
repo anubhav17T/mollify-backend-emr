@@ -423,7 +423,7 @@ def create_razorpay_order_status_table():
                 sqlalchemy.Column("razorpay_signature", sqlalchemy.String),
                 sqlalchemy.Column("consultation_id", Integer),
                 sqlalchemy.Column("created_on", DateTime),
-                sqlalchemy.Column("order_status", DateTime),
+                sqlalchemy.Column("order_status", sqlalchemy.String(10)),
             )
             engine = sqlalchemy.create_engine(
                 DB_URL, pool_size=3)

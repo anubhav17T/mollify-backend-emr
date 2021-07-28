@@ -2,16 +2,21 @@ from fastapi import status
 
 
 class ConsultationStatusMessage:
-    def __init__(self, status: str,id:int):
+    def __init__(self, status: str, id: int):
         self.status = status
         self.id = id
 
-
     def message(self):
+        if self.status is None:
+            return {"message": "CHEERS!! Your consultation has been booked",
+                    "code": status.HTTP_201_CREATED,
+                    "id": self.id,
+                    "success": True}
+
         if self.status == "OPEN":
             return {"message": "CHEERS!! Your consultation has been booked",
                     "code": status.HTTP_201_CREATED,
-                    "id":self.id,
+                    "id": self.id,
                     "success": True}
 
         if self.status == "INPROGRESS":

@@ -25,6 +25,6 @@ class ConsultationTable(BaseModel):
     start_time: datetime
     end_time: datetime
     time_slot_config_id: int
-    status: Status
+    status: Status = Field(default=None,description="STATUS DESCRIPTION FOR THE CONSULTATIONS")
     cancel_reason: str = Field(None, description="WHY BOOKING IS CANCELLED")
     session_type: SessionType

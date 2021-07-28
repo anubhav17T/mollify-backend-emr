@@ -134,6 +134,24 @@ def check_for_open_status(parent_id: int, doctor_id: int, patient_id: int):
                         values={"parent_id": parent_id, "doctor_id": doctor_id, "patient_id": patient_id})
 
 
-def check_if_consultation_parent_id_exist(parent_id: int):
-    query = "SELECT id,doctor_id FROM consultations WHERE parent_id=:parent_id"
-    return db.fetch_one(query=query,values={"parent_id":parent_id})
+def check_if_consultation_parent_id_exist(id: int):
+    query = "SELECT id,doctor_id FROM consultations WHERE id=:id"
+    return db.fetch_one(query=query, values={"id": id})
+
+
+def doctor_past_consultations(doctor_id: int):
+    query = "SELECT array_agg(consultations.status)AS status,array_agg(consultations.id)AS id,array_agg(" \
+            "consultations.parent_id)AS parent_id,array_agg(consultations.cancel_reason)AS cancel_reason," \
+            "consultations.patient_id,consultations.start_time,consultations.end_time,users.full_name AS patient_name," \
+            "consultations.session_type FROM consultations INNER JOIN users ON consultations.patient_id = users.id " \
+            "WHERE doctor_id=:doctor_id AND (status='INPROGRESS' OR status='CANCELLED' OR status='COMPLETED') GROUP " \
+            "BY " \
+            "consultations.patient_id,consultations.start_time,consultations.end_time,users.full_name," \
+            "consultations.session_type"
+    return db.fetch_all(query=query, values={"doctor_id": doctor_id})
+
+
+def update_consultation_status(id: int):
+    query = "UPDATE consultations SET status='OPEN' WHERE id=:id RETURNING id;"
+    return db.execute(query=query,values={"id":id})
+

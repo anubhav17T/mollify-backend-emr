@@ -135,7 +135,7 @@ if __name__ == "__main__":
     try:
         """ADD MULTIPLE PROCESSING IN CREATING DATABASE TABLE FOR FAST EXECUTION """
         # import uvicorn
-        #
-        # uvicorn.run(app,port=8001)
+        # uvicorn.run(app,port=8000)
     except Exception as e:
         logger.error("###### EXCEPTION IN MAIN FILE IS {} ####### ".format(e))
+

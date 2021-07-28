@@ -127,7 +127,7 @@ async def register_user(user: Doctor):
     user.password = str(random_with_N_digits(n=5))
     user.password = hash_password(password=user.password)
     logger.info("#### RANDOMLY GENERATED USER PASSWORD ##### ")
-    slug_object = get_part_of_string(input_string=user.full_name, character="space")
+    slug_object = get_part_of_string(input_string=user.full_name, character="space").lower()
     specialisation_name_object = await find_specialisation(specialisation_value=user.specialisation[0])
     if specialisation_name_object is None:
         return {"error": {"message": "Unable to find the provided specialisation in the database",

@@ -1,9 +1,10 @@
 from fastapi import status, APIRouter
-from constants.variable_constants import (CONSULTATION_STATUS_OPEN,
-                                          CONSULTATION_STATUS_CANCELLED, \
-                                          CONSULTATION_STATUS_COMPLETED,
-                                          CONSULTATION_STATUS_PROGRESS,
-                                          CONSULTATION_STATUS_RESCHEDULED)
+from constants.variable_constants import (
+    CONSULTATION_STATUS_OPEN,
+    CONSULTATION_STATUS_CANCELLED, \
+    CONSULTATION_STATUS_COMPLETED,
+    CONSULTATION_STATUS_PROGRESS,
+    CONSULTATION_STATUS_RESCHEDULED)
 from utils.db_functions.db_consultation_function import (save_consultation,
                                                          fetch_consultation_status, \
                                                          fetch_all_consultation,
@@ -11,7 +12,7 @@ from utils.db_functions.db_consultation_function import (save_consultation,
                                                          check_for_consultation_existence,
                                                          check_for_multiple_states,
                                                          check_for_duplicate_consultation_booking,
-                                                         check_for_open_status, \
+                                                         check_for_open_status, doctor_past_consultations, \
                                                          )
 from utils.logger.logger import logger
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
@@ -31,7 +32,6 @@ global doctor_id
                           description="POST CALL FOR CONSULTATIONS")
 async def create_consultations(consultation: ConsultationTable):
     logger.info("###### BOOK CONSULTATION METHOD CALLED ######")
-
     # run multiple process for all checks
     response = CheckUserExistence(_id=consultation.doctor_id, target="DOCTORS-CONSULTATION-POST")
     await response.check_if_user_id_exist()
@@ -62,11 +62,19 @@ async def create_consultations(consultation: ConsultationTable):
             success=False, target="CONSULTATION(STATUS_OPEN AND PARENT_ID CHECK)")
 
     if consultation.status == CONSULTATION_STATUS_OPEN and consultation.parent_id is None:
+        if consultation.cancel_reason is not None:
+            raise CustomExceptionHandler(
+                message="Cancel reason should be none",
+                code=status.HTTP_400_BAD_REQUEST,
+                success=False, target="CONSULTATION STATES OPEN")
+
         state = ConsultationChecks()
         await state.duplicate_consultation_for_doctor(doctor_id=consultation.doctor_id,
                                                       start_time=consultation.start_time,
                                                       end_time=consultation.end_time
                                                       )
+        # todo: if 2 consultation intersects for user and same consultation exist for
+
     if (consultation.status == CONSULTATION_STATUS_CANCELLED or
         consultation.status == CONSULTATION_STATUS_COMPLETED or
         consultation.status == CONSULTATION_STATUS_PROGRESS or
@@ -95,6 +103,12 @@ async def create_consultations(consultation: ConsultationTable):
                 temp = dict(response)
                 if temp["session_type"] != consultation.session_type:
                     raise Exception("Session type is different in state in status inprogress")
+
+                if consultation.cancel_reason is not None:
+                    raise CustomExceptionHandler(
+                        message="Cancel reason should be none",
+                        code=status.HTTP_400_BAD_REQUEST,
+                        success=False, target="CONSULTATION STATES INPROGRESS")
 
                 if temp["id"] == consultation.parent_id and temp["status"] == "OPEN":
                     logger.info("###### STAGE-1 PARENT_ID AND STATUS-> OPEN IS VALIDATED")
@@ -125,6 +139,12 @@ async def create_consultations(consultation: ConsultationTable):
                     temp = dict(config)
                     if temp["session_type"] != consultation.session_type:
                         raise Exception("Session type is different in state in status completed")
+
+                    if consultation.cancel_reason is not None:
+                        raise CustomExceptionHandler(
+                            message="Cancel reason should be none",
+                            code=status.HTTP_400_BAD_REQUEST,
+                            success=False, target="CONSULTATION STATES COMPLETED")
 
                     if temp["parent_id"] == consultation.parent_id and temp["status"] == "INPROGRESS":
                         logger.info("###### STAGE-1 PARENT_ID AND STATUS-> INPROGRESS IS VALIDATED")
@@ -171,7 +191,8 @@ async def create_consultations(consultation: ConsultationTable):
                                                                    status=consultation.status
                                                                    )
                     if check is not None:
-                        raise Exception("CONSULTATION IS ALREADY CANCELLED/RESCHEDULED, DUPLICATE ENTRY?", )
+                        raise Exception("CONSULTATION IS ALREADY CANCELLED/RESCHEDULED, DUPLICATE ENTRY?")
+                # todo: same day consultation cancel/reschedule  not allow or money will cut !!
     except Exception as Why:
         raise CustomExceptionHandler(
             message="Something went wrong in doctor consultation booking {}".format(Why),
@@ -179,12 +200,12 @@ async def create_consultations(consultation: ConsultationTable):
             success=False, target="CONSULTATION(STATUS_CANCELLED)")
     else:
         day = consultation.start_time.strftime("%A").upper()
-        check_response = await save_consultation(consultation=consultation, day=day)
-        if not check_response:
+        response_id = await save_consultation(consultation=consultation, day=day)
+        if not response_id:
             raise CustomExceptionHandler(message="Unable to insert in consultations table",
                                          code=status.HTTP_400_BAD_REQUEST,
                                          success=False, target="SAVE-CONSULTATION")
-        message = ConsultationStatusMessage(status=consultation.status, id=check_response)
+        message = ConsultationStatusMessage(status=consultation.status, id=response_id)
         return message.message()
 
 
@@ -196,7 +217,6 @@ async def get_consultations(id: int = Path(..., description="id of the doctor"),
     global doctor_id
     response = CheckUserExistence(_id=id, target="DOCTORS-CONSULTATION-GEGTG")
     await response.check_if_user_id_exist()
-
     if checkStatus is None:
         logger.info("######## CHECK STATUS IS NONE, FETCHING ALL ID #########")
         check_response = await fetch_all_consultation(doctor_id=id)
@@ -215,3 +235,74 @@ async def get_consultations(id: int = Path(..., description="id of the doctor"),
                                          code=status.HTTP_400_BAD_REQUEST,
                                          success=False, target="GET-CONSULTATION")
         return check_response
+
+
+@doctor_consultation.get("/doctors/consultations/upcoming/{id}", tags=["DOCTORS/CONSULTATIONS"],
+                         description="GET CALL DOCTORS PREVIOUS CONSULTATIONS")
+async def get_upcoming_doctor_consultations(id: int):
+    logger.info("######## FETCHING UPCOMING CONSULTATIONS ###############")
+
+
+@doctor_consultation.get("/doctors/consultations/history/{doctor_id}", tags=["DOCTORS/CONSULTATIONS"],
+                         description="GET CALL DOCTORS PREVIOUS CONSULTATIONS")
+async def get_past_doctor_consultations(doctor_id: int):
+    logger.info("######## FETCHING PAST CONSULTATIONS ###############")
+    fetch_past_consultations = await doctor_past_consultations(doctor_id=doctor_id)
+    if not fetch_past_consultations:
+        return {"message": "You have no past consultations",
+                "success": True,
+                "code": status.HTTP_200_OK,
+                "data": []
+                }
+    consultation_information = []
+    try:
+        for values in fetch_past_consultations:
+            items = dict(values)
+            if len(items["status"]) == 2:
+                booking_history_information = {"information": [
+                    {
+                        "status": items["status"][0],
+                        "id": items["id"][0],
+                        "cancel_reason": items["cancel_reason"][0],
+                        "parent_id": items["parent_id"][0]
+                    },
+                    {
+                        "status": items["status"][1],
+                        "id": items["id"][1],
+                        "cancel_reason": items["cancel_reason"][1],
+                        "parent_id": items["parent_id"][1]
+                    }
+                ],
+                    "patient": {"id": items["patient_id"], "name": items["patient_name"]},
+                    "status": items["status"][1],
+                    "id": items["id"][1],
+                    "cancel_reason": items["cancel_reason"][1],
+                    "parent_id": items["parent_id"][1],
+                }
+            else:
+                booking_history_information = {"information": [
+                    {
+                        "status": items["status"][0],
+                        "id": items["id"][0],
+                        "cancel_reason": items["cancel_reason"][0],
+                        "parent_id": items["parent_id"][0]
+                    }
+                ],
+                    "patient": {"id": items["patient_id"], "name": items["patient_name"]},
+                    "status": items["status"][0],
+                    "id": items["id"][0],
+                    "parent_id": items["parent_id"][0],
+                }
+            booking_history_information["start_time"] = items["start_time"]
+            booking_history_information["end_time"] = items["end_time"]
+            booking_history_information["session_type"] = items["session_type"]
+            booking_history_information["patient_id"] = items["patient_id"]
+            consultation_information.append(booking_history_information)
+    except Exception as Why:
+        raise CustomExceptionHandler(message="Something went wrong,cannot able to show past consultations",
+                                     code=status.HTTP_404_NOT_FOUND,
+                                     success=False,
+                                     target="GET-PAST-CONSULTATIONS-DUE_TO {}".format(Why)
+                                     )
+    else:
+        return consultation_information

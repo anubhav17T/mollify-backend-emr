@@ -1,7 +1,5 @@
 from datetime import datetime, timezone
 from fastapi import status
-from constants.variable_constants import CONSULTATION_STATUS_OPEN, CONSULTATION_STATUS_CANCELLED, \
-    CONSULTATION_STATUS_COMPLETED, CONSULTATION_STATUS_PROGRESS, CONSULTATION_STATUS_RESCHEDULED
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from utils.db_functions.db_consultation_function import fetch_feedback_utils, find_if_review_exist, client_exist, \
     check_for_duplicate_consultation_booking
@@ -10,7 +8,6 @@ from utils.db_functions.db_functions import find_exist_user_id, find_exist_user,
 from utils.db_functions.db_specialisation_function import check_if_id_exists
 from utils.logger.logger import logger
 from datetime import timedelta
-import fastapi
 dt = datetime.now(timezone.utc)
 
 
