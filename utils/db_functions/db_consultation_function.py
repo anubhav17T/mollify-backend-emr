@@ -143,15 +143,33 @@ def doctor_past_consultations(doctor_id: int):
     query = "SELECT array_agg(consultations.status)AS status,array_agg(consultations.id)AS id,array_agg(" \
             "consultations.parent_id)AS parent_id,array_agg(consultations.cancel_reason)AS cancel_reason," \
             "consultations.patient_id,consultations.start_time,consultations.end_time,users.full_name AS patient_name," \
-            "consultations.session_type FROM consultations INNER JOIN users ON consultations.patient_id = users.id " \
+            "users.gender AS gender,users.marital_status AS marital_status,consultations.session_type FROM consultations INNER JOIN users ON consultations.patient_id = users.id " \
             "WHERE doctor_id=:doctor_id AND (status='INPROGRESS' OR status='CANCELLED' OR status='COMPLETED') GROUP " \
             "BY " \
             "consultations.patient_id,consultations.start_time,consultations.end_time,users.full_name," \
-            "consultations.session_type"
+            "consultations.session_type,users.gender,users.marital_status"
     return db.fetch_all(query=query, values={"doctor_id": doctor_id})
 
 
 def update_consultation_status(id: int):
     query = "UPDATE consultations SET status='OPEN' WHERE id=:id RETURNING id;"
-    return db.execute(query=query,values={"id":id})
+    return db.execute(query=query, values={"id": id})
 
+
+def doctor_upcoming_consultation(doctor_id: int):
+    query = "SELECT array_agg(consultations.status)AS status,array_agg(consultations.id)AS id,array_agg(" \
+            "consultations.parent_id)AS parent_id,array_agg(consultations.cancel_reason)AS cancel_reason," \
+            "consultations.patient_id,consultations.start_time,consultations.end_time,users.full_name AS " \
+            "patient_name,users.gender AS gender,users.marital_status AS marital_status,consultations.session_type " \
+            "FROM consultations INNER JOIN users ON consultations.patient_id = users.id " \
+            "WHERE doctor_id=:doctor_id AND (status='OPEN' OR status='RESCHEDULED') AND consultations.start_time " \
+            ">=now()  " \
+            "GROUP BY " \
+            "consultations.patient_id,consultations.start_time,consultations.end_time,users.full_name,users.gender,users.marital_status," \
+            "consultations.session_type"
+    return db.fetch_all(query=query, values={"doctor_id": doctor_id})
+
+
+def select(id:int):
+    query = "SELECT * FROM client_intake_form WHERE id=:id"
+    return db.fetch_one(query=query,values={"id":id})

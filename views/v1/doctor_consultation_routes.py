@@ -12,7 +12,8 @@ from utils.db_functions.db_consultation_function import (save_consultation,
                                                          check_for_consultation_existence,
                                                          check_for_multiple_states,
                                                          check_for_duplicate_consultation_booking,
-                                                         check_for_open_status, doctor_past_consultations, \
+                                                         check_for_open_status, doctor_past_consultations,
+                                                         doctor_upcoming_consultation, select, \
                                                          )
 from utils.logger.logger import logger
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
@@ -237,17 +238,82 @@ async def get_consultations(id: int = Path(..., description="id of the doctor"),
         return check_response
 
 
-@doctor_consultation.get("/doctors/consultations/upcoming/{id}", tags=["DOCTORS/CONSULTATIONS"],
+@doctor_consultation.get("/doctors/consultations/upcoming/{doctors_id}", tags=["DOCTORS/CONSULTATIONS"],
                          description="GET CALL DOCTORS PREVIOUS CONSULTATIONS")
-async def get_upcoming_doctor_consultations(id: int):
+async def get_upcoming_doctor_consultations(doctors_id: int):
     logger.info("######## FETCHING UPCOMING CONSULTATIONS ###############")
+    fetching_upcoming_consultations = await doctor_upcoming_consultation(doctor_id=doctors_id)
+    if not fetching_upcoming_consultations:
+        return {"message": "You have no upcoming consultations booked",
+                "success": True,
+                "code": status.HTTP_200_OK,
+                "data": []
+                }
+    consultation_information = []
+    try:
+        for values in fetching_upcoming_consultations:
+            items = dict(values)
+            if len(items["status"]) == 2:
+                booking_upcoming_information = {"information": [
+                    {
+                        "status": items["status"][0],
+                        "id": items["id"][0],
+                        "cancel_reason": items["cancel_reason"][0],
+                        "parent_id": items["parent_id"][0]
+                    },
+                    {
+                        "status": items["status"][1],
+                        "id": items["id"][1],
+                        "cancel_reason": items["cancel_reason"][1],
+                        "parent_id": items["parent_id"][1]
+                    }
+                ],
+                    "patient": {"id": items["patient_id"], "name": items["patient_name"],
+                                "gender": items["gender"], "marital_status": items["marital_status"]},
+                    "status": items["status"][1],
+                    "id": items["id"][1],
+                    "cancel_reason": items["cancel_reason"][1],
+                    "parent_id": items["parent_id"][1],
+                }
+            else:
+                booking_upcoming_information = {"information": [
+                    {
+                        "status": items["status"][0],
+                        "id": items["id"][0],
+                        "cancel_reason": items["cancel_reason"][0],
+                        "parent_id": items["parent_id"][0]
+                    }
+                ],
+                    "patient": {"id": items["patient_id"], "name": items["patient_name"],
+                                "gender": items["gender"], "marital_status": items["marital_status"]},
+                    "status": items["status"][0],
+                    "id": items["id"][0],
+                    "parent_id": items["parent_id"][0],
+                }
+            booking_upcoming_information["start_time"] = items["start_time"]
+            booking_upcoming_information["end_time"] = items["end_time"]
+            booking_upcoming_information["session_type"] = items["session_type"]
+            booking_upcoming_information["patient_id"] = items["patient_id"]
+            consultation_information.append(booking_upcoming_information)
+    except Exception as Why:
+        raise CustomExceptionHandler(message="Something went wrong,cannot able to show upcoming consultations",
+                                     code=status.HTTP_404_NOT_FOUND,
+                                     success=False,
+                                     target="GET-PAST-CONSULTATIONS-DUE_TO {}".format(Why)
+                                     )
+    else:
+        return {"message": "Here,is your upcoming consultations",
+                "success": True,
+                "code": status.HTTP_200_OK,
+                "data": consultation_information
+                }
 
 
-@doctor_consultation.get("/doctors/consultations/history/{doctor_id}", tags=["DOCTORS/CONSULTATIONS"],
+@doctor_consultation.get("/doctors/consultations/history/{doctors_id}", tags=["DOCTORS/CONSULTATIONS"],
                          description="GET CALL DOCTORS PREVIOUS CONSULTATIONS")
-async def get_past_doctor_consultations(doctor_id: int):
+async def get_past_doctor_consultations(doctors_id: int):
     logger.info("######## FETCHING PAST CONSULTATIONS ###############")
-    fetch_past_consultations = await doctor_past_consultations(doctor_id=doctor_id)
+    fetch_past_consultations = await doctor_past_consultations(doctor_id=doctors_id)
     if not fetch_past_consultations:
         return {"message": "You have no past consultations",
                 "success": True,
@@ -273,7 +339,8 @@ async def get_past_doctor_consultations(doctor_id: int):
                         "parent_id": items["parent_id"][1]
                     }
                 ],
-                    "patient": {"id": items["patient_id"], "name": items["patient_name"]},
+                    "patient": {"id": items["patient_id"], "name": items["patient_name"],
+                                "gender": items["gender"], "marital_status": items["marital_status"]},
                     "status": items["status"][1],
                     "id": items["id"][1],
                     "cancel_reason": items["cancel_reason"][1],
@@ -288,7 +355,10 @@ async def get_past_doctor_consultations(doctor_id: int):
                         "parent_id": items["parent_id"][0]
                     }
                 ],
-                    "patient": {"id": items["patient_id"], "name": items["patient_name"]},
+                    "patient": {"id": items["patient_id"], "name": items["patient_name"],
+                                "gender": items["gender"],
+                                "marital_status": items["marital_status"]
+                                },
                     "status": items["status"][0],
                     "id": items["id"][0],
                     "parent_id": items["parent_id"][0],
@@ -305,4 +375,19 @@ async def get_past_doctor_consultations(doctor_id: int):
                                      target="GET-PAST-CONSULTATIONS-DUE_TO {}".format(Why)
                                      )
     else:
-        return consultation_information
+        return {"message": "Here,is your past consultations",
+                "success": True,
+                "code": status.HTTP_200_OK,
+                "data": consultation_information
+                }
+
+
+# @doctor_consultation.get("/doctors/consultations/form/{id}", tags=["DOCTORS/CONSULTATIONS"])
+# async def see(id: int):
+#     logger.info("###")
+#     result = await select(id=id)
+#     questions = result["questions"]
+#     import json
+#     q = json.loads(questions)
+#     print(q)
+#     return {"questions":q,"current_medicine":result["currently_on_medicines"]}
