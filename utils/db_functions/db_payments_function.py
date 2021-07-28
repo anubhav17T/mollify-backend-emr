@@ -25,3 +25,8 @@ def save_razorpay_payment(verification: VerifyRazorPayment, order_status: str):
 def update_payment_status(id: int):
     query = "UPDATE razorpay_order_status SET order_status='NOT PAID' WHERE id=:id RETURNING id;"
     return db.execute(query=query,values={"id":id})
+
+
+def check_payment_status(consultation_id:int):
+    query = "SELECT order_status,consultation_id FROM razorpay_order_status WHERE consultation_id=:consultation_id"
+    return db.fetch_one(query=query,values={"consultation_id":consultation_id})

@@ -5,7 +5,7 @@ from payments.razorpay.razor import PaymentRazorpay
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from utils.db_functions.db_consultation_function import check_if_consultation_parent_id_exist, \
     update_consultation_status
-from utils.db_functions.db_payments_function import save_razorpay_payment, update_payment_status
+from utils.db_functions.db_payments_function import save_razorpay_payment, update_payment_status, check_payment_status
 from utils.logger.logger import logger
 
 payment_router = APIRouter()
@@ -30,9 +30,13 @@ async def verify_razorpay_payment(verify: VerifyRazorPayment):
     success_in_consultation = await check_if_consultation_parent_id_exist(id=verify.consultation_id)
 
     # CHECK FOR DUPLICATE PAYMENT
-
-
-
+    is_consultation_exist = await check_payment_status(consultation_id=verify.consultation_id)
+    if is_consultation_exist is not None:
+        raise CustomExceptionHandler(message="Payment for the consultation is already being marked",
+                                     code=status.HTTP_400_BAD_REQUEST,
+                                     success=False,
+                                     target="IS-DUPLICATE-CONSULTATION-EXIST"
+                                     )
     if success_in_consultation is None:
         logger.info("########## NO CONSULTATION FOUND ############")
         raise CustomExceptionHandler(message="NO CONSULTATION ID EXIST", code=status.HTTP_400_BAD_REQUEST,
