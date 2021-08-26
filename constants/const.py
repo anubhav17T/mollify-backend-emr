@@ -19,7 +19,7 @@ PHONE_REGEX = "(0/91)?[7-9][0-9]{9}"
 CLOUD_NAME = "mollify"
 API_KEY = "466423759736745"
 API_SECRET = "Arv-iXxAZuNrVgf3k4_nS47VFag"
-
+#
 DB_HOST = "ec2-54-163-254-204.compute-1.amazonaws.com"
 DB_USER = "jkyfmagnmgcpjs"
 DB_PASSWORD = "a63ffcd21fa58bf0619dd063e87da51afa3b665b4c1305ea73014dbad828f59e"
@@ -85,7 +85,6 @@ APPLICATION_CERTIFICATE = "f04e1c68506c4d309deb06ffff8e0088"
 "============== ALEMBIC LOCAL CONFIGURATION =========="
 URL = "postgresql://postgres:mollify@123@localhost/mollify"
 
-SENDGRID_API_KEY = "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"
 
 """ QUERIES FOR UPDATE TIMESLOTS """
 UPDATE = "UPDATE doctors_time_slot SET "

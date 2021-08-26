@@ -272,16 +272,3 @@ async def update_doctor_details(doctor_update: DoctorUpdateInformation, id: int)
                 "success": True,
                 "code": status.HTTP_201_CREATED}
 
-
-@doctor_routes.get("/user/document/sample", description="THERAPY PLAN FOR THE USER")
-def sample_file():
-    from cloudinary import uploader
-    import cloudinary
-    html = """<h1> An interesting title </h1> This page will be red"""
-    logger.info("HERE")
-    hti = Html2Image()
-    logger.info("CONSTRUCTOR MADE")
-    hti.screenshot(html_str=html, save_as='red_page.png')
-    logger.info("SCREENSHOT TAKEN")
-    result_ = cloudinary.uploader.upload("red_page.png")
-    logger.info("##### RESULT IS {}".format(str(result_)))

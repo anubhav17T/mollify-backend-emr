@@ -8,6 +8,7 @@ from utils.db_functions.db_functions import find_exist_user_id, find_exist_user,
 from utils.db_functions.db_specialisation_function import check_if_id_exists
 from utils.logger.logger import logger
 from datetime import timedelta
+
 dt = datetime.now(timezone.utc)
 
 
@@ -117,6 +118,14 @@ class TimeslotConfiguration(object):
             raise Exception("Date is not valid, please specify current or future date")
         return True
 
+    def check_if_start_time_is_less_than_current_time(self):
+        if self.start_time.time() <= dt.now().time():
+            raise Exception("Time slot is not valid, because start time is less than current time")
+        return True
+
+
+
+
     def end_time_should_not_exceed(self):
         end = timedelta(hours=self.end_time.time().hour,
                         minutes=self.end_time.time().minute)
@@ -204,7 +213,7 @@ class FindClient:
 
 class ConsultationChecks:
     @staticmethod
-    async def duplicate_consultation_for_doctor(doctor_id:int, start_time:datetime, end_time:datetime):
+    async def duplicate_consultation_for_doctor(doctor_id: int, start_time: datetime, end_time: datetime):
         duplicate = await check_for_duplicate_consultation_booking(doctor_id=doctor_id,
                                                                    start_time=start_time,
                                                                    end_time=end_time
@@ -214,5 +223,3 @@ class ConsultationChecks:
                 message="BOOKING ALREADY EXIST FOR THE SPECIFIED DOCTOR AT GIVEN TIME",
                 code=status.HTTP_400_BAD_REQUEST,
                 success=False, target="CONSULTATION(STATUS_OPEN AND PARENT_ID DUPLICATE CHECK)")
-
-

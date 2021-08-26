@@ -13,7 +13,7 @@ from utils.db_functions.db_consultation_function import (save_consultation,
                                                          check_for_multiple_states,
                                                          check_for_duplicate_consultation_booking,
                                                          check_for_open_status, doctor_past_consultations,
-                                                         doctor_upcoming_consultation, select, \
+                                                         doctor_upcoming_consultation, fetch_all_form_details, \
                                                          )
 from utils.logger.logger import logger
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
@@ -45,6 +45,7 @@ async def create_consultations(consultation: ConsultationTable):
         time_configuration_object.check_if_start_time_greater_than_end_time()
         time_configuration_object.check_if_start_date_greater_than_end_date()
         time_configuration_object.check_if_start_date_valid()
+        time_configuration_object.check_if_start_time_is_less_than_current_time()
         await time_configuration_object.check_if_timeslot_id_exist(timeslot_id=consultation.time_slot_config_id,
                                                                    doctor_id=consultation.doctor_id)
     except Exception as why:
@@ -294,6 +295,17 @@ async def get_upcoming_doctor_consultations(doctors_id: int):
             booking_upcoming_information["end_time"] = items["end_time"]
             booking_upcoming_information["session_type"] = items["session_type"]
             booking_upcoming_information["patient_id"] = items["patient_id"]
+            document_info = await fetch_all_form_details(patient_id=items["patient_id"],
+                                                         consultation_id=booking_upcoming_information["id"])
+            if document_info:
+                document = {}
+                for val in document_info:
+                    items = dict(val)
+                    document.update({items["document_type"]: items["url"]})
+                booking_upcoming_information["document"] = document
+            else:
+                booking_upcoming_information["document"] = {"CLIENT_INTAKE": None, "THERAPY_PLAN": None,
+                                                            "CASE_HISTORY": None}
             consultation_information.append(booking_upcoming_information)
     except Exception as Why:
         raise CustomExceptionHandler(message="Something went wrong,cannot able to show upcoming consultations",
@@ -367,6 +379,17 @@ async def get_past_doctor_consultations(doctors_id: int):
             booking_history_information["end_time"] = items["end_time"]
             booking_history_information["session_type"] = items["session_type"]
             booking_history_information["patient_id"] = items["patient_id"]
+            document_info = await fetch_all_form_details(patient_id=items["patient_id"],
+                                                         consultation_id=booking_history_information["id"])
+            if document_info:
+                document = {}
+                for val in document_info:
+                    items = dict(val)
+                    document.update({items["document_type"]: items["url"]})
+                booking_history_information["document"] = document
+            else:
+                booking_history_information["document"] = {"CLIENT_INTAKE": None, "THERAPY_PLAN": None,
+                                                           "CASE_HISTORY": None}
             consultation_information.append(booking_history_information)
     except Exception as Why:
         raise CustomExceptionHandler(message="Something went wrong,cannot able to show past consultations",
@@ -380,14 +403,3 @@ async def get_past_doctor_consultations(doctors_id: int):
                 "code": status.HTTP_200_OK,
                 "data": consultation_information
                 }
-
-
-# @doctor_consultation.get("/doctors/consultations/form/{id}", tags=["DOCTORS/CONSULTATIONS"])
-# async def see(id: int):
-#     logger.info("###")
-#     result = await select(id=id)
-#     questions = result["questions"]
-#     import json
-#     q = json.loads(questions)
-#     print(q)
-#     return {"questions":q,"current_medicine":result["currently_on_medicines"]}

@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field
 
-
 class Feedback(BaseModel):
     consultation_id: int = Field(..., description="Unique ID For Consultation")
     doctor_id: int = Field(..., description="Unique id for doctor")

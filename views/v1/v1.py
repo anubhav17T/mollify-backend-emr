@@ -296,7 +296,7 @@ async def reset_password(request: ResetPassword):
         logger.info("###### RESET PASSWORD METHOD COMPLETED ######### ")
 
 
-@app_v1.put("/doctors/image-upload", tags=["DOCTORS/GENERAL"])
+@app_v1.put("/doctors/images-upload", tags=["DOCTORS/GENERAL"])
 async def uploading_image(file: bytes = File(...)):
     try:
         logger.info("######## UPDATING IMAGE FOR THE DOCTOR/THERAPIST {} ####")
@@ -311,7 +311,7 @@ async def uploading_image(file: bytes = File(...)):
         }
     except Exception as e:
         logger.error("######## EXCEPTION OCCURED IN IMAGE UPLOAD METHOD {} ###### ".format(e))
-        raise CustomExceptionHandler(message="unable to upload the image", code=status.HTTP_400_BAD_REQUEST,
+        raise CustomExceptionHandler(message="unable to upload the images", code=status.HTTP_400_BAD_REQUEST,
                                      target="IMAGE-UPLOAD", success=False
                                      )
     finally:

@@ -173,3 +173,8 @@ def doctor_upcoming_consultation(doctor_id: int):
 def select(id:int):
     query = "SELECT * FROM client_intake_form WHERE id=:id"
     return db.fetch_one(query=query,values={"id":id})
+
+def fetch_all_form_details(patient_id: int, consultation_id: int):
+    query = "SELECT document_type,url FROM client_documents WHERE patient_id=:patient_id " \
+            "AND consultation_id=:consultation_id "
+    return db.fetch_all(query=query, values={"patient_id": patient_id, "consultation_id": consultation_id})
