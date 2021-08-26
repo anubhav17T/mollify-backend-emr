@@ -1,4 +1,6 @@
 from fastapi import status, APIRouter, HTTPException, Depends, Path
+from html2image import Html2Image
+
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from utils.db_functions.db_language_function import get_language_doctor
 from utils.db_functions.db_qualifications_function import get_doc_qualifications
@@ -132,7 +134,8 @@ async def get_specific_doctor_by_id(id: int):
     logger.info("###### FETCHING INFORMATION OF DOCTOR ###############")
     doc_or_therapist_results = await specific_results_doctor(id=id)
     doc_or_therapist_results = dict(doc_or_therapist_results)
-    consultation_charges = {"chat":doc_or_therapist_results["chat"],"audio":doc_or_therapist_results["audio"],"video":doc_or_therapist_results["video"]}
+    consultation_charges = {"chat": doc_or_therapist_results["chat"], "audio": doc_or_therapist_results["audio"],
+                            "video": doc_or_therapist_results["video"]}
     doc_or_therapist_results.pop("chat")
     doc_or_therapist_results.pop("audio")
     doc_or_therapist_results.pop("video")
@@ -143,7 +146,7 @@ async def get_specific_doctor_by_id(id: int):
             "languages": await get_language_doctor(id=id),
             "qualification": await get_doc_qualifications(id=id),
             "specialisation": await get_specialisation_of_doctor(doctor_id=id),
-            "consultation_charges":consultation_charges
+            "consultation_charges": consultation_charges
         }
     except Exception as WHY:
         logger.error("####### EXCEPTION IN GETTING DOCTOR DETAILS IS {} ###########".format(WHY))
@@ -268,3 +271,17 @@ async def update_doctor_details(doctor_update: DoctorUpdateInformation, id: int)
         return {"message": "Successfully updated the status",
                 "success": True,
                 "code": status.HTTP_201_CREATED}
+
+
+@doctor_routes.get("/user/document/sample", description="THERAPY PLAN FOR THE USER")
+def sample_file():
+    from cloudinary import uploader
+    import cloudinary
+    html = """<h1> An interesting title </h1> This page will be red"""
+    logger.info("HERE")
+    hti = Html2Image()
+    logger.info("CONSTRUCTOR MADE")
+    hti.screenshot(html_str=html, save_as='red_page.png')
+    logger.info("SCREENSHOT TAKEN")
+    result_ = cloudinary.uploader.upload("red_page.png")
+    logger.info("##### RESULT IS {}".format(str(result_)))
