@@ -296,26 +296,21 @@ async def reset_password(request: ResetPassword):
         logger.info("###### RESET PASSWORD METHOD COMPLETED ######### ")
 
 
-@app_v1.put("/doctors/images-upload", tags=["DOCTORS/GENERAL"])
+@app_v1.post("/doctors/images-upload", tags=["DOCTORS/GENERAL"])
 async def uploading_image(file: bytes = File(...)):
-    try:
-        logger.info("######## UPDATING IMAGE FOR THE DOCTOR/THERAPIST {} ####")
-        logger.info("#### USERNAME IS VALID #####")
-        result_ = cloudinary.uploader.upload(file)
-        url = result_.get("secure_url")
-        return {
-            "status": status.HTTP_201_CREATED,
-            "message": "Image uploaded successfully",
-            "url": url,
-            "success": True
-        }
-    except Exception as e:
-        logger.error("######## EXCEPTION OCCURED IN IMAGE UPLOAD METHOD {} ###### ".format(e))
-        raise CustomExceptionHandler(message="unable to upload the images", code=status.HTTP_400_BAD_REQUEST,
+    logger.info("######## UPLOADING IMAGE FOR THE DOCTOR/THERAPIST ############")
+    image_secure_url = cloudinary.uploader.upload(file)
+    if not image_secure_url:
+        raise CustomExceptionHandler(message="Error in uploading the image",
+                                     code=status.HTTP_400_BAD_REQUEST,
                                      target="IMAGE-UPLOAD", success=False
                                      )
-    finally:
-        logger.info("####### UPLOADING IMAGE METHOD COMPLETED ######")
+    return {
+        "status": status.HTTP_201_CREATED,
+        "message": "Image uploaded successfully",
+        "url": image_secure_url.get("secure_url"),
+        "success": True
+    }
 
 
 @app_v1.get("/doctors/information/{slug}", tags=["DOCTORS/GENERAL"])
