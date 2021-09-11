@@ -2,7 +2,6 @@ import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from utils.logger.logger import logger
-
 html = """\
 <html>
   <head></head>

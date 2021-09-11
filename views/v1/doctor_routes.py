@@ -1,12 +1,11 @@
 from fastapi import status, APIRouter, HTTPException, Depends, Path
-from html2image import Html2Image
-
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from utils.db_functions.db_language_function import get_language_doctor
 from utils.db_functions.db_qualifications_function import get_doc_qualifications
 from utils.db_functions.db_specialisation_function import update_doctor_status, get_specialisation_of_doctor, \
     get_first_specialisation_of_doctor
 from utils.db_functions.raw_queries import WHERE_ID_DOCTORS, QUERY_FOR_UPDATE_DOCTORS_INFORMATION
+from utils.helper_function.misc import check_password_length
 from utils.helper_function.string_character_finder import get_part_of_string, specific_string
 from utils.security.security import verify_password, hash_password
 from models.doctor import Doctor, ChangePassword, ChannelName, DoctorStatus, DoctorUpdateInformation
@@ -18,7 +17,8 @@ from constants import const
 from utils.random_generator.random_digits import random_with_N_digits
 from utils.db_functions.db_functions import find_exist_user, get_all_doctor, specific_results_doctor, \
     find_slug_therapist
-from utils.db_functions.doctor_crud import change_password_user, save_black_list_token, update_doctor_information
+from utils.db_functions.doctor_crud import change_password_user, save_black_list_token, update_doctor_information, \
+    get_protected_password
 from utils.utils_classes.classes_for_checks import CheckUserExistence, DoctorByName
 
 expireTimeInSeconds = 3600 * 3600
@@ -38,72 +38,106 @@ async def videoConferencing(request: ChannelName, current_user: Doctor = Depends
                                                   role=Role_Publisher,
                                                   uid=uid,
                                                   privilegeExpiredTs=privilegeExpiredTs)
-        return {"token": token,
-                "success": True,
-                "channel_name": request.channel_name,
-                "uid": uid,
-                "Username": current_user.username,
-                "mail": current_user.mail,
-                "code": 200
-                }
+
     except Exception as e:
-        logger.error("#### ERROR IS {} ".format(e))
-        return {
-            "success": False,
-            "Username": current_user.username,
-            "mail": current_user.mail
-        }
+        logger.error("#### ERROR IN VIDEO CONFERENCING  IS {} ".format(e))
+        raise CustomExceptionHandler(message="Something went wrong in video calling,please try again later.",
+                                     code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                                     success=False,
+                                     target="VIDEO-CONFERENCING-AGORA")
+    else:
+        return {"message": "Please validate the credentials",
+                "success": True,
+                "data": {"token": token, "channel_name": request.channel_name, "username": current_user["username"],
+                         "mail": current_user["mail"]},
+                "code": status.HTTP_200_OK}
 
 
 @doctor_routes.get("/doctors/profile/", tags=['DOCTORS/RESTRICTED'])
 async def get_user_profile(current_user: Doctor = Depends(get_current_user)):
     try:
-        result_db = {"mail": current_user.mail, "full_name": current_user.full_name,
-                     "phone_number": current_user.phone_number}
-    except Exception as e:
-        logger.error("#### ERROR IN GET USER PROFILE ROUTE {} ##### ".format(e))
-        return False
+        return {"message": "Here is your details", "code": status.HTTP_200_OK, "success": True,
+                "data": {"id": current_user["id"], "username": current_user["username"],
+                         "full_name": current_user["full_name"],
+                         "mail": current_user["mail"], "phone_number": current_user["phone_number"],
+                         "gender": current_user["gender"], "experience": current_user["experience"],
+                         "url": current_user["url"], "about": current_user["about"]}
+                }
+    except Exception as E:
+        logger.error("CANNOT ABLE TO FIND THE USER DATA, ERROR IN QUERY")
+        raise CustomExceptionHandler(message="Something went wrong ,please try again later.",
+                                     code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                                     success=False,
+                                     target="DOCTOR/THERAPIST PROFILE")
+
+
+@doctor_routes.patch("/doctors/current-status", tags=['DOCTORS/RESTRICTED'], description="Patch call for doctor status")
+async def update_status(doctor: DoctorStatus, current_user: Doctor = Depends(get_current_user)):
+    if doctor.is_active is None and doctor.is_online is None:
+        raise CustomExceptionHandler(message="No values is passed in request body",
+                                     target="DOCTORS-STATUS-PATCH",
+                                     code=status.HTTP_404_NOT_FOUND,
+                                     success=False)
+    logger.info("####### CHECKING THE ID OF THE DOCTOR ########")
+    query_for_update = "UPDATE doctors SET "
+    values_map = {}
+    for key in doctor:
+        if key[1] is None:
+            continue
+        values_map[key[0]] = key[1]
+        query_for_update = query_for_update + key[0] + "".join("=:") + key[0] + ","
+    query_for_update = query_for_update.rstrip(",")
+    query_for_update = query_for_update + WHERE_ID_DOCTORS
+    values_map["id"] = current_user["id"]
+    check_response = await update_doctor_status(query=query_for_update, values=values_map)
+    if not check_response:
+        raise CustomExceptionHandler(message="We regret,cannot able to update your status",
+                                     code=status.HTTP_400_BAD_REQUEST,
+                                     success=False,
+                                     target="STATUS UPDATE")
     else:
-        return result_db
-    finally:
-        logger.info("###### GET DOCTOR PROFILE METHOD FINISHED #########")
+        return {"message": "Successfully updated your status",
+                "success": True,
+                "code": status.HTTP_201_CREATED}
 
 
 @doctor_routes.patch("/doctors/change-password", tags=['DOCTORS/RESTRICTED'])
 async def change_password(change_password_object: ChangePassword, current_user: Doctor = Depends(get_current_user)):
-    # check is user exist
+    logger.info("here")
+    response = await get_protected_password(mail=current_user["mail"])
+    valid = verify_password(change_password_object.current_password, response)
+    if not valid:
+        logger.error("OOPS!! Current password does not match")
+        raise CustomExceptionHandler(message="OOPS!! Your password is incorrect",
+                                     code=status.HTTP_409_CONFLICT,
+                                     success=False,
+                                     target="VERIFY-CURRENT_PASSWORD")
+    length_validity = await check_password_length(new=change_password_object.new_password)
+    if not length_validity:
+        raise CustomExceptionHandler(message="Password should be greater than 7 digits",
+                                     code=status.HTTP_409_CONFLICT,
+                                     success=False,
+                                     target="VERIFY-PASSWORD_LENGTH")
+    # Check new password and confirm password
+    if change_password_object.new_password != change_password_object.confirm_password:
+        raise CustomExceptionHandler(message="OOPS!! New password and Confirm password does not match",
+                                     code=status.HTTP_409_CONFLICT,
+                                     success=False,
+                                     target="VERIFY-CURRENT_PASSWORD")
+    change_password_object.new_password = hash_password(change_password_object.new_password)
     try:
-        result = await find_exist_user(mail=current_user.mail)
-        if not result:
-            logger.error("#### USER NOT REGISTERED #####")
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Doctor/Therapist already registered.")
-        # Verify current password
-        user = Doctor(**result)
-        valid = verify_password(change_password_object.current_password, user.password)
-        if not valid:
-            print("### PASSWORD DIDN'T MATCH ####")
-            return {"message": "Current password is not a match", "code": 409}
-
-        # Check new password and confirm password
-        if change_password_object.new_password == change_password_object.confirm_password:
-            # Change Password
-            change_password_object.new_password = hash_password(change_password_object.new_password)
-            await change_password_user(change_password_object, current_user)
-            return {
-                "status_code": status.HTTP_200_OK,
-                "detail": "Password has been changed successfully"
-            }
-        else:
-            logger.error("#### NEW PASSWORD AND CONFIRM PASSWORD DIDN'T MATCHED ####")
-            return {
-                "status_code": status.HTTP_409_CONFLICT,
-                "detail": "New and confirm password didn't match"
-            }
-
-    except Exception as e:
-        logger.error("#### SOMETHING WENT WRONG IN CHANGE_PASSWORD FUNCTION IN USER_ROUTES {} ######".format(e))
-    finally:
-        logger.info("##### CHANGE PASSWORD METHOD OVER ##### ")
+        await change_password_user(change_password_object, current_user_mail=current_user["mail"])
+    except Exception as Why:
+        logger.error("ERROR OCCURRED IN CHANGING PASSWORD BECAUSE OF {}".format(Why))
+        raise CustomExceptionHandler(message="Something is wrong with our server,we are working on it.",
+                                     code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                                     success=False,
+                                     target="CHANGE_PASSWORD_DB_UPDATE"
+                                     )
+    else:
+        return {"message": "Password has been updated successfully",
+                "code": status.HTTP_201_CREATED,
+                "success": True}
 
 
 @doctor_routes.get("/doctors/logout", tags=['DOCTORS/RESTRICTED'])
@@ -111,8 +145,10 @@ async def logout(token: str = Depends(get_token_user), current_user: Doctor = De
     # Save token of user to table blacklist
     await save_black_list_token(token, current_user)
     return {
-        "status_code": status.HTTP_200_OK,
-        "detail": "User logout successfully"
+        "message": "Log out successfully",
+        "code": status.HTTP_200_OK,
+        "success": False,
+        "target": "DOCTOR-LOGOUT"
     }
 
 
@@ -182,12 +218,12 @@ async def update_status(doctor: DoctorStatus, id: int = Path(..., description="S
     values_map["id"] = id
     check_response = await update_doctor_status(query=query_for_update, values=values_map)
     if not check_response:
-        raise CustomExceptionHandler(message="cannot able to update in doctor status",
+        raise CustomExceptionHandler(message="We regret,cannot able to update your status",
                                      code=status.HTTP_400_BAD_REQUEST,
                                      success=False,
                                      target="STATUS UPDATE")
     else:
-        return {"message": "successfully updated the status",
+        return {"message": "Successfully updated your status",
                 "success": True,
                 "code": status.HTTP_201_CREATED}
 
@@ -205,7 +241,7 @@ async def find_doctor_by_name(name: str = Path(None, description="NAME OF DOCTOR
 global slug_object
 
 
-@doctor_routes.patch("/doctors/{id}", tags=['DOCTORS/CRUD'], description="Patch call for doctor status")
+@doctor_routes.patch("/doctors/{id}", tags=['DOCTORS/CRUD'], description="Patch call for doctor information")
 async def update_doctor_details(doctor_update: DoctorUpdateInformation, id: int):
     global slug_object
     logger.info("####### UPDATE DOCTOR DETAILS API CALLED #############")
@@ -263,12 +299,75 @@ async def update_doctor_details(doctor_update: DoctorUpdateInformation, id: int)
                                                          update_value_map=values_map)
 
     if not check_response:
-        raise CustomExceptionHandler(message="cannot able to update in doctor details",
+        raise CustomExceptionHandler(message="Cannot able to update in doctor details",
                                      code=status.HTTP_400_BAD_REQUEST,
                                      success=False,
                                      target="STATUS UPDATE")
     else:
-        return {"message": "Successfully updated the status",
+        return {"message": "Successfully updated the doctors information",
+                "success": True,
+                "code": status.HTTP_201_CREATED}
+
+
+@doctor_routes.patch("/doctors/profile", tags=['DOCTORS/RESTRICTED'], description="Patch call for doctor information")
+async def update_doctor_details(doctor_update: DoctorUpdateInformation,
+                                current_user: Doctor = Depends(get_current_user)):
+    global slug_object
+    logger.info("####### UPDATE DOCTOR DETAILS API CALLED #############")
+    # todo check for username and add functionality of name change and slug
+    query_for_update = QUERY_FOR_UPDATE_DOCTORS_INFORMATION
+    values_map = {}
+    for key in doctor_update:
+        if key[1] is None:
+            continue
+        values_map[key[0]] = key[1]
+        query_for_update = query_for_update + key[0] + "".join("=:") + key[0] + ","
+    query_for_update = query_for_update.rstrip(",")
+    query_for_update = query_for_update + WHERE_ID_DOCTORS
+    values_map["id"] = current_user["id"]
+
+    query_for_qualification_update = ""
+    if doctor_update.qualification is not None:
+        for update in doctor_update.qualification:
+            if update.qualification_id is not None:
+                pass
+            else:
+                pass
+
+    if doctor_update.full_name is not None:
+        slug_object = get_part_of_string(input_string=doctor_update.full_name, character="space")
+        find_first_specialisation_name = await get_first_specialisation_of_doctor(doctor_id=current_user["id"])
+        if find_first_specialisation_name is None:
+            raise CustomExceptionHandler(
+                message="cannot able to find the specialisation for the doctor having id {}".format(str(id)),
+                code=status.HTTP_400_BAD_REQUEST,
+                success=False,
+                target="STATUS UPDATE")
+        speciality = dict(find_first_specialisation_name)
+        slug_object = slug_object + "-" + str(speciality["name"]).lower()
+        result_slug = await find_slug_therapist(slug=slug_object)
+        if result_slug is not None:
+            logger.info(
+                "###### NAME WITH SAME SLUG NAME IS ALREADY THERE THEREFORE ADDING SOME IDENTFIER ##### ")
+            slug_object = slug_object + "-" + str(specific_string(length=4)).lower()
+        check_response = await update_doctor_information(doctor_update=doctor_update, doctor_id=current_user["id"],
+                                                         query_for_update=query_for_update,
+                                                         update_value_map=values_map,
+                                                         slug_object=slug_object)
+
+    else:
+        check_response = await update_doctor_information(doctor_update=doctor_update,
+                                                         doctor_id=current_user["id"],
+                                                         query_for_update=query_for_update,
+                                                         update_value_map=values_map)
+
+    if not check_response:
+        raise CustomExceptionHandler(message="Cannot able to update in doctor details",
+                                     code=status.HTTP_400_BAD_REQUEST,
+                                     success=False,
+                                     target="STATUS UPDATE")
+    else:
+        return {"message": "Successfully updated the doctors information",
                 "success": True,
                 "code": status.HTTP_201_CREATED}
 

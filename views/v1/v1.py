@@ -51,62 +51,50 @@ app_v1 = APIRouter()
 @app_v1.get("/doctors/check-registration/", response_model_exclude_unset=True, tags=["DOCTORS/GENERAL"])
 async def check_availability(request: Request):
     logger.info("####### CHECK REGISTRATION OF THE DOCTOR/THERAPIST ###### ")
-    try:
-        if request.query_params is None:
-            return {"error": {"code": 400,
-                              "message": "value required for username or email",
-                              "target": "check-registration",
-                              "success": True}}
-
-        params = request.query_params
-        if params["value"] is None:
-            return {"error": {"code": 400,
-                              "message": "value required for username or email",
-                              "target": "check-registration",
-                              "success": True}}
-        else:
-            find_exist_asset = await find_exist_username_email(params["value"])
-            if find_exist_asset is not None:
-                return {"error": {"code": status.HTTP_409_CONFLICT,
-                                  "message": "user has already registered with  username or mail",
-                                  "success": True}
-                        }
-            else:
-                return {"message": "welcome!! new user", "code": status.HTTP_200_OK, "success": False}
-    except Exception as e:
-        logger.error("Exception occurred in user check function {}".format(e))
-    finally:
-        logger.info("######## CHECK DOCTOR-REGISTRATION METHOD FINISHED ########")
+    if request.query_params is None or request.query_params["value"] is None:
+        raise CustomExceptionHandler(message="Please provide username or mail",
+                                     code=status.HTTP_400_BAD_REQUEST,
+                                     target="CHECK-REGISTRATION",
+                                     success=True
+                                     )
+    params = request.query_params
+    find_user = await find_exist_username_email(params["value"])
+    if find_user is not None:
+        raise CustomExceptionHandler(message="User is already registered with username or mail",
+                                     code=status.HTTP_400_BAD_REQUEST,
+                                     target="CHECK-REGISTRATION",
+                                     success=False
+                                     )
+    return {"message": "new user", "code": status.HTTP_200_OK, "success": True}
 
 
 @app_v1.post("/doctors/register", status_code=status.HTTP_201_CREATED,
              tags=["DOCTORS/GENERAL"], description="Post call for adding doctors in database")
 async def register_user(user: Doctor):
     global object_map
-    user.Config.orm_mode = True
     logger.info("##### REGISTRATION PROCESS STARTED FOR THE USER {} #########".format(user.full_name))
     # check if doctor exist or not
     find_user_by_mail_object = CheckUserByMail(mail=user.mail, target="doctor/registration")
     await find_user_by_mail_object.find_user_by_email()
     if user.phone_number is None:
         logger.error("##### PHONE NUMBER FIELD NOT PROVIDED ##### ")
-        raise CustomExceptionHandler(message="Please provide phone number",
+        raise CustomExceptionHandler(message="Please provide your phone number",
                                      code=status.HTTP_400_BAD_REQUEST,
-                                     target="doctor/registration",
+                                     target="DOCTOR/REGISTRATION",
                                      success=False
                                      )
     logger.info("#### USER PHONE NUMBER IS NOT NONE ######")
     pattern = re.compile(PHONE_REGEX)
     if not pattern.match(user.phone_number):
         logger.error("##### PHONE NUMBER PATTERN DOESN'T MATCHES PROVIDED ##### ")
-        raise CustomExceptionHandler(message="Please provide phone number",
+        raise CustomExceptionHandler(message="Phone number is not correct",
                                      code=status.HTTP_400_BAD_REQUEST,
-                                     target="doctor/registration",
+                                     target="DOCTOR/REGISTRATION",
                                      success=False
                                      )
     phone_result_obj = await find_exist_user_phone(phone_number=user.phone_number)
     if phone_result_obj is not None:
-        raise CustomExceptionHandler(message="Provided phone number already exist",
+        raise CustomExceptionHandler(message="Provided Phone number already exist",
                                      code=status.HTTP_409_CONFLICT,
                                      target="doctor/registration",
                                      success=False
@@ -168,7 +156,7 @@ async def register_user(user: Doctor):
                 }
             }
     else:
-        raise CustomExceptionHandler(message="UNABLE TO REGISTER THE USER",
+        raise CustomExceptionHandler(message="Something went wrong,unable to register you",
                                      target="DOCTOR-REGISTER",
                                      success=False,
                                      code=status.HTTP_400_BAD_REQUEST)
@@ -176,20 +164,25 @@ async def register_user(user: Doctor):
 
 @app_v1.post("/doctors/login", tags=["DOCTORS/GENERAL"])
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    print(form_data)
     # check if user exist or not
-    global result, through_access_token
     logger.info("###### LOGGING IN THROUGH MAIL ###### ")
     form_data.username = form_data.username.lower()
     result = await find_exist_username_email(check=form_data.username)
     if not result:
-        return {"status": 404, "message": "User not found", "success": False}
-    through_access_token = form_data.username
-    # verify password
-    user = Doctor(**result)
-    verify_pass = verify_password(plain_password=form_data.password, hashed_passwrd=user.password)
+        raise CustomExceptionHandler(message="User not found",
+                                     code=status.HTTP_404_NOT_FOUND,
+                                     target="DOCTORS/LOGIN",
+                                     success=False
+                                     )
+    verify_pass = verify_password(plain_password=form_data.password, hashed_passwrd=result["password"])
     if not verify_pass:
         logger.error("##### Incorrect username or password ######## ")
-        return {"status": 400, "message": "Incorrect username or password", "success": False}
+        raise CustomExceptionHandler(message="Please check your password",
+                                     code=status.HTTP_404_NOT_FOUND,
+                                     target="DOCTORS/LOGIN",
+                                     success=False
+                                     )
     # create token
     access_token_expires = jwt_utils.timedelta(minutes=JWT_EXPIRATION_TIME)
     access_token = await jwt_utils.create_access_token(
@@ -197,7 +190,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         expire_delta=access_token_expires
     )
     if not access_token:
-        raise CustomExceptionHandler(message="cannot able to create token", success=False,
+        raise CustomExceptionHandler(message="Cannot able to create token", success=False,
                                      code=status.HTTP_400_BAD_REQUEST, target="CREATE-DOCTOR")
     else:
         return {
@@ -205,9 +198,10 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
             "token_type": "bearer",
             "success": True,
             "user_info": {
-                "fullname": user.full_name,
+                "id":result["id"],
+                "fullname": result["full_name"],
                 "message": "user logged in successfully",
-                "code": 200
+                "code": status.HTTP_200_OK
             }
         }
 
@@ -230,33 +224,23 @@ async def forget_password(request: ForgotPassword, background_tasks: BackgroundT
                                          code=status.HTTP_400_BAD_REQUEST, target="FORGOT-PASSWORD")
     else:
         logger.error("###### ERROR IN PATH PARAMETER NOT DEFINED ####### ")
-        raise CustomExceptionHandler(message="ERROR IN PATH PARAMETER NOT DEFINED",
+        raise CustomExceptionHandler(message="Something went wrong,please try reseting your password later",
                                      success=False,
-                                     code=status.HTTP_400_BAD_REQUEST, target="FORGOT-PASSWORD")
+                                     code=status.HTTP_400_BAD_REQUEST,
+                                     target="FORGOT-PASSWORD(PATH PARAMETER DOESN'T EXIST)")
 
     # create reset code and save into database
     reset_code = str(uuid.uuid1())
     try:
         await create_reset_code(request.mail, reset_code)
         background_tasks.add_task(send_email, to_email=request.mail, subject='Reset Password', reset_code=reset_code)
-        try:
-            logger.info("#### SENDING RESET PASSWORD MESSAGE ON THE MAIL {} ########".format(request.mail))
-            logger.info("### ALL GOOD #####")
-            return {
-                "reset_code": reset_code,
-                "code": 200,
-                "message": "Email has been sent with instructions to reset password",
-                "success": True
-            }
-        except Exception as e:
-            logger.error(
-                "###### EXCEPTION OCCURRED IN SENDING FORGOT PASSWORD FOR THE MAIL {} WITH EXCEPTION {} ###".format(
-                    request.mail, e))
-            raise CustomExceptionHandler(message="Error, email not send",
-                                         success=False,
-                                         code=status.HTTP_409_CONFLICT, target="FORGOT-PASSWORD")
+        logger.info("#### SENDING RESET PASSWORD MESSAGE ON THE MAIL {} ########".format(request.mail))
+        return {"code": 200, "message": "Email has been sent with instructions to reset password", "success": True}
     except Exception as e:
         logger.error("####### SOMETHING WENT WRONG IN FORGOT PASSWORD MAIL IN USER {} #########".format(e))
+        raise CustomExceptionHandler(message="We Regret,Something went wrong in sending mail",
+                                     success=False,
+                                     code=status.HTTP_409_CONFLICT, target="FORGOT-PASSWORD")
     finally:
         logger.info("###### FORGOT PASSWORD MAIL FUNCTION OVER ##### ")
 
@@ -273,7 +257,7 @@ async def reset_password(request: ResetPassword):
     # Check if both new & confirm password are same
     if request.new_password != request.confirm_password:
         logger.error("###### NEW PASSWORD AND CONFIRM PASSWORD ARE NOT A MATCH ######### ")
-        raise CustomExceptionHandler(message="PASSWORD DIDN'T MATCH",
+        raise CustomExceptionHandler(message="Sorry, password didn't match",
                                      success=False,
                                      code=status.HTTP_409_CONFLICT,
                                      target="RESET-PASSWORD")
@@ -286,7 +270,7 @@ async def reset_password(request: ResetPassword):
     try:
         await disable_reset_code(request.reset_password_token, forgot_password_object.mail)
         return {
-            "status": 200,
+            "status": status.HTTP_200_OK,
             "message": "Password has been reset successfully.",
             "success": True
         }
@@ -338,7 +322,7 @@ async def get_doctor_information(slug: str = Path(...)):
         }
     except Exception as WHY:
         logger.error("####### EXCEPTION IN GETTING DOCTOR DETAILS IS {} ###########".format(WHY))
-        raise CustomExceptionHandler(message="Unable to fetch the results",
+        raise CustomExceptionHandler(message="Something went wrong,unable to find the results",
                                      target="GET DOCTOR INFORMATION BY SLUG",
                                      code=status.HTTP_400_BAD_REQUEST, success=False)
     else:

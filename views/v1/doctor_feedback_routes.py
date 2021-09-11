@@ -1,6 +1,8 @@
-from fastapi import status, APIRouter
+from fastapi import status, APIRouter, Depends
+from models.doctor import Doctor
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from utils.helper_function.string_helpers import check_length
+from utils.jwt_utils.jwt_utils import get_current_user
 from utils.logger.logger import logger
 from utils.db_functions.raw_queries import (QUERY_FOR_FEEDBACK_UPDATE,
                                             WHERE_ID_FEEDBACKS)
@@ -32,9 +34,9 @@ async def create_feedback(feedback: Feedback):
     await response.review_exist()
     save_feedback_resp_id = await save_feedback(feedback)
     if not save_feedback_resp_id:
-        raise CustomExceptionHandler(message="unable to insert the data in feedback table",
+        raise CustomExceptionHandler(message="Something went wrong,cannot able to save the feedback",
                                      code=status.HTTP_409_CONFLICT,
-                                     success=False, target="SAVE-FEEDBACK")
+                                     success=False, target="SAVE-FEEDBACK(DATA INSERTION ERROR)")
     return {"message": "Thank you for your feedback", "code": status.HTTP_201_CREATED, "success": True}
 
 
@@ -47,9 +49,30 @@ async def get_feedbacks_doctor(doctor_id: int):
     logger.info("###### GETTING ALL THE FEEDBACKS FOR SPECIFIC DOCTOR ID ############")
     response = await get_all_feedbacks(doctor_id=doctor_id)
     if not response:
-        raise CustomExceptionHandler(message="No Feedbacks For Specific Doctor", code=status.HTTP_400_BAD_REQUEST,
-                                     success=False, target="GET-SPECIFIC-FEEDBACK")
-    return response
+        return {"message": "Sorry, No Feedbacks Found",
+                "code": status.HTTP_200_OK,
+                "success": True,
+                "data": []}
+    return {"message": "Here is your feedbacks",
+            "code": status.HTTP_200_OK,
+            "success": True, "data": response}
+
+
+@doctor_feedback.get("/doctors/feedback/", tags=["DOCTORS/RESTRICTED"], description="GET CALL FOR FEEDBACKS")
+async def get_feedbacks_doctor(current_user: Doctor = Depends(get_current_user)):
+    logger.info("##### GET SPECIFIC FEEDBACK METHOD CALLED ########")
+    # todo:change it to internal api call because using same database
+    logger.info("###### GETTING ALL THE FEEDBACKS FOR SPECIFIC DOCTOR ID ############")
+    response = await get_all_feedbacks(doctor_id=current_user["id"])
+    if not response:
+        return {"message": "Sorry, No Feedbacks Found",
+                "code": status.HTTP_200_OK,
+                "success": True,
+                "data": []}
+    return {"message": "Here is your feedbacks",
+            "code": status.HTTP_200_OK,
+            "success": True,
+            "data": response}
 
 
 @doctor_feedback.put("/doctors/feedback/{feedback_id}", tags=["DOCTORS/FEEDBACKS"],

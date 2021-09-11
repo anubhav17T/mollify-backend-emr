@@ -7,18 +7,18 @@ from utils.connection_configuration.db_object import db
 from utils.logger.logger import logger
 
 
-def change_password_user(change_password_object: ChangePassword, current_user: Doctor):
-    query = "UPDATE users SET password=:password WHERE mail=:mail"
+def change_password_user(change_password_object: ChangePassword,current_user_mail:str):
+    query = "UPDATE doctors SET password=:password WHERE mail=:mail"
     logger.info("####### CHANGING USER PASSWORD ##########")
     try:
-        return db.execute(query, values={"password": change_password_object.new_password, "mail": current_user.mail})
+        return db.execute(query, values={"password": change_password_object.new_password, "mail": current_user_mail})
     except Exception as e:
         logger.error("##### EXCEPTION IN CHANGING PASSWORD OF USER IS {}".format(e))
 
 
 def save_black_list_token(token: str, current_user=Doctor):
     query = "INSERT INTO doctors_blacklists VALUES (:token,:mail)"
-    return db.execute(query, values={"token": token, "mail": current_user.mail})
+    return db.execute(query, values={"token": token, "mail": current_user["mail"]})
 
 
 async def update_doctor_information(doctor_update: DoctorUpdateInformation,
@@ -50,3 +50,8 @@ async def update_doctor_information(doctor_update: DoctorUpdateInformation,
             logger.info("###### TRANSACTION COMMITTED AND SUCCESS TRUE FOR DOCTOR UPDATE #######")
             return True
 
+
+
+def get_protected_password(mail:str):
+    query = "SELECT password FROM doctors WHERE mail=:mail"
+    return db.execute(query=query,values={"mail":mail})

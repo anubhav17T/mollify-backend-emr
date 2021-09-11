@@ -21,7 +21,7 @@ class CheckUserExistence(object):
         response = await check_if_id_exists(id=self._id)
         if response is None:
             logger.error("########### NO ID IS FOUND FOR GIVEN ID ############")
-            raise CustomExceptionHandler(message="no id is found",
+            raise CustomExceptionHandler(message="Something went wrong,specialisation does not exit",
                                          code=status.HTTP_400_BAD_REQUEST,
                                          success=False,
                                          target=self.target)
@@ -32,7 +32,7 @@ class CheckUserExistence(object):
         response = await find_exist_user_id(id=self._id)
         if response is None:
             logger.error("########### NO USER IS FOUND FOR GIVEN ID ############")
-            raise CustomExceptionHandler(message="User not found for the given id",
+            raise CustomExceptionHandler(message="Something went wrong,no doctor found",
                                          code=status.HTTP_400_BAD_REQUEST,
                                          success=False,
                                          target=self.target
@@ -220,6 +220,9 @@ class ConsultationChecks:
                                                                    )
         if duplicate is not None:
             raise CustomExceptionHandler(
-                message="BOOKING ALREADY EXIST FOR THE SPECIFIED DOCTOR AT GIVEN TIME",
+                message="Sorry this doctor is not available at provided time",
                 code=status.HTTP_400_BAD_REQUEST,
-                success=False, target="CONSULTATION(STATUS_OPEN AND PARENT_ID DUPLICATE CHECK)")
+                success=False, target="CONSULTATION(STATUS_OPEN AND PARENT_ID DUPLICATE CHECK),BOOKING ALREADY EXIST "
+                                      "FOR THE SPECIFIED DOCTOR AT GIVEN TIME")
+
+

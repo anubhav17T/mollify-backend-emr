@@ -193,7 +193,9 @@ def find_exist_user_id(id: int):
 
 def find_exist_username_email(check: str):
     try:
-        query = "select mail,full_name from doctors where mail=:mail or username=:username"
+        query = "select id,password,username,full_name,mail,phone_number,gender,experience,url,about from doctors " \
+                "where " \
+                "mail=:mail or username=:username "
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY")
         return db.fetch_one(query=query, values={"mail": check, "username": check})
     except Exception as e:
@@ -561,7 +563,7 @@ async def register_user_combined(doctor, slug):
                                                                                   "url": doctor.url,
                                                                                   "about": doctor.about,
                                                                                   "slug": slug,
-                                                                                  "chat":doctor.consultation_charges.chat,
+                                                                                  "chat": doctor.consultation_charges.chat,
                                                                                   "audio": doctor.consultation_charges.audio,
                                                                                   "video": doctor.consultation_charges.video,
                                                                                   "created_on": dt.utcnow()

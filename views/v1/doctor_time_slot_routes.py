@@ -120,7 +120,7 @@ async def get_timeslot_specific_doctor(doctor_id: int = Path(...),
                                                query=QUERY_FOR_TIME_SLOT_DAYS,
                                                query_helper=QUERY_FOR_TIME_SLOT_DAYS_HELPER)
             return {"doctor_slots": await time_slot_for_day(doctor_id=doctor_id, days=days),
-                    "booked":await find_booked_time_slot(doctor_id=doctor_id,days=days)
+                    "booked": await find_booked_time_slot(doctor_id=doctor_id, days=days)
                     }
         else:
             return {"doctor_slots": await time_slot_for_all_days(doctor_id=doctor_id),

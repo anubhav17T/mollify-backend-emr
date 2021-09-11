@@ -51,22 +51,23 @@ async def create_consultations(consultation: ConsultationTable):
     except Exception as why:
         logger.error("######### ERROR IN TIMESLOT CONFIGURATION CHECKS BECAUSE {} ##############".format(why))
         raise CustomExceptionHandler(
-            message="CANNOT ABLE TO VALIDATE DOCTOR TIMESLOT CONFIGURATIONS BECAUSE: {},FOR DOCTOR_ID {} ".format(
-                why, consultation.doctor_id),
+            message="We regret something went wrong in timeslots,please try again later",
             success=False,
-            code=status.HTTP_400_BAD_REQUEST,
-            target="CONSULTATION(DOCTOR-TIMESLOT-CHECK)"
+            code=status.HTTP_409_CONFLICT,
+            target="CONSULTATION(DOCTOR-TIMESLOT-CHECK),CANNOT ABLE TO VALIDATE TIMESLOT CONFIG BECAUSE {}".format(why)
         )
     if consultation.status == CONSULTATION_STATUS_OPEN and consultation.parent_id is not None:
         raise CustomExceptionHandler(
-            message="BOOKING ID(PARENT_ID) IS NOT NONE",
+            message="We regret,there is a small error from our side,our team is working",
             code=status.HTTP_400_BAD_REQUEST,
-            success=False, target="CONSULTATION(STATUS_OPEN AND PARENT_ID CHECK)")
+            success=False,
+            target="CONSULTATION(STATUS_OPEN AND PARENT_ID CHECK),BOOKING ID(PARENT_ID) IS NOT NONE"
+        )
 
     if consultation.status == CONSULTATION_STATUS_OPEN and consultation.parent_id is None:
         if consultation.cancel_reason is not None:
             raise CustomExceptionHandler(
-                message="Cancel reason should be none",
+                message="Cancel reason?Please do not provide cancel reason while booking",
                 code=status.HTTP_400_BAD_REQUEST,
                 success=False, target="CONSULTATION STATES OPEN")
 
@@ -83,7 +84,7 @@ async def create_consultations(consultation: ConsultationTable):
         consultation.status == CONSULTATION_STATUS_RESCHEDULED) \
             and consultation.parent_id is None:
         raise CustomExceptionHandler(
-            message="BOOKING ID(PARENT_ID) IS NONE",
+            message="We regret,there is a small error from our side,our team is working",
             code=status.HTTP_400_BAD_REQUEST,
             success=False, target="CONSULTATION(PARENT_ID NONE FOR OTHER STATES)")
 
