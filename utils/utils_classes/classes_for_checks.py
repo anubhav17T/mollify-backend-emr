@@ -120,14 +120,6 @@ class TimeslotConfiguration(object):
             raise Exception("Date is not valid, please specify current or future date")
         return True
 
-    def check_if_start_time_is_less_than_current_time(self):
-        logger.info("####### STARTTIME IS {}".format(str(self.start_time)))
-        logger.info("TYPE OF START TIME IS {}".format(str(type(self.start_time))))
-        logger.info("####### CURRENT TIME IS {}".format(str(self.dt.now().time())))
-        if self.start_time.time() <= self.dt.now().time():
-            raise Exception("Time slot is not valid, because start time is less than current time")
-        return True
-
     def end_time_should_not_exceed(self):
         end = timedelta(hours=self.end_time.time().hour,
                         minutes=self.end_time.time().minute)

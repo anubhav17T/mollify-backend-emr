@@ -45,7 +45,6 @@ async def create_consultations(consultation: ConsultationTable):
         time_configuration_object.check_if_start_time_greater_than_end_time()
         time_configuration_object.check_if_start_date_greater_than_end_date()
         time_configuration_object.check_if_start_date_valid()
-        time_configuration_object.check_if_start_time_is_less_than_current_time()
         await time_configuration_object.check_if_timeslot_id_exist(timeslot_id=consultation.time_slot_config_id,
                                                                    doctor_id=consultation.doctor_id)
     except Exception as why:
