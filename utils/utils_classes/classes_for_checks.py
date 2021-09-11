@@ -9,13 +9,14 @@ from utils.db_functions.db_specialisation_function import check_if_id_exists
 from utils.logger.logger import logger
 from datetime import timedelta
 
-dt = datetime.now(timezone.utc)
 
 
 class CheckUserExistence(object):
     def __init__(self, _id, target):
         self._id = _id
         self.target = target
+        self.dt = datetime.now(timezone.utc)
+
 
     async def check_specialisation_id_exist(self):
         response = await check_if_id_exists(id=self._id)
@@ -100,6 +101,7 @@ class TimeslotConfiguration(object):
         self.start_time = start_time
         self.end_time = end_time
         self.doctor_id = doctor_id
+        self.dt = datetime.now(timezone.utc)
 
     def check_if_start_time_greater_than_end_time(self):
         if self.start_time >= self.end_time:
@@ -114,17 +116,17 @@ class TimeslotConfiguration(object):
         return True
 
     def check_if_start_date_valid(self):
-        if self.start_time.date() < dt.date():
+        if self.start_time.date() < self.dt.date():
             raise Exception("Date is not valid, please specify current or future date")
         return True
 
     def check_if_start_time_is_less_than_current_time(self):
-        if self.start_time.time() <= dt.now().time():
+        logger.info("####### STARTTIME IS {}".format(str(self.start_time)))
+        logger.info("TYPE OF START TIME IS {}".format(str(type(self.start_time))))
+        logger.info("####### CURRENT TIME IS {}".format(str(self.dt.now().time())))
+        if self.start_time.time() <= self.dt.now().time():
             raise Exception("Time slot is not valid, because start time is less than current time")
         return True
-
-
-
 
     def end_time_should_not_exceed(self):
         end = timedelta(hours=self.end_time.time().hour,
@@ -224,5 +226,3 @@ class ConsultationChecks:
                 code=status.HTTP_400_BAD_REQUEST,
                 success=False, target="CONSULTATION(STATUS_OPEN AND PARENT_ID DUPLICATE CHECK),BOOKING ALREADY EXIST "
                                       "FOR THE SPECIFIED DOCTOR AT GIVEN TIME")
-
-
