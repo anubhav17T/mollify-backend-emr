@@ -55,7 +55,6 @@ async def time_slot_mapping(time_slot_config: List[TimeSlot], doctor_id: int = B
                     raise Exception("You have provided same day timeslots twice.")
                 else:
                     days.append(check_unique_day)
-
             for time_values in time_slot_config:
                 if time_values.start_time is None or time_values.end_time is None:
                     raise Exception("Please specify start time and end time value!")

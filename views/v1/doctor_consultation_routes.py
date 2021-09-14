@@ -45,12 +45,14 @@ async def create_consultations(consultation: ConsultationTable):
         time_configuration_object.check_if_start_time_greater_than_end_time()
         time_configuration_object.check_if_start_date_greater_than_end_date()
         time_configuration_object.check_if_start_date_valid()
+        time_configuration_object.check_if_time_and_date_is_valid()
+
         await time_configuration_object.check_if_timeslot_id_exist(timeslot_id=consultation.time_slot_config_id,
                                                                    doctor_id=consultation.doctor_id)
     except Exception as why:
         logger.error("######### ERROR IN TIMESLOT CONFIGURATION CHECKS BECAUSE {} ##############".format(why))
         raise CustomExceptionHandler(
-            message="We regret something went wrong in timeslots,please try again later",
+            message="Something went wrong on our end,please try again later.",
             success=False,
             code=status.HTTP_409_CONFLICT,
             target="CONSULTATION(DOCTOR-TIMESLOT-CHECK),CANNOT ABLE TO VALIDATE TIMESLOT CONFIG BECAUSE {}".format(why)

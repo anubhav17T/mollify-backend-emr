@@ -10,22 +10,20 @@ from utils.logger.logger import logger
 from datetime import timedelta
 
 
-
 class CheckUserExistence(object):
     def __init__(self, _id, target):
         self._id = _id
         self.target = target
         self.dt = datetime.now(timezone.utc)
 
-
     async def check_specialisation_id_exist(self):
         response = await check_if_id_exists(id=self._id)
         if response is None:
             logger.error("########### NO ID IS FOUND FOR GIVEN ID ############")
-            raise CustomExceptionHandler(message="Something went wrong,specialisation does not exit",
+            raise CustomExceptionHandler(message="We regret,Something went wrong our at end.",
                                          code=status.HTTP_400_BAD_REQUEST,
                                          success=False,
-                                         target=self.target)
+                                         target=self.target + "[SPECIALISATION DOES NOT EXIST]")
         logger.info("### GOT THE USER ####")
         return response
 
@@ -33,10 +31,10 @@ class CheckUserExistence(object):
         response = await find_exist_user_id(id=self._id)
         if response is None:
             logger.error("########### NO USER IS FOUND FOR GIVEN ID ############")
-            raise CustomExceptionHandler(message="Something went wrong,no doctor found",
+            raise CustomExceptionHandler(message="We regret,Something went wrong on our end.We are checking",
                                          code=status.HTTP_400_BAD_REQUEST,
                                          success=False,
-                                         target=self.target
+                                         target=self.target + "[NO DOCTOR FOUND FOR GIVEN ID]"
                                          )
         logger.info("### GOT THE USER ####")
         return response
@@ -70,10 +68,10 @@ class CheckTimeSlotId(object):
         response = await check_if_time_slot_id_exist(id=self._id)
         if response is None:
             logger.error("########### NO TIMESLOT IS FOUND FOR GIVEN ID ############")
-            raise CustomExceptionHandler(message="no id is found",
+            raise CustomExceptionHandler(message="We regret,Something went wrong on our end.We are checking",
                                          code=status.HTTP_400_BAD_REQUEST,
                                          success=False,
-                                         target=self.target)
+                                         target=self.target + "[NO TIMESLOT ID FOUND]")
         logger.info("### GOT THE USER ####")
         return response
 
@@ -87,7 +85,7 @@ class DoctorByName(object):
         response = await doctor_by_name(name=self.name)
         if not response:
             logger.error("########### NO DOCTOR FOUND FOR GIVEN NAME ############")
-            raise CustomExceptionHandler(message="Sorry, No Doctor was found",
+            raise CustomExceptionHandler(message="We regret we cannot able to find the doctor.Please try again later.",
                                          code=status.HTTP_400_BAD_REQUEST,
                                          success=False,
                                          target=self.target)
@@ -101,7 +99,7 @@ class TimeslotConfiguration(object):
         self.start_time = start_time
         self.end_time = end_time
         self.doctor_id = doctor_id
-        self.dt = datetime.now(timezone.utc)
+        self.dt = datetime.now()
 
     def check_if_start_time_greater_than_end_time(self):
         if self.start_time >= self.end_time:
@@ -119,6 +117,14 @@ class TimeslotConfiguration(object):
         if self.start_time.date() < self.dt.date():
             raise Exception("Date is not valid, please specify current or future date")
         return True
+
+    def check_if_time_and_date_is_valid(self):
+        # incoming date is less than or equalto and incoming time is +-10 then failed
+        dt = datetime.now()
+        if self.start_time.date() == dt.date():
+            if self.start_time.time().hour - dt.time().hour <= 0:
+                raise Exception("TIME SLOT SHOULD BE BOOKED IN AN GAP OF ATLEAST 1 HOUR")
+            logger.info("------- TIME OKAY -----------")
 
     def end_time_should_not_exceed(self):
         end = timedelta(hours=self.end_time.time().hour,
