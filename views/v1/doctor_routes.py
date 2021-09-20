@@ -55,20 +55,33 @@ async def videoConferencing(request: ChannelName, current_user: Doctor = Depends
 
 @doctor_routes.get("/doctors/profile/", tags=['DOCTORS/RESTRICTED'])
 async def get_user_profile(current_user: Doctor = Depends(get_current_user)):
+    logger.info("###### FETCHING INFORMATION OF DOCTOR ###############")
+    doc_or_therapist_results = await specific_results_doctor(id=current_user["id"])
+    doc_or_therapist_results = dict(doc_or_therapist_results)
+    consultation_charges = {"chat": doc_or_therapist_results["chat"], "audio": doc_or_therapist_results["audio"],
+                            "video": doc_or_therapist_results["video"]}
+    doc_or_therapist_results.pop("chat")
+    doc_or_therapist_results.pop("audio")
+    doc_or_therapist_results.pop("video")
     try:
-        return {"message": "Here is your details", "code": status.HTTP_200_OK, "success": True,
-                "data": {"id": current_user["id"], "username": current_user["username"],
-                         "full_name": current_user["full_name"],
-                         "mail": current_user["mail"], "phone_number": current_user["phone_number"],
-                         "gender": current_user["gender"], "experience": current_user["experience"],
-                         "url": current_user["url"], "about": current_user["about"]}
-                }
-    except Exception as E:
-        logger.error("CANNOT ABLE TO FIND THE USER DATA, ERROR IN QUERY")
-        raise CustomExceptionHandler(message="Something went wrong ,please try again later.",
-                                     code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                                     success=False,
-                                     target="DOCTOR/THERAPIST PROFILE")
+        logger.info("#### GOING TO FIND DOCTORS LANGUAGES,QUALIFICATIONS AND SPECIALISATION ###########")
+        doc_or_therapist_information = {
+            "languages": await get_language_doctor(id=current_user["id"]),
+            "qualification": await get_doc_qualifications(id=current_user["id"]),
+            "specialisation": await get_specialisation_of_doctor(doctor_id=current_user["id"]),
+            "consultation_charges": consultation_charges
+        }
+    except Exception as WHY:
+        logger.error("####### EXCEPTION IN GETTING DOCTOR DETAILS IS {} ###########".format(WHY))
+        raise CustomExceptionHandler(message="Unable to fetch the results",
+                                     target="GET DOCTOR INFORMATION BY ID",
+                                     code=status.HTTP_400_BAD_REQUEST, success=False)
+    else:
+        logger.info("######## GETTING FINAL DOCTOR_RESULT MAP ############")
+        doc_or_therapist_results.update(doc_or_therapist_information)
+        return {"message":"Here is your detail",
+                "success":True,"code":status.HTTP_200_OK,
+                "data":doc_or_therapist_results}
 
 
 @doctor_routes.patch("/doctors/current-status", tags=['DOCTORS/RESTRICTED'], description="Patch call for doctor status")

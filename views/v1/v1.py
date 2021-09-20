@@ -170,7 +170,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     form_data.username = form_data.username.lower()
     result = await find_exist_username_email(check=form_data.username)
     if not result:
-        raise CustomExceptionHandler(message="User not found",
+        raise CustomExceptionHandler(message="Something went wrong,user not found.",
                                      code=status.HTTP_404_NOT_FOUND,
                                      target="DOCTORS/LOGIN",
                                      success=False

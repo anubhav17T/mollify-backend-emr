@@ -300,14 +300,13 @@ async def get_upcoming_doctor_consultations(doctors_id: int):
             document_info = await fetch_all_form_details(patient_id=items["patient_id"],
                                                          consultation_id=booking_upcoming_information["id"])
             if document_info:
-                document = {}
+                temp_array = []
                 for val in document_info:
                     items = dict(val)
-                    document.update({items["document_type"]: items["url"]})
-                booking_upcoming_information["document"] = document
+                    temp_array.append({"type": items["document_type"], "url": items["url"],"media_type":items["media_type"]})
+                booking_upcoming_information["document"] = temp_array
             else:
-                booking_upcoming_information["document"] = {"CLIENT_INTAKE": None, "THERAPY_PLAN": None,
-                                                            "CASE_HISTORY": None}
+                booking_upcoming_information["document"] = []
             consultation_information.append(booking_upcoming_information)
     except Exception as Why:
         raise CustomExceptionHandler(message="Something went wrong,cannot able to show upcoming consultations",
@@ -382,16 +381,15 @@ async def get_past_doctor_consultations(doctors_id: int):
             booking_history_information["session_type"] = items["session_type"]
             booking_history_information["patient_id"] = items["patient_id"]
             document_info = await fetch_all_form_details(patient_id=items["patient_id"],
-                                                         consultation_id=booking_history_information["id"])
+                                                         consultation_id=booking_history_information["parent_id"])
             if document_info:
-                document = {}
+                temp = []
                 for val in document_info:
                     items = dict(val)
-                    document.update({items["document_type"]: items["url"]})
-                booking_history_information["document"] = document
+                    temp.append({"type": items["document_type"], "url": items["url"]})
+                booking_history_information["document"] = temp
             else:
-                booking_history_information["document"] = {"CLIENT_INTAKE": None, "THERAPY_PLAN": None,
-                                                           "CASE_HISTORY": None}
+                booking_history_information["document"] = []
             consultation_information.append(booking_history_information)
     except Exception as Why:
         raise CustomExceptionHandler(message="Something went wrong,cannot able to show past consultations",
