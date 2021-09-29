@@ -12,7 +12,7 @@ class CustomConsultation:
         self.doctor_id = doctor_id
 
     @staticmethod
-    async def if_field_is_day(self):
+    async def if_field_is_day():
         current_time = datetime.now()
         logger.info("####### CURRENT TIME IS {} #########".format(current_time))
         return convert_datetime(time=current_time),current_time
@@ -23,12 +23,6 @@ class CustomConsultation:
             fetch_current_day_open_consultations = await doctor_custom_day_consultations(doctor_id=self.doctor_id,
                                                                                          current_time=current_time,
                                                                                          end_time=end_time)
-            if not fetch_current_day_open_consultations:
-                return {"message": "No consultations for today",
-                        "success": True,
-                        "code": status.HTTP_200_OK,
-                        "data": []
-                        }
             return fetch_current_day_open_consultations
         if self.field == "week":
             pass
@@ -38,6 +32,12 @@ class CustomConsultation:
     async def fetch_information(self):
         consultation_information = []
         fetch_field_consultations = await self.find_consultation()
+        if not fetch_field_consultations:
+            return {"message": "No consultations for today",
+                    "success": True,
+                    "code": status.HTTP_200_OK,
+                    "data": []
+                    }
         try:
             for values in fetch_field_consultations:
                 items = dict(values)
@@ -102,3 +102,6 @@ class CustomConsultation:
                                          )
         else:
             return consultation_information
+
+
+
