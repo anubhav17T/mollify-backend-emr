@@ -13,8 +13,10 @@ from utils.db_functions.db_consultation_function import (save_consultation,
                                                          check_for_multiple_states,
                                                          check_for_duplicate_consultation_booking,
                                                          check_for_open_status, doctor_past_consultations,
-                                                         doctor_upcoming_consultation, fetch_all_form_details, \
+                                                         doctor_upcoming_consultation, fetch_all_form_details,
+                                                         doctor_custom_day_consultations, \
                                                          )
+from utils.helper_function.misc import convert_datetime
 from utils.logger.logger import logger
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from models.consultation import ConsultationTable
@@ -24,7 +26,7 @@ from utils.utils_classes.classes_for_checks import (CheckUserExistence,
                                                     FindClient, \
                                                     ConsultationChecks)
 from utils.utils_classes.consultation_return_message import ConsultationStatusMessage
-
+from datetime import datetime
 doctor_consultation = APIRouter()
 global doctor_id
 
@@ -303,7 +305,8 @@ async def get_upcoming_doctor_consultations(doctors_id: int):
                 temp_array = []
                 for val in document_info:
                     items = dict(val)
-                    temp_array.append({"type": items["document_type"], "url": items["url"],"media_type":items["media_type"]})
+                    temp_array.append(
+                        {"type": items["document_type"], "url": items["url"], "media_type": items["media_type"]})
                 booking_upcoming_information["document"] = temp_array
             else:
                 booking_upcoming_information["document"] = []
@@ -403,3 +406,28 @@ async def get_past_doctor_consultations(doctors_id: int):
                 "code": status.HTTP_200_OK,
                 "data": consultation_information
                 }
+
+
+# open and number of consultation count
+@doctor_consultation.get("/doctors/consultations/custom/{doctors_id}", tags=["DOCTORS/CONSULTATIONS"])
+async def get_custom_consultations(doctors_id: int,
+                                   field: str = Query(..., description="DAY/MONTH/WEEK CONSULTATIONS", min_length=3,
+                                                      max_length=6)):
+    logger.info("####### FETCHING CUSTOM CONSULTATIONS #############")
+    if field == "day":
+        current_time = datetime.now()
+        end_time = convert_datetime(time=current_time)
+        fetch_current_day_open_consultations = await doctor_custom_day_consultations(doctor_id=doctors_id,
+                                                                                     current_time=current_time,
+                                                                                     end_time=end_time)
+        if not fetch_current_day_open_consultations:
+            return {"message": "No consultations for today",
+                    "success": True,
+                    "code": status.HTTP_200_OK,
+                    "data": []
+                    }
+        return fetch_current_day_open_consultations
+    if field == "week":
+        pass
+    if field == "month":
+        pass

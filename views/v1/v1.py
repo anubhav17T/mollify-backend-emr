@@ -102,9 +102,9 @@ async def register_user(user: Doctor):
     is_array_unique = find_unique_element(specialisation_array=user.specialisation,
                                           languages_array=user.languages)
     if not is_array_unique:
-        raise CustomExceptionHandler(message="Duplicate Entry in specialisation and languages",
+        raise CustomExceptionHandler(message="Something went wrong on our side, Please try again later.",
                                      code=status.HTTP_400_BAD_REQUEST,
-                                     target="doctor/registration",
+                                     target="doctor/registration,Duplicate Entry in specialisation and languages",
                                      success=False
                                      )
 
