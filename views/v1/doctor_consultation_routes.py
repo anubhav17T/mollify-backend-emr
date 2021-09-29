@@ -420,9 +420,4 @@ async def get_custom_consultations(doctors_id: int,
     logger.info("########### FIELD PROVIDED IS {} #########".format(field))
     consultations = CustomConsultation(doctor_id=doctors_id,field=field)
     logger.info("##### CUSTOM CONSULTATION OBJECT MADE ########")
-    data = await consultations.fetch_information()
-    return {"message":"Here is your upcoming consultations",
-            "success":True,
-            "code":status.HTTP_200_OK,
-            "data":data
-            }
+    await consultations.fetch_information()

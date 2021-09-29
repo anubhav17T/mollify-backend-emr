@@ -101,7 +101,11 @@ class CustomConsultation:
                                          target="GET-PAST-CONSULTATIONS-DUE_TO {}".format(Why)
                                          )
         else:
-            return consultation_information
+            return {"message": "Here is your upcoming consultations",
+                    "success": True,
+                    "code": status.HTTP_200_OK,
+                    "data": consultation_information
+                    }
 
 
 
