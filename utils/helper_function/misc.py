@@ -1,4 +1,5 @@
 from datetime import datetime
+import calendar
 
 
 async def check_password_length(new):
@@ -15,3 +16,11 @@ def convert_datetime(time):
     return current_time_object
 
 
+def get_last_date(year,month):
+    date = calendar.monthrange(year, month)
+    return date[1]
+
+
+c = "30/9/2021 23:59:51"
+current_time_object = datetime.strptime(c, "%d/%m/%Y %H:%M:%S")
+print(current_time_object)

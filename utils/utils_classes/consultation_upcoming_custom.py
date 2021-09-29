@@ -1,13 +1,14 @@
 from datetime import datetime
 from fastapi import status
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
-from utils.db_functions.db_consultation_function import doctor_custom_day_consultations, fetch_all_form_details
-from utils.helper_function.misc import convert_datetime
+from utils.db_functions.db_consultation_function import doctor_custom_day_consultations, fetch_all_form_details, \
+    doctor_custom_month_consultations
+from utils.helper_function.misc import convert_datetime, get_last_date
 from utils.logger.logger import logger
 
 
 class CustomConsultation:
-    def __init__(self, field: str,doctor_id:int):
+    def __init__(self, field: str, doctor_id: int):
         self.field = field
         self.doctor_id = doctor_id
 
@@ -15,11 +16,20 @@ class CustomConsultation:
     async def if_field_is_day():
         current_time = datetime.now()
         logger.info("####### CURRENT TIME IS {} #########".format(current_time))
-        return convert_datetime(time=current_time),current_time
+        return convert_datetime(time=current_time), current_time
+
+    @staticmethod
+    async def if_field_is_month():
+        current_time = datetime.now()
+        logger.info("####### CURRENT TIME IS {} #########".format(current_time))
+        date = get_last_date(year=current_time.year, month=current_time.month)
+        end_time = str(date) + "/" + str(current_time.month) + "/" + str(current_time.year)
+        end_time = end_time + " 23:59:51"
+        return datetime.strptime(end_time, "%d/%m/%Y %H:%M:%S"), current_time
 
     async def find_consultation(self):
         if self.field == "day":
-            end_time,current_time = await self.if_field_is_day()
+            end_time, current_time = await self.if_field_is_day()
             fetch_current_day_open_consultations = await doctor_custom_day_consultations(doctor_id=self.doctor_id,
                                                                                          current_time=current_time,
                                                                                          end_time=end_time)
@@ -27,7 +37,11 @@ class CustomConsultation:
         if self.field == "week":
             pass
         if self.field == "month":
-            pass
+            end_time, current_time = await self.if_field_is_month()
+            fetch_current_month_open_consultations = await doctor_custom_month_consultations(doctor_id=self.doctor_id,
+                                                                                             current_time=current_time,
+                                                                                             end_time=end_time)
+            return fetch_current_month_open_consultations
 
     async def fetch_information(self):
         consultation_information = []
@@ -106,6 +120,3 @@ class CustomConsultation:
                     "code": status.HTTP_200_OK,
                     "data": consultation_information
                     }
-
-
-
