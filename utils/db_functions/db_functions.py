@@ -72,7 +72,7 @@ def get_specific_doctor(search_query):
 
 def get_all_doctor():
     try:
-        query = """SELECT id,username,full_name,mail,gender,experience,is_active,url,
+        query = """SELECT id,full_name,mail,gender,experience,is_active,url,
         is_online,about,slug FROM doctors ORDER BY created_on DESC """
         logger.info("### PROCEEDING FURTHER FOR EXECUTION OF QUERY OF GET SPECIFIC DOCTOR")
         return db.fetch_all(query)
@@ -193,7 +193,7 @@ def find_exist_user_id(id: int):
 
 def find_exist_username_email(check: str):
     try:
-        query = "select id,password,username,full_name,mail,phone_number,gender,experience,url,about from doctors " \
+        query = "select id,password,full_name,mail,phone_number,gender,experience,url,about from doctors " \
                 "where " \
                 "mail=:mail or username=:username "
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY")
@@ -240,9 +240,9 @@ def find_slug_therapist(slug: str):
 def save_doctor(doctor: Doctor, slug):
     dt = datetime.now(timezone.utc)
     try:
-        query = """ INSERT INTO doctors VALUES (nextval('doctors_id_seq'),:username,:full_name,:mail,:password,:phone_number,:gender,:experience,:econsultation_fee,:isActive,:isOnline,:url,:follow_up_fee,:about, :slug, :created_on) RETURNING id """
+        query = """ INSERT INTO doctors VALUES (nextval('doctors_id_seq'),:full_name,:mail,:password,:phone_number,:gender,:experience,:econsultation_fee,:isActive,:isOnline,:url,:follow_up_fee,:about, :slug, :created_on) RETURNING id """
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY")
-        return db.execute(query=query, values={"username": doctor.username,
+        return db.execute(query=query, values={
                                                "full_name": doctor.full_name, "mail": doctor.mail,
                                                "password": doctor.password,
                                                "phone_number": doctor.phone_number, "gender": doctor.gender,
@@ -440,7 +440,7 @@ def save_timeSlot_doctor_map(map_array_object):
 
 
 def get_doctor_id(slug: str):
-    query = """SELECT id,username,full_name,mail,phone_number,gender,experience,econsultation_fee,is_active,url,
+    query = """SELECT id,full_name,mail,phone_number,gender,experience,econsultation_fee,is_active,url,
             is_online,follow_up_fee,about,slug FROM doctors WHERE slug=:slug """
     try:
         return db.fetch_one(query, values={"slug": slug})
@@ -451,7 +451,7 @@ def get_doctor_id(slug: str):
 
 
 def find_doctor_information(slug: str):
-    query = """SELECT id,username,full_name,mail,phone_number,gender,experience,is_active,url,
+    query = """SELECT id,full_name,mail,phone_number,gender,experience,is_active,url,
         is_online,about,slug,audio,video,chat FROM doctors WHERE slug=:slug"""
     try:
         return db.fetch_one(query, values={"slug": slug})
@@ -551,7 +551,7 @@ async def register_user_combined(doctor, slug):
         try:
             dt = datetime.now(timezone.utc)
             logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY")
-            doctor_id = await db.execute(query=QUERY_FOR_REGISTER_DOCTOR, values={"username": doctor.username,
+            doctor_id = await db.execute(query=QUERY_FOR_REGISTER_DOCTOR, values={
                                                                                   "full_name": doctor.full_name,
                                                                                   "mail": doctor.mail,
                                                                                   "password": doctor.password,

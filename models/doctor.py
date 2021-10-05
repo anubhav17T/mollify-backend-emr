@@ -21,7 +21,6 @@ class ConsultationSpecificFee(BaseModel):
 
 
 class Doctor(BaseModel):
-    username: str = Field(None, example="username")
     full_name: str = Field(..., example="name + surname")
     mail: str = Query(..., regex=EMAIL_REGEX, example="john.doe@gmail.com")
     password: str = Field(None, example="test@123")

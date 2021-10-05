@@ -24,7 +24,6 @@ def creating_doctor_table():
                 "doctors",
                 metadata,
                 sqlalchemy.Column("id", Integer, Sequence("doctors_id_seq"), primary_key=True),
-                sqlalchemy.Column("username", sqlalchemy.String()),
                 sqlalchemy.Column("full_name", sqlalchemy.String()),
                 sqlalchemy.Column("mail", sqlalchemy.String()),
                 sqlalchemy.Column("password", sqlalchemy.String()),

@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Path
 from fastapi import status
-
 from models.qualification import UpdateQualification
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from utils.db_functions.db_qualifications_function import get_doc_qualifications, check_if_qualification_exist, \

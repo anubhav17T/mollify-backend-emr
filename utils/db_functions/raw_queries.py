@@ -1,4 +1,4 @@
-QUERY_FOR_REGISTER_DOCTOR = """INSERT INTO doctors VALUES (nextval('doctors_id_seq'),:username,:full_name,:mail,:password,
+QUERY_FOR_REGISTER_DOCTOR = """INSERT INTO doctors VALUES (nextval('doctors_id_seq'),:full_name,:mail,:password,
             :phone_number,:gender,:experience,:is_active,:is_online,:url,:about, 
             :slug,:chat,:audio,:video,:created_on) RETURNING id """
 
@@ -37,7 +37,7 @@ QUERY_FOR_DOCTORS_QUALIFICATIONS_SELECT = "SELECT doctors.id,doctors.full_name,d
 
 QUERY_FOR_DOCTOR_SPECIALISATION_MAP = "SELECT doctors_specialisations_map.doctor_id,specialisations.name,specialisations.id,specialisations.is_active FROM doctors_specialisations_map INNER JOIN specialisations ON doctors_specialisations_map.specialisation_id=specialisations.id WHERE doctor_id=:doctor_id"
 
-QUERY_FOR_SPECIFIC_DOCTORS_DETAILS = """SELECT id,username,full_name,mail,phone_number,gender,experience,is_active,url,
+QUERY_FOR_SPECIFIC_DOCTORS_DETAILS = """SELECT id,full_name,mail,phone_number,gender,experience,is_active,url,
         is_online,about,slug,chat,audio,video FROM doctors WHERE id=:id """
 
 QUERY_FOR_FIND_FIRST_DOCTOR_SPECIALISATION = "SELECT specialisations.name FROM doctors_specialisations_map INNER JOIN specialisations ON doctors_specialisations_map.specialisation_id=specialisations.id WHERE doctor_id=:doctor_id ORDER BY specialisation_id LIMIT 1"
@@ -88,7 +88,7 @@ QUERY_FOR_EXISTING_TIMESLOT = "SELECT doctors_timeslot_map.doctor_id,doctors_tim
 QUERY_FOR_DOCTOR_TIMESLOT_MAP = "INSERT INTO doctors_timeSlot_map VALUES (nextval('doctors_timeSlot_map_id_seq')," \
                                 ":doctor_id,:time_slot_id,now() at time zone 'UTC') "
 
-QUERY_FOR_DOCTOR_DETAILS_AND_QUALIFICATIONS = "SELECT doctors.id,doctors.full_name,doctors.username,doctors.mail," \
+QUERY_FOR_DOCTOR_DETAILS_AND_QUALIFICATIONS = "SELECT doctors.id,doctors.full_name,doctors.mail," \
                                               "doctors.gender,doctors.experience,doctors.about,doctors.slug,ARRAY_AGG(" \
                                               "qualifications.qualification_name) AS qualificaion_name," \
                                               "ARRAY_AGG(qualifications.year) AS year FROM doctors INNER JOIN " \

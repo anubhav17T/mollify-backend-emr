@@ -48,7 +48,7 @@ async def videoConferencing(request: ChannelName, current_user: Doctor = Depends
     else:
         return {"message": "Please validate the credentials",
                 "success": True,
-                "data": {"token": token, "channel_name": request.channel_name, "username": current_user["username"],
+                "data": {"token": token, "channel_name": request.channel_name,
                          "mail": current_user["mail"]},
                 "code": status.HTTP_200_OK}
 

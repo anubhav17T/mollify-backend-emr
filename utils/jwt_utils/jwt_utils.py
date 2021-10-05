@@ -58,7 +58,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
                                          target="JWT-VERIFICATION"
                                          )
         return {"id":result["id"],
-                "username":result["username"],
                 "full_name":result["full_name"],
                 "mail":result["mail"],
                 "phone_number":result["phone_number"],
