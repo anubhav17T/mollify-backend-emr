@@ -26,8 +26,9 @@ from utils.utils_classes.classes_for_checks import CheckUserExistence, CheckTime
     CheckForConsultation
 from datetime import datetime, timezone
 from utils.connection_configuration.db_object import db
+from pytz import timezone
 
-dt = datetime.now(timezone.utc)
+dt = datetime.now(timezone("Asia/Kolkata"))
 global object_id
 
 doctor_time_slot_routes = APIRouter()

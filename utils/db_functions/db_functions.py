@@ -21,6 +21,7 @@ from utils.logger.logger import logger
 from utils.connection_configuration.db_object import db
 from datetime import datetime, timezone
 from models.specialisation import Specialisation
+from pytz import timezone
 
 
 def save_specialisation(specailisations: Specialisation):
@@ -236,9 +237,8 @@ def find_slug_therapist(slug: str):
     finally:
         logger.info("#### FIND IND_SLUG_THERAPIST FUNCTION COMPLETED ####")
 
-
 def save_doctor(doctor: Doctor, slug):
-    dt = datetime.now(timezone.utc)
+    dt = datetime.now(timezone("Asia/Kolkata"))
     try:
         query = """ INSERT INTO doctors VALUES (nextval('doctors_id_seq'),:full_name,:mail,:password,:phone_number,:gender,:experience,:econsultation_fee,:isActive,:isOnline,:url,:follow_up_fee,:about, :slug, :created_on) RETURNING id """
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY")
@@ -549,7 +549,7 @@ async def register_user_combined(doctor, slug):
     async with db.transaction():
         transaction = await db.transaction()
         try:
-            dt = datetime.now(timezone.utc)
+            dt = datetime.now(timezone("Asia/Kolkata"))
             logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY")
             doctor_id = await db.execute(query=QUERY_FOR_REGISTER_DOCTOR, values={
                                                                                   "full_name": doctor.full_name,

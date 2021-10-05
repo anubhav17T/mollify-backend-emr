@@ -8,13 +8,14 @@ from utils.db_functions.db_functions import find_exist_user_id, find_exist_user,
 from utils.db_functions.db_specialisation_function import check_if_id_exists
 from utils.logger.logger import logger
 from datetime import timedelta
+from pytz import timezone
 
 
 class CheckUserExistence(object):
     def __init__(self, _id, target):
         self._id = _id
         self.target = target
-        self.dt = datetime.now(timezone.utc)
+        self.dt = datetime.now(timezone("Asia/Kolkata"))
 
     async def check_specialisation_id_exist(self):
         response = await check_if_id_exists(id=self._id)
@@ -99,7 +100,7 @@ class TimeslotConfiguration(object):
         self.start_time = start_time
         self.end_time = end_time
         self.doctor_id = doctor_id
-        self.dt = datetime.now()
+        self.dt = datetime.now(timezone("Asia/Kolkata"))
 
     def check_if_start_time_greater_than_end_time(self):
         if self.start_time >= self.end_time:
@@ -120,7 +121,7 @@ class TimeslotConfiguration(object):
 
     def check_if_time_and_date_is_valid(self):
         # incoming date is less than or equalto and incoming time is +-10 then failed
-        dt = datetime.now()
+        dt = datetime.now(timezone("Asia/Kolkata"))
         if self.start_time.date() == dt.date():
             if self.start_time.time().hour - dt.time().hour <= 0:
                 raise Exception("TIME SLOT SHOULD BE BOOKED IN AN GAP OF ATLEAST 1 HOUR")

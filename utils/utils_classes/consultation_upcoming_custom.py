@@ -5,7 +5,7 @@ from utils.db_functions.db_consultation_function import doctor_custom_day_consul
     doctor_custom_month_consultations
 from utils.helper_function.misc import convert_datetime, get_last_date
 from utils.logger.logger import logger
-
+from pytz import timezone
 
 class CustomConsultation:
     def __init__(self, field: str, doctor_id: int, page_limit: int, size: int):
@@ -16,13 +16,13 @@ class CustomConsultation:
 
     @staticmethod
     async def if_field_is_day():
-        current_time = datetime.now()
+        current_time = datetime.now(timezone("Asia/Kolkata"))
         logger.info("####### CURRENT TIME IS {} #########".format(current_time))
         return convert_datetime(time=current_time), current_time
 
     @staticmethod
     async def if_field_is_month():
-        current_time = datetime.now()
+        current_time = datetime.now(timezone("Asia/Kolkata"))
         logger.info("####### CURRENT TIME IS {} #########".format(current_time))
         date = get_last_date(year=current_time.year, month=current_time.month)
         end_time = str(date) + "/" + str(current_time.month) + "/" + str(current_time.year)
@@ -37,7 +37,6 @@ class CustomConsultation:
                                                                                          end_time=end_time,
                                                                                          page_limit=self.page_limit,
                                                                                          size=self.size
-
                                                                                          )
             return fetch_current_day_open_consultations
         if self.field == "week":
