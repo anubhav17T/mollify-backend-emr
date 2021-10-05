@@ -180,7 +180,7 @@ def doctor_custom_day_consultations(doctor_id: int, current_time: datetime, end_
             ">='{}' AND consultations.start_time <='{}') GROUP BY consultations.patient_id,consultations.start_time," \
             "consultations.end_time,users.full_name,users.gender," \
             "users.marital_status," \
-            "consultations.session_type ORDER BY consultations.start_time DESC OFFSET {} LIMIT {}".format(current_time, end_time,size,page_limit)
+            "consultations.session_type ORDER BY consultations.start_time OFFSET {} LIMIT {}".format(current_time, end_time,size,page_limit)
     return db.fetch_all(query=query, values={"doctor_id": doctor_id})
 
 
@@ -198,7 +198,7 @@ def doctor_custom_month_consultations(doctor_id: int, current_time: datetime, en
             ">='{}' AND consultations.start_time <='{}') GROUP BY consultations.patient_id,consultations.start_time," \
             "consultations.end_time,users.full_name,users.gender," \
             "users.marital_status," \
-            "consultations.session_type ORDER BY consultations.start_time DESC OFFSET {} LIMIT {}".format(current_time, end_time,size,page_limit)
+            "consultations.session_type ORDER BY consultations.start_time OFFSET {} LIMIT {}".format(current_time, end_time,size,page_limit)
     return db.fetch_all(query=query, values={"doctor_id": doctor_id})
 
 
