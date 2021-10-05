@@ -24,7 +24,7 @@ class CustomConsultation:
         logger.info("####### CURRENT TIME IS {} #########".format(current_time))
         date = get_last_date(year=current_time.year, month=current_time.month)
         end_time = str(date) + "/" + str(current_time.month) + "/" + str(current_time.year)
-        end_time = end_time + " 23:59:51"
+        end_time = end_time + " 23:59:52"
         return datetime.strptime(end_time, "%d/%m/%Y %H:%M:%S"), current_time
 
     async def find_consultation(self):

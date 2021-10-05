@@ -27,7 +27,6 @@ from utils.utils_classes.classes_for_checks import (CheckUserExistence,
                                                     ConsultationChecks)
 from utils.utils_classes.consultation_return_message import ConsultationStatusMessage
 from datetime import datetime
-
 from utils.utils_classes.consultation_upcoming_custom import CustomConsultation
 
 doctor_consultation = APIRouter()
@@ -328,16 +327,22 @@ async def get_upcoming_doctor_consultations(doctors_id: int):
                 }
 
 
-@doctor_consultation.get("/doctors/consultations/history/{doctors_id}", tags=["DOCTORS/CONSULTATIONS"],
+@doctor_consultation.get("/doctors/consultations/history/{doctors_id}",
+                         tags=["DOCTORS/CONSULTATIONS"],
                          description="GET CALL DOCTORS PREVIOUS CONSULTATIONS")
-async def get_past_doctor_consultations(doctors_id: int):
+async def get_past_doctor_consultations(doctors_id: int, page_limit: int = Query(default=10),
+                                        size: int = Query(default=0,
+                                                          description="POSITION OF THE RECORDS TO START WITH")):
     logger.info("######## FETCHING PAST CONSULTATIONS ###############")
-    fetch_past_consultations = await doctor_past_consultations(doctor_id=doctors_id)
+    fetch_past_consultations = await doctor_past_consultations(doctor_id=doctors_id, limit=page_limit, offset=size)
     if not fetch_past_consultations:
         return {"message": "You have no past consultations",
                 "success": True,
                 "code": status.HTTP_200_OK,
-                "data": []
+                "data": [],
+                "total":0,
+                "page_limit":page_limit,
+                "size":size
                 }
     consultation_information = []
     try:
@@ -407,10 +412,14 @@ async def get_past_doctor_consultations(doctors_id: int):
         return {"message": "Here,is your past consultations",
                 "success": True,
                 "code": status.HTTP_200_OK,
-                "data": consultation_information
+                "data": consultation_information,
+                "total": len(consultation_information),
+                "page_limit": page_limit,
+                "size": size
                 }
 
 
+# todo: NEED TO ADD PAGINATION IN THIS ROUTE THIS IS UPCOMING CONSULTATION
 # open and number of consultation count
 @doctor_consultation.get("/doctors/consultations/custom/{doctors_id}", tags=["DOCTORS/CONSULTATIONS"])
 async def get_custom_consultations(doctors_id: int,
@@ -418,6 +427,6 @@ async def get_custom_consultations(doctors_id: int,
                                                       max_length=6)):
     logger.info("####### FETCHING CUSTOM CONSULTATIONS #############")
     logger.info("########### FIELD PROVIDED IS {} #########".format(field))
-    consultations = CustomConsultation(doctor_id=doctors_id,field=field)
+    consultations = CustomConsultation(doctor_id=doctors_id, field=field)
     logger.info("##### CUSTOM CONSULTATION OBJECT MADE ########")
     return await consultations.fetch_information()
