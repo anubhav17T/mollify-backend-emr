@@ -340,9 +340,9 @@ async def get_past_doctor_consultations(doctors_id: int, page_limit: int = Query
                 "success": True,
                 "code": status.HTTP_200_OK,
                 "data": [],
-                "total":0,
-                "page_limit":page_limit,
-                "size":size
+                "total": 0,
+                "page_limit": page_limit,
+                "size": size
                 }
     consultation_information = []
     try:
@@ -424,9 +424,18 @@ async def get_past_doctor_consultations(doctors_id: int, page_limit: int = Query
 @doctor_consultation.get("/doctors/consultations/custom/{doctors_id}", tags=["DOCTORS/CONSULTATIONS"])
 async def get_custom_consultations(doctors_id: int,
                                    field: str = Query(..., description="DAY/MONTH/WEEK CONSULTATIONS", min_length=3,
-                                                      max_length=6)):
-    logger.info("####### FETCHING CUSTOM CONSULTATIONS #############")
+                                                      max_length=6),
+                                   page_limit:int=Query(default=10,description="HOW MANY RECORDS IN PAGE CLIENT WANT"),
+                                   size:int = Query(default=0,description="FROM WHICH ROW TO BEGIN OR SKIP")
+                                   ):
     logger.info("########### FIELD PROVIDED IS {} #########".format(field))
-    consultations = CustomConsultation(doctor_id=doctors_id, field=field)
+    if field != "month" or field != "day" or field != "week":
+        raise CustomExceptionHandler(message="OOPS!! Something went wrong at our end.",
+                                     target="GET_CUSTOM_CONSULTATIONS[QUERY SHOULD BE IN RANGE [week,month,day]",
+                                     code=status.HTTP_400_BAD_REQUEST,
+                                     success=False
+                                     )
+    logger.info("####### FETCHING CUSTOM CONSULTATIONS #############")
+    consultations = CustomConsultation(doctor_id=doctors_id, field=field,page_limit=page_limit,size=size)
     logger.info("##### CUSTOM CONSULTATION OBJECT MADE ########")
     return await consultations.fetch_information()

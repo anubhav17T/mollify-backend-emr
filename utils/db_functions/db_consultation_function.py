@@ -170,7 +170,7 @@ def doctor_upcoming_consultation(doctor_id: int):
     return db.fetch_all(query=query, values={"doctor_id": doctor_id})
 
 
-def doctor_custom_day_consultations(doctor_id: int, current_time: datetime, end_time: datetime):
+def doctor_custom_day_consultations(doctor_id: int, current_time: datetime, end_time: datetime,page_limit:int,size:int):
     query = "SELECT array_agg(consultations.status)AS status,array_agg(consultations.id)AS id,array_agg(" \
             "consultations.parent_id)AS parent_id,array_agg(consultations.cancel_reason)AS cancel_reason," \
             "consultations.patient_id,consultations.start_time,consultations.end_time,users.full_name AS " \
@@ -180,7 +180,7 @@ def doctor_custom_day_consultations(doctor_id: int, current_time: datetime, end_
             ">='{}' AND consultations.start_time <='{}') GROUP BY consultations.patient_id,consultations.start_time," \
             "consultations.end_time,users.full_name,users.gender," \
             "users.marital_status," \
-            "consultations.session_type".format(current_time, end_time)
+            "consultations.session_type ORDER BY consultations.start_time DESC OFFSET {} LIMIT {}".format(current_time, end_time,size,page_limit)
     return db.fetch_all(query=query, values={"doctor_id": doctor_id})
 
 
@@ -188,7 +188,7 @@ def doctor_custom_week_consultations(doctor_id: int):
     pass
 
 
-def doctor_custom_month_consultations(doctor_id: int, current_time: datetime, end_time: datetime):
+def doctor_custom_month_consultations(doctor_id: int, current_time: datetime, end_time: datetime,page_limit:int,size:int):
     query = "SELECT array_agg(consultations.status)AS status,array_agg(consultations.id)AS id,array_agg(" \
             "consultations.parent_id)AS parent_id,array_agg(consultations.cancel_reason)AS cancel_reason," \
             "consultations.patient_id,consultations.start_time,consultations.end_time,users.full_name AS " \
@@ -198,7 +198,7 @@ def doctor_custom_month_consultations(doctor_id: int, current_time: datetime, en
             ">='{}' AND consultations.start_time <='{}') GROUP BY consultations.patient_id,consultations.start_time," \
             "consultations.end_time,users.full_name,users.gender," \
             "users.marital_status," \
-            "consultations.session_type".format(current_time, end_time)
+            "consultations.session_type ORDER BY consultations.start_time DESC OFFSET {} LIMIT {}".format(current_time, end_time,size,page_limit)
     return db.fetch_all(query=query, values={"doctor_id": doctor_id})
 
 

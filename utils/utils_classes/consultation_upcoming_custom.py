@@ -8,9 +8,11 @@ from utils.logger.logger import logger
 
 
 class CustomConsultation:
-    def __init__(self, field: str, doctor_id: int):
+    def __init__(self, field: str, doctor_id: int, page_limit: int, size: int):
         self.field = field
         self.doctor_id = doctor_id
+        self.page_limit = page_limit
+        self.size = size
 
     @staticmethod
     async def if_field_is_day():
@@ -32,7 +34,11 @@ class CustomConsultation:
             end_time, current_time = await self.if_field_is_day()
             fetch_current_day_open_consultations = await doctor_custom_day_consultations(doctor_id=self.doctor_id,
                                                                                          current_time=current_time,
-                                                                                         end_time=end_time)
+                                                                                         end_time=end_time,
+                                                                                         page_limit=self.page_limit,
+                                                                                         size=self.size
+
+                                                                                         )
             return fetch_current_day_open_consultations
         if self.field == "week":
             pass
@@ -40,7 +46,10 @@ class CustomConsultation:
             end_time, current_time = await self.if_field_is_month()
             fetch_current_month_open_consultations = await doctor_custom_month_consultations(doctor_id=self.doctor_id,
                                                                                              current_time=current_time,
-                                                                                             end_time=end_time)
+                                                                                             end_time=end_time,
+                                                                                             page_limit=self.page_limit,
+                                                                                             size=self.size
+                                                                                             )
             return fetch_current_month_open_consultations
 
     async def fetch_information(self):
@@ -118,5 +127,8 @@ class CustomConsultation:
             return {"message": "Here is your upcoming consultations",
                     "success": True,
                     "code": status.HTTP_200_OK,
-                    "data": consultation_information
+                    "data": consultation_information,
+                    "total":len(consultation_information),
+                    "size":self.size,
+                    "page_limit":self.page_limit
                     }
