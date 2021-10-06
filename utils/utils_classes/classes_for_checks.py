@@ -179,21 +179,16 @@ class ConsultationValidity(object):
                                               consultation_id=self.consultation_id)
         if response is None:
             logger.error("##### CANNOT ABLE TO FIND THE CONSULTATION OR DOCTOR OR PATIENT ID #####")
-            raise CustomExceptionHandler(message="Sorry,Either Consultation is not booked or doctor is not found",
-                                         code=status.HTTP_400_BAD_REQUEST,
-                                         success=False,
-                                         target="Consultation Utils")
+            return False
+        return True
 
     async def review_exist(self):
         logger.info("####### INFO FIND IF REVIEW ALREADY EXIST ##############")
         response = await find_if_review_exist(consultation_id=self.consultation_id)
         if response:
             logger.error("##### REVIEW ALREADY THERE, YOU CANNOT ADD NEW ONE!!!! #####")
-            raise CustomExceptionHandler(message="You have already provided the review for the doctor,please update "
-                                                 "the previous one",
-                                         code=status.HTTP_400_BAD_REQUEST,
-                                         success=False,
-                                         target="Consultation Utils")
+            return False
+        return True
 
 
 class FindClient:

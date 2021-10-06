@@ -1,7 +1,9 @@
 from datetime import datetime
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Query
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+
+from views.v1.communication_routes import information
 from views.v1.doctor_language_routes import doctor_languages
 from views.v1.doctor_specialisation_routes import doctor_specialisation
 from views.v1.doctors_qualification_routes import doctor_qualification_router
@@ -83,6 +85,7 @@ app.include_router(doctor_languages, prefix=V1_PREFIX)
 app.include_router(doctor_qualification_router, prefix=V2_PREFIX)
 app.include_router(app_v2_filters, prefix=V2_PREFIX)
 app.include_router(payment_router, prefix=V1_PREFIX)
+app.include_router(information, prefix=V1_PREFIX)
 
 
 async def home():
@@ -135,7 +138,6 @@ if __name__ == "__main__":
     try:
         """ADD MULTIPLE PROCESSING IN CREATING DATABASE TABLE FOR FAST EXECUTION """
         # import uvicorn
-        # uvicorn.run(app,port=8000)
+        # uvicorn.run(app, port=8002)
     except Exception as e:
         logger.error("###### EXCEPTION IN MAIN FILE IS {} ####### ".format(e))
-

@@ -17,29 +17,6 @@ from utils.db_functions.db_feedback_function import (save_feedback,
 doctor_feedback = APIRouter()
 
 
-@doctor_feedback.post("/doctors/feedbacks", tags=["DOCTORS/FEEDBACKS"], description="POST CALL FOR DOCTOR FEEDBACK")
-async def create_feedback(feedback: Feedback):
-    logger.info("##### CREATE FEEDBACK METHOD CALLED ########")
-    string_length = check_length(string=feedback.review)
-    if not string_length:
-        logger.error("####### STRING LENGTH DOESNT NOT MATCHES #############")
-        raise CustomExceptionHandler(message="Either review is greater than 500 words or less than 40 words",
-                                     code=status.HTTP_409_CONFLICT,
-                                     success=False, target="SAVE-FEEDBACK")
-
-    response = ConsultationValidity(consultation_id=feedback.consultation_id,
-                                    doctor_id=feedback.doctor_id,
-                                    patient_id=feedback.patient_id)
-    await response.consultation_utils()
-    await response.review_exist()
-    save_feedback_resp_id = await save_feedback(feedback)
-    if not save_feedback_resp_id:
-        raise CustomExceptionHandler(message="Something went wrong,cannot able to save the feedback",
-                                     code=status.HTTP_409_CONFLICT,
-                                     success=False, target="SAVE-FEEDBACK(DATA INSERTION ERROR)")
-    return {"message": "Thank you for your feedback", "code": status.HTTP_201_CREATED, "success": True}
-
-
 @doctor_feedback.get("/doctors/feedback/{doctor_id}", tags=["DOCTORS/FEEDBACKS"], description="GET CALL FOR FEEDBACKS")
 async def get_feedbacks_doctor(doctor_id: int):
     logger.info("##### GET SPECIFIC FEEDBACK METHOD CALLED ########")
@@ -73,31 +50,3 @@ async def get_feedbacks_doctor(current_user: Doctor = Depends(get_current_user))
             "code": status.HTTP_200_OK,
             "success": True,
             "data": response}
-
-
-@doctor_feedback.put("/doctors/feedback/{feedback_id}", tags=["DOCTORS/FEEDBACKS"],
-                     description="UPDATE CALL FOR DOCTOR FEEDBACKS")
-async def update_doctor_feedbacks(feedback_id: int, feedback_update: FeedbackUpdate):
-    logger.info("########## GET SPECIFIC FEEDBACK METHOD CALLED ########")
-    response = await find_if_feedback_exist(feedback_id=feedback_id)
-    if response is None:
-        raise CustomExceptionHandler(message="No Feedback Exist", code=status.HTTP_400_BAD_REQUEST,
-                                     success=False, target="GET-SPECIFIC-FEEDBACK")
-    logger.info("####### FEEDBACK ID FOUND, PROCEEDING FURTHER ################ ")
-    feedback_update_query = QUERY_FOR_FEEDBACK_UPDATE
-    values_map = {"id": feedback_id}
-    for values in feedback_update:
-        if values[1] is None:
-            continue
-        feedback_update_query = feedback_update_query + values[0] + "".join("=:") + values[0] + ","
-        values_map[values[0]] = values[1]
-    feedback_update_query = feedback_update_query.rstrip(",") + WHERE_ID_FEEDBACKS
-    response = await update_feedback(query=feedback_update_query, values_map=values_map)
-    if not response:
-        raise CustomExceptionHandler(message="Sorry, cannot able to update your feedback",
-                                     code=status.HTTP_400_BAD_REQUEST,
-                                     success=False, target="GET-SPECIFIC-FEEDBACK")
-    else:
-        return {"message": "Your feedback is updated,thanks !!",
-                "code": status.HTTP_200_OK,
-                "success": True}
