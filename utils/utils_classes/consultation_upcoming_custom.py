@@ -39,9 +39,9 @@ class CustomConsultation:
                                                                                          size=self.size
                                                                                          )
             logger.info("###### NOW CALCULATING COUNT OF THE DAY CONSULTATION #####")
-            count = await doctor_custom_day_consultations_count(doctor_id=self.doctor_id,current_time=current_time,end_time=end_time)
-            logger.info("##### COUNT IS {} ###".format(count["count"]))
-            return fetch_current_day_open_consultations,count
+            # count = await doctor_custom_day_consultations_count(doctor_id=self.doctor_id,current_time=current_time,end_time=end_time)
+            # logger.info("##### COUNT IS {} ###".format(count["count"]))
+            return fetch_current_day_open_consultations
         if self.field == "week":
             pass
         if self.field == "month":
@@ -56,7 +56,7 @@ class CustomConsultation:
 
     async def fetch_information(self):
         consultation_information = []
-        fetch_field_consultations,count = await self.find_consultation()
+        fetch_field_consultations = await self.find_consultation()
         if not fetch_field_consultations:
             return {"message": "No consultations for today",
                     "success": True,
