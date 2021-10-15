@@ -41,7 +41,7 @@ class CustomConsultation:
             logger.info("###### NOW CALCULATING COUNT OF THE DAY CONSULTATION #####")
             count = await doctor_custom_day_consultations_count(doctor_id=self.doctor_id,current_time=current_time,end_time=end_time)
             logger.info("##### COUNT IS {} ###".format(count["count"]))
-            return fetch_current_day_open_consultations
+            return fetch_current_day_open_consultations,count
         if self.field == "week":
             pass
         if self.field == "month":
