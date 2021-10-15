@@ -14,7 +14,7 @@ from utils.db_functions.db_consultation_function import (save_consultation,
                                                          check_for_duplicate_consultation_booking,
                                                          check_for_open_status, doctor_past_consultations,
                                                          doctor_upcoming_consultation, fetch_all_form_details,
-                                                         doctor_custom_day_consultations, \
+                                                         doctor_custom_day_consultations, fetch_past_consultation_count, \
                                                          )
 from utils.helper_function.misc import convert_datetime
 from utils.logger.logger import logger
@@ -344,6 +344,9 @@ async def get_past_doctor_consultations(doctors_id: int, page_limit: int = Query
                 "page_limit": page_limit,
                 "size": size
                 }
+    # checking total consultations
+    fetch_total_past_consultations = await fetch_past_consultation_count(doctor_id=doctors_id)
+    print(fetch_total_past_consultations)
     consultation_information = []
     try:
         for values in fetch_past_consultations:
@@ -413,7 +416,7 @@ async def get_past_doctor_consultations(doctors_id: int, page_limit: int = Query
                 "success": True,
                 "code": status.HTTP_200_OK,
                 "data": consultation_information,
-                "total": len(consultation_information),
+                "total": fetch_total_past_consultations["count"],
                 "page_limit": page_limit,
                 "size": size
                 }

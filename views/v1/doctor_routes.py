@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import status, APIRouter, HTTPException, Depends, Path
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from utils.db_functions.db_language_function import get_language_doctor
@@ -20,6 +21,7 @@ from utils.db_functions.db_functions import find_exist_user, get_all_doctor, spe
 from utils.db_functions.doctor_crud import change_password_user, save_black_list_token, update_doctor_information, \
     get_protected_password
 from utils.utils_classes.classes_for_checks import CheckUserExistence, DoctorByName
+from pytz import timezone
 
 expireTimeInSeconds = 3600 * 3600
 currentTimestamp = int(time.time())
@@ -79,9 +81,9 @@ async def get_user_profile(current_user: Doctor = Depends(get_current_user)):
     else:
         logger.info("######## GETTING FINAL DOCTOR_RESULT MAP ############")
         doc_or_therapist_results.update(doc_or_therapist_information)
-        return {"message":"Here is your detail",
-                "success":True,"code":status.HTTP_200_OK,
-                "data":doc_or_therapist_results}
+        return {"message": "Here is your detail",
+                "success": True, "code": status.HTTP_200_OK,
+                "data": doc_or_therapist_results}
 
 
 @doctor_routes.patch("/doctors/current-status", tags=['DOCTORS/RESTRICTED'], description="Patch call for doctor status")
@@ -100,6 +102,8 @@ async def update_status(doctor: DoctorStatus, current_user: Doctor = Depends(get
         values_map[key[0]] = key[1]
         query_for_update = query_for_update + key[0] + "".join("=:") + key[0] + ","
     query_for_update = query_for_update.rstrip(",")
+    dt = datetime.now(timezone("Asia/Kolkata"))
+    query_for_update = query_for_update + ",updated_on='{}'".format(dt)
     query_for_update = query_for_update + WHERE_ID_DOCTORS
     values_map["id"] = current_user["id"]
     check_response = await update_doctor_status(query=query_for_update, values=values_map)
@@ -116,7 +120,7 @@ async def update_status(doctor: DoctorStatus, current_user: Doctor = Depends(get
 
 @doctor_routes.patch("/doctors/change-password", tags=['DOCTORS/RESTRICTED'])
 async def change_password(change_password_object: ChangePassword, current_user: Doctor = Depends(get_current_user)):
-    logger.info("here")
+    logger.info("#### CHANGING PASSWORD ### ")
     response = await get_protected_password(mail=current_user["mail"])
     valid = verify_password(change_password_object.current_password, response)
     if not valid:
@@ -227,6 +231,8 @@ async def update_status(doctor: DoctorStatus, id: int = Path(..., description="S
         values_map[key[0]] = key[1]
         query_for_update = query_for_update + key[0] + "".join("=:") + key[0] + ","
     query_for_update = query_for_update.rstrip(",")
+    dt = datetime.now(timezone("Asia/Kolkata"))
+    query_for_update = query_for_update + ",updated_on='{}'".format(dt)
     query_for_update = query_for_update + WHERE_ID_DOCTORS
     values_map["id"] = id
     check_response = await update_doctor_status(query=query_for_update, values=values_map)
@@ -273,9 +279,10 @@ async def update_doctor_details(doctor_update: DoctorUpdateInformation, id: int)
         values_map[key[0]] = key[1]
         query_for_update = query_for_update + key[0] + "".join("=:") + key[0] + ","
     query_for_update = query_for_update.rstrip(",")
+    dt = datetime.now(timezone("Asia/Kolkata"))
+    query_for_update = query_for_update + ",updated_on='{}'".format(dt)
     query_for_update = query_for_update + WHERE_ID_DOCTORS
     values_map["id"] = id
-
     query_for_qualification_update = ""
     if doctor_update.qualification is not None:
         for update in doctor_update.qualification:
@@ -322,7 +329,8 @@ async def update_doctor_details(doctor_update: DoctorUpdateInformation, id: int)
                 "code": status.HTTP_201_CREATED}
 
 
-@doctor_routes.patch("/doctors/profile", tags=['DOCTORS/RESTRICTED'], description="Patch call for doctor information")
+# updated on to be discussed
+@doctor_routes.patch("/doctors/profile/", tags=['DOCTORS/RESTRICTED'], description="Patch call for doctor information")
 async def update_doctor_details(doctor_update: DoctorUpdateInformation,
                                 current_user: Doctor = Depends(get_current_user)):
     global slug_object
@@ -336,9 +344,11 @@ async def update_doctor_details(doctor_update: DoctorUpdateInformation,
         values_map[key[0]] = key[1]
         query_for_update = query_for_update + key[0] + "".join("=:") + key[0] + ","
     query_for_update = query_for_update.rstrip(",")
+    dt = datetime.now(timezone("Asia/Kolkata"))
+    query_for_update = query_for_update + " updated_on='{}'".format(dt)
+    print(query_for_update)
     query_for_update = query_for_update + WHERE_ID_DOCTORS
     values_map["id"] = current_user["id"]
-
     query_for_qualification_update = ""
     if doctor_update.qualification is not None:
         for update in doctor_update.qualification:
@@ -383,4 +393,3 @@ async def update_doctor_details(doctor_update: DoctorUpdateInformation,
         return {"message": "Successfully updated the doctors information",
                 "success": True,
                 "code": status.HTTP_201_CREATED}
-

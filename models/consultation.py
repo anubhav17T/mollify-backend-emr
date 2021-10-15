@@ -28,3 +28,5 @@ class ConsultationTable(BaseModel):
     status: Status = Field(default=None,description="STATUS DESCRIPTION FOR THE CONSULTATIONS")
     cancel_reason: str = Field(None, description="WHY BOOKING IS CANCELLED")
     session_type: SessionType
+
+

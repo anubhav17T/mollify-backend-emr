@@ -95,7 +95,6 @@ class DoctorStatus(BaseModel):
 
 
 class DoctorUpdateInformation(BaseModel):
-    full_name: str = None
     phone_number: str = None
     gender: Gender = None
     experience: str = None

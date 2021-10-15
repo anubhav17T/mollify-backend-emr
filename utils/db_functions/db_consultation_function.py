@@ -139,7 +139,7 @@ def check_if_consultation_parent_id_exist(id: int):
     return db.fetch_one(query=query, values={"id": id})
 
 
-def doctor_past_consultations(doctor_id: int, limit: int, offset:int):
+def doctor_past_consultations(doctor_id: int, limit: int, offset: int):
     query = "SELECT array_agg(consultations.status)AS status,array_agg(consultations.id)AS id,array_agg(" \
             "consultations.parent_id)AS parent_id,array_agg(consultations.cancel_reason)AS cancel_reason," \
             "consultations.patient_id,consultations.start_time,consultations.end_time,users.full_name AS patient_name," \
@@ -147,8 +147,14 @@ def doctor_past_consultations(doctor_id: int, limit: int, offset:int):
             "WHERE doctor_id=:doctor_id AND (status='INPROGRESS' OR status='CANCELLED' OR status='COMPLETED') GROUP " \
             "BY " \
             "consultations.patient_id,consultations.start_time,consultations.end_time,users.full_name," \
-            "consultations.session_type,users.gender,users.marital_status ORDER BY consultations.end_time DESC LIMIT {} OFFSET {}".format(limit,offset)
+            "consultations.session_type,users.gender,users.marital_status ORDER BY consultations.end_time DESC LIMIT {} OFFSET {}".format(
+        limit, offset)
     return db.fetch_all(query=query, values={"doctor_id": doctor_id})
+
+
+def fetch_past_consultation_count(doctor_id: int):
+    query = "SELECT COUNT(id) FROM consultations WHERE doctor_id=:doctor_id AND (status='INPROGRESS' OR status='CANCELLED' OR status='COMPLETED')"
+    return db.fetch_one(query=query, values={"doctor_id": doctor_id})
 
 
 def update_consultation_status(id: int):
@@ -170,7 +176,8 @@ def doctor_upcoming_consultation(doctor_id: int):
     return db.fetch_all(query=query, values={"doctor_id": doctor_id})
 
 
-def doctor_custom_day_consultations(doctor_id: int, current_time: datetime, end_time: datetime,page_limit:int,size:int):
+def doctor_custom_day_consultations(doctor_id: int, current_time: datetime, end_time: datetime, page_limit: int,
+                                    size: int):
     query = "SELECT array_agg(consultations.status)AS status,array_agg(consultations.id)AS id,array_agg(" \
             "consultations.parent_id)AS parent_id,array_agg(consultations.cancel_reason)AS cancel_reason," \
             "consultations.patient_id,consultations.start_time,consultations.end_time,users.full_name AS " \
@@ -180,15 +187,25 @@ def doctor_custom_day_consultations(doctor_id: int, current_time: datetime, end_
             ">='{}' AND consultations.start_time <='{}') GROUP BY consultations.patient_id,consultations.start_time," \
             "consultations.end_time,users.full_name,users.gender," \
             "users.marital_status," \
-            "consultations.session_type ORDER BY consultations.start_time OFFSET {} LIMIT {}".format(current_time, end_time,size,page_limit)
+            "consultations.session_type ORDER BY consultations.start_time OFFSET {} LIMIT {}".format(current_time,
+                                                                                                     end_time, size,
+                                                                                                     page_limit)
     return db.fetch_all(query=query, values={"doctor_id": doctor_id})
+
+
+def doctor_custom_day_consultations_count(doctor_id: int, current_time: datetime, end_time: datetime):
+    query = "SELECT count(id) FROM consultations WHERE doctor_id=:doctor_id AND (status='OPEN' OR " \
+            "status='RESCHEDULED') AND (consultations.start_time" \
+            ">='{}' AND consultations.start_time <='{}')".format(current_time, end_time)
+    return db.fetch_one(query=query,values={"doctor_id": doctor_id})
 
 
 def doctor_custom_week_consultations(doctor_id: int):
     pass
 
 
-def doctor_custom_month_consultations(doctor_id: int, current_time: datetime, end_time: datetime,page_limit:int,size:int):
+def doctor_custom_month_consultations(doctor_id: int, current_time: datetime, end_time: datetime, page_limit: int,
+                                      size: int):
     query = "SELECT array_agg(consultations.status)AS status,array_agg(consultations.id)AS id,array_agg(" \
             "consultations.parent_id)AS parent_id,array_agg(consultations.cancel_reason)AS cancel_reason," \
             "consultations.patient_id,consultations.start_time,consultations.end_time,users.full_name AS " \
@@ -198,7 +215,9 @@ def doctor_custom_month_consultations(doctor_id: int, current_time: datetime, en
             ">='{}' AND consultations.start_time <='{}') GROUP BY consultations.patient_id,consultations.start_time," \
             "consultations.end_time,users.full_name,users.gender," \
             "users.marital_status," \
-            "consultations.session_type ORDER BY consultations.start_time OFFSET {} LIMIT {}".format(current_time, end_time,size,page_limit)
+            "consultations.session_type ORDER BY consultations.start_time OFFSET {} LIMIT {}".format(current_time,
+                                                                                                     end_time, size,
+                                                                                                     page_limit)
     return db.fetch_all(query=query, values={"doctor_id": doctor_id})
 
 

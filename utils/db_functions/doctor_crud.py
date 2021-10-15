@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from constants.const import UPDATE, TIME_SLOT_ID_KEY, WHERE
 from models.doctor import Doctor, DoctorUpdate, ChangePassword, DoctorUpdateInformation
 from fastapi import Depends
@@ -5,13 +7,15 @@ from utils.db_functions.raw_queries import QUERY_FOR_UPDATE_SLUG, INSERT_QUERY_F
 from utils.jwt_utils.jwt_utils import get_current_user
 from utils.connection_configuration.db_object import db
 from utils.logger.logger import logger
+from pytz import timezone
 
 
 def change_password_user(change_password_object: ChangePassword,current_user_mail:str):
-    query = "UPDATE doctors SET password=:password WHERE mail=:mail"
+    query = "UPDATE doctors SET password=:password,updated_on=:updated_on WHERE mail=:mail"
     logger.info("####### CHANGING USER PASSWORD ##########")
     try:
-        return db.execute(query, values={"password": change_password_object.new_password, "mail": current_user_mail})
+        dt = datetime.now(timezone("Asia/Kolkata"))
+        return db.execute(query, values={"password": change_password_object.new_password, "mail": current_user_mail,"updated_on":dt})
     except Exception as e:
         logger.error("##### EXCEPTION IN CHANGING PASSWORD OF USER IS {}".format(e))
 
