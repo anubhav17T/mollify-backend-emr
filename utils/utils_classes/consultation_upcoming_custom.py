@@ -2,7 +2,7 @@ from datetime import datetime
 from fastapi import status
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from utils.db_functions.db_consultation_function import doctor_custom_day_consultations, fetch_all_form_details, \
-    doctor_custom_month_consultations, doctor_custom_day_consultations_count
+    doctor_custom_month_consultations, doctor_custom_day_consultations_count, doctor_custom_month_consultations_count
 from utils.helper_function.misc import convert_datetime, get_last_date
 from utils.logger.logger import logger
 from pytz import timezone
@@ -39,8 +39,8 @@ class CustomConsultation:
                                                                                          size=self.size
                                                                                          )
             logger.info("###### NOW CALCULATING COUNT OF THE DAY CONSULTATION #####")
-            # count = await doctor_custom_day_consultations_count(doctor_id=self.doctor_id,current_time=current_time,end_time=end_time)
-            # logger.info("##### COUNT IS {} ###".format(count["count"]))
+            count = await doctor_custom_day_consultations_count(doctor_id=self.doctor_id,current_time=current_time,end_time=end_time)
+            logger.info("##### COUNT IS {} ###".format(count["count"]))
             return fetch_current_day_open_consultations
         if self.field == "week":
             pass
@@ -52,11 +52,12 @@ class CustomConsultation:
                                                                                              page_limit=self.page_limit,
                                                                                              size=self.size
                                                                                              )
-            return fetch_current_month_open_consultations
+            count = await doctor_custom_month_consultations_count(doctor_id=self.doctor_id,current_time=current_time,end_time=end_time)
+            return fetch_current_month_open_consultations,count
 
     async def fetch_information(self):
         consultation_information = []
-        fetch_field_consultations = await self.find_consultation()
+        fetch_field_consultations,count = await self.find_consultation()
         if not fetch_field_consultations:
             return {"message": "No consultations for today",
                     "success": True,

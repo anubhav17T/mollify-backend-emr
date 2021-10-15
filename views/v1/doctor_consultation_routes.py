@@ -43,6 +43,7 @@ async def create_consultations(consultation: ConsultationTable):
     response_user = FindClient(client_id=consultation.patient_id)
     await response_user.find_if_client_exit()
     try:
+
         time_configuration_object = TimeslotConfiguration(start_time=consultation.start_time,
                                                           end_time=consultation.end_time,
                                                           doctor_id=consultation.doctor_id)
@@ -426,7 +427,7 @@ async def get_past_doctor_consultations(doctors_id: int, page_limit: int = Query
 # open and number of consultation count
 @doctor_consultation.get("/doctors/consultations/custom/{doctors_id}", tags=["DOCTORS/CONSULTATIONS"])
 async def get_custom_consultations(doctors_id: int,
-                                   field: str = Query(..., description="DAY/MONTH/WEEK CONSULTATIONS", min_length=3,
+                                   field: str = Query(..., description="day/month/week CONSULTATIONS", min_length=3,
                                                       max_length=6),
                                    page_limit: int = Query(default=10,
                                                            description="HOW MANY RECORDS IN PAGE CLIENT WANT"),
