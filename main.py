@@ -2,11 +2,11 @@ from datetime import datetime
 from fastapi import FastAPI, Request, Query
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-
 from views.v1.communication_routes import information
 from views.v1.doctor_language_routes import doctor_languages
 from views.v1.doctor_specialisation_routes import doctor_specialisation
 from views.v1.doctors_qualification_routes import doctor_qualification_router
+from views.v1.therapy_document import documents
 from views.v2.filters.doctor_filter_routes import app_v2_filters
 from utils.connection_configuration.check_connection import DatabaseConfiguration
 from utils.connection_configuration.db_object import db
@@ -86,6 +86,8 @@ app.include_router(doctor_qualification_router, prefix=V2_PREFIX)
 app.include_router(app_v2_filters, prefix=V2_PREFIX)
 app.include_router(payment_router, prefix=V1_PREFIX)
 app.include_router(information, prefix=V1_PREFIX)
+app.include_router(documents, prefix=V1_PREFIX)
+
 
 
 async def home():

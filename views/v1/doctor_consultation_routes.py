@@ -331,19 +331,19 @@ async def get_upcoming_doctor_consultations(doctors_id: int):
 @doctor_consultation.get("/doctors/consultations/history/{doctors_id}",
                          tags=["DOCTORS/CONSULTATIONS"],
                          description="GET CALL DOCTORS PREVIOUS CONSULTATIONS")
-async def get_past_doctor_consultations(doctors_id: int, page_limit: int = Query(default=10),
-                                        size: int = Query(default=0,
+async def get_past_doctor_consultations(doctors_id: int, size: int = Query(default=10),
+                                        page: int = Query(default=0,
                                                           description="POSITION OF THE RECORDS TO START WITH")):
     logger.info("######## FETCHING PAST CONSULTATIONS ###############")
-    fetch_past_consultations = await doctor_past_consultations(doctor_id=doctors_id, limit=page_limit, offset=size)
+    fetch_past_consultations = await doctor_past_consultations(doctor_id=doctors_id, limit=size, offset=page)
     if not fetch_past_consultations:
         return {"message": "You have no past consultations",
                 "success": True,
                 "code": status.HTTP_200_OK,
                 "data": [],
                 "total": 0,
-                "page_limit": page_limit,
-                "size": size
+                "size": size,
+                "page": page
                 }
     # checking total consultations
     fetch_total_past_consultations = await fetch_past_consultation_count(doctor_id=doctors_id)
@@ -418,8 +418,8 @@ async def get_past_doctor_consultations(doctors_id: int, page_limit: int = Query
                 "code": status.HTTP_200_OK,
                 "data": consultation_information,
                 "total": fetch_total_past_consultations["count"],
-                "page_limit": page_limit,
-                "size": size
+                "size": size,
+                "page": page
                 }
 
 
@@ -429,14 +429,15 @@ async def get_past_doctor_consultations(doctors_id: int, page_limit: int = Query
 async def get_custom_consultations(doctors_id: int,
                                    field: str = Query(..., description="day/month/week CONSULTATIONS", min_length=3,
                                                       max_length=6),
-                                   page_limit: int = Query(default=10,
-                                                           description="HOW MANY RECORDS IN PAGE CLIENT WANT"),
-                                   size: int = Query(default=0, description="FROM WHICH ROW TO BEGIN OR SKIP")
+                                   size: int = Query(default=10,
+                                                     description="HOW MANY RECORDS IN PAGE CLIENT WANT"),
+                                   page: int = Query(default=0, description="FROM WHICH ROW TO BEGIN OR SKIP")
                                    ):
     logger.info("########### FIELD PROVIDED IS {} #########".format(field))
     if field == "month" or field == "day" or field == "week":
         logger.info("####### FETCHING CUSTOM CONSULTATIONS #############")
-        consultations = CustomConsultation(doctor_id=doctors_id, field=field, page_limit=page_limit, size=size)
+        #we have changed the name
+        consultations = CustomConsultation(doctor_id=doctors_id, field=field, size=size, page=page)
         logger.info("##### CUSTOM CONSULTATION OBJECT MADE ########")
         return await consultations.fetch_information()
     raise CustomExceptionHandler(message="OOPS!! Something went wrong at our end.",

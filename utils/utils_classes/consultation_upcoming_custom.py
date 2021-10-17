@@ -7,12 +7,13 @@ from utils.helper_function.misc import convert_datetime, get_last_date
 from utils.logger.logger import logger
 from pytz import timezone
 
+
 class CustomConsultation:
-    def __init__(self, field: str, doctor_id: int, page_limit: int, size: int):
+    def __init__(self, field: str, doctor_id: int, size: int, page: int):
         self.field = field
         self.doctor_id = doctor_id
-        self.page_limit = page_limit
         self.size = size
+        self.page = page
 
     @staticmethod
     async def if_field_is_day():
@@ -32,32 +33,36 @@ class CustomConsultation:
     async def find_consultation(self):
         if self.field == "day":
             end_time, current_time = await self.if_field_is_day()
+            # we have interchanged the name as per ui requirement
             fetch_current_day_open_consultations = await doctor_custom_day_consultations(doctor_id=self.doctor_id,
                                                                                          current_time=current_time,
                                                                                          end_time=end_time,
-                                                                                         page_limit=self.page_limit,
-                                                                                         size=self.size
+                                                                                         page_limit=self.size,
+                                                                                         size=self.page
                                                                                          )
             logger.info("###### NOW CALCULATING COUNT OF THE DAY CONSULTATION #####")
-            count = await doctor_custom_day_consultations_count(doctor_id=self.doctor_id,current_time=current_time,end_time=end_time)
+            count = await doctor_custom_day_consultations_count(doctor_id=self.doctor_id, current_time=current_time,
+                                                                end_time=end_time)
             logger.info("##### COUNT IS {} ###".format(count["count"]))
-            return fetch_current_day_open_consultations,count
+            return fetch_current_day_open_consultations, count
         if self.field == "week":
             pass
         if self.field == "month":
             end_time, current_time = await self.if_field_is_month()
+            #we have interchanged the name as per ui requirement
             fetch_current_month_open_consultations = await doctor_custom_month_consultations(doctor_id=self.doctor_id,
                                                                                              current_time=current_time,
                                                                                              end_time=end_time,
-                                                                                             page_limit=self.page_limit,
-                                                                                             size=self.size
+                                                                                             page_limit=self.size,
+                                                                                             size=self.page
                                                                                              )
-            count = await doctor_custom_month_consultations_count(doctor_id=self.doctor_id,current_time=current_time,end_time=end_time)
-            return fetch_current_month_open_consultations,count
+            count = await doctor_custom_month_consultations_count(doctor_id=self.doctor_id, current_time=current_time,
+                                                                  end_time=end_time)
+            return fetch_current_month_open_consultations, count
 
     async def fetch_information(self):
         consultation_information = []
-        fetch_field_consultations,count = await self.find_consultation()
+        fetch_field_consultations, count = await self.find_consultation()
         if not fetch_field_consultations:
             return {"message": "No consultations for today",
                     "success": True,
@@ -131,7 +136,7 @@ class CustomConsultation:
                     "success": True,
                     "code": status.HTTP_200_OK,
                     "data": consultation_information,
-                    "total":count["count"],
-                    "size":self.size,
-                    "page_limit":self.page_limit
+                    "total": count["count"],
+                    "size": self.size,
+                    "page": self.page
                     }
