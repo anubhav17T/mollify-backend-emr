@@ -200,8 +200,11 @@ def doctor_custom_day_consultations_count(doctor_id: int, current_time: datetime
     return db.fetch_one(query=query, values={"doctor_id": doctor_id})
 
 
-def doctor_custom_week_consultations(doctor_id: int):
-    pass
+def doctor_custom_week_consultations(doctor_id: int,current_time:datetime,end_time):
+    query = "SELECT count(id) FROM consultations WHERE doctor_id=:doctor_id AND (status='OPEN' OR " \
+            "status='RESCHEDULED') AND (consultations.start_time" \
+            ">='{}' AND consultations.start_time <='{}')".format(current_time, end_time)
+    return db.fetch_one(query=query, values={"doctor_id": doctor_id})
 
 
 def doctor_custom_month_consultations(doctor_id: int, current_time: datetime, end_time: datetime, page_limit: int,

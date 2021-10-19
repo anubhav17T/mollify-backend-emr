@@ -2,10 +2,12 @@ from datetime import datetime
 from fastapi import status
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from utils.db_functions.db_consultation_function import doctor_custom_day_consultations, fetch_all_form_details, \
-    doctor_custom_month_consultations, doctor_custom_day_consultations_count, doctor_custom_month_consultations_count
+    doctor_custom_month_consultations, doctor_custom_day_consultations_count, doctor_custom_month_consultations_count, \
+    doctor_custom_week_consultations
 from utils.helper_function.misc import convert_datetime, get_last_date
 from utils.logger.logger import logger
 from pytz import timezone
+from datetime import datetime, timedelta
 
 
 class CustomConsultation:
@@ -30,6 +32,16 @@ class CustomConsultation:
         end_time = end_time + " 23:59:52"
         return datetime.strptime(end_time, "%d/%m/%Y %H:%M:%S"), current_time
 
+    @staticmethod
+    async def if_field_is_week():
+        current_time = datetime.now(timezone("Asia/Kolkata"))
+        logger.info("####### CURRENT TIME IS {} #########".format(current_time))
+        date_str = str(current_time.day) + "/" + str(current_time.month) + "/" + str(current_time.year)
+        date_obj = datetime.strptime(date_str, "%d/%m/%Y")
+        start_of_week = date_obj - timedelta(days=date_obj.weekday())
+        end_of_week = start_of_week + timedelta(days=6, hours=23, minutes=59, seconds=50)  # Sunday
+        return end_of_week, current_time
+
     async def find_consultation(self):
         if self.field == "day":
             end_time, current_time = await self.if_field_is_day()
@@ -46,10 +58,22 @@ class CustomConsultation:
             logger.info("##### COUNT IS {} ###".format(count["count"]))
             return fetch_current_day_open_consultations, count
         if self.field == "week":
-            pass
+            end_time, current_time = await self.if_field_is_week()
+            fetch_current_week_open_consultations = await doctor_custom_month_consultations(doctor_id=self.doctor_id,
+                                                                                            current_time=current_time,
+                                                                                            end_time=end_time,
+                                                                                            page_limit=self.size,
+                                                                                            size=self.page
+                                                                                            )
+
+            logger.info("###### NOW CALCULATING COUNT OF THE WEEK CONSULTATION #####")
+            count = await doctor_custom_week_consultations(doctor_id=self.doctor_id, current_time=current_time,
+                                                           end_time=end_time)
+            return fetch_current_week_open_consultations,count
+
         if self.field == "month":
             end_time, current_time = await self.if_field_is_month()
-            #we have interchanged the name as per ui requirement
+            # we have interchanged the name as per ui requirement
             fetch_current_month_open_consultations = await doctor_custom_month_consultations(doctor_id=self.doctor_id,
                                                                                              current_time=current_time,
                                                                                              end_time=end_time,
