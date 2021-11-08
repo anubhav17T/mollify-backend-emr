@@ -94,7 +94,7 @@ toml==0.10.2
 tox==3.23.0
 tox-travis==0.12
 typed-ast==1.4.3
-typing-extensions==3.7.4.3
+typing-extensions==3.10.0.0
 urllib3==1.26.4
 virtualenv==20.4.3
 zipp==3.4.1
