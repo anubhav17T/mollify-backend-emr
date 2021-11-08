@@ -60,11 +60,11 @@ pydantic==1.8.1
 pydocstyle==5.1.1
 pyflakes==2.3.1
 Pygments==2.8.1
-PyJWT==2.3.0
+PyJWT==2.0.1
 pyparsing==2.4.7
 pytest==6.2.3
 pytest-cov==2.11.1
-python-dev-tools==2020.9.10
+python-dev-tools==2020.9.4
 python-multipart==0.0.5
 pytz==2021.1
 pyupgrade==2.12.0
@@ -114,7 +114,7 @@ itsdangerous==1.1.0
 python-socketio==5.2.1
 alembic==1.6.4
 sendgrid==6.7.0
-pip~=21.3.1
+pip~=21.1.2
 wheel~=0.36.2
 schema~=0.7.4
 aiofiles~=0.6.0
