@@ -1,5 +1,4 @@
 import jwt
-from jwt import PyJWTError
 from pydantic import ValidationError
 from datetime import datetime, timedelta
 from constants.const import JWT_EXPIRATION_TIME, JWT_SECRET_KEY, JWT_ALGORITHM
@@ -66,5 +65,11 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
                 "url":result["url"],
                 "about":result["about"]
                 }
-    except (PyJWTError, ValidationError):
+    except ValidationError:
         raise credential_exception
+    except Exception as e:
+        raise CustomExceptionHandler(message="Something went wrong,please try again later",
+                                     code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                     success=False,
+                                     target="JWT-VERIFICATION CAUSEED[{}]".format(e)
+                                     )
