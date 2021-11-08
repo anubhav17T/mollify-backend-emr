@@ -64,7 +64,7 @@ PyJWT==2.3.0
 pyparsing==2.4.7
 pytest==6.2.3
 pytest-cov==2.11.1
-python-dev-tools==2020.9.4
+python-dev-tools==2020.9.10
 python-multipart==0.0.5
 pytz==2021.1
 pyupgrade==2.12.0
@@ -114,7 +114,7 @@ itsdangerous==1.1.0
 python-socketio==5.2.1
 alembic==1.6.4
 sendgrid==6.7.0
-pip~=20.3.4
+pip~=21.3.1
 wheel~=0.36.2
 schema~=0.7.4
 aiofiles~=0.6.0
