@@ -164,7 +164,6 @@ async def register_user(user: Doctor):
 
 @app_v1.post("/doctors/login", tags=["DOCTORS/GENERAL"])
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    print(form_data)
     # check if user exist or not
     logger.info("###### LOGGING IN THROUGH MAIL ###### ")
     form_data.username = form_data.username.lower()
@@ -197,7 +196,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
             "access_token": access_token,
             "token_type": "bearer",
             "success": True,
-            "user_info": {
+            "details": {
                 "id":result["id"],
                 "fullname": result["full_name"],
                 "message": "user logged in successfully",

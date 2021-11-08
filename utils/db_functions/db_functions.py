@@ -196,9 +196,9 @@ def find_exist_username_email(check: str):
     try:
         query = "select id,password,full_name,mail,phone_number,gender,experience,url,about from doctors " \
                 "where " \
-                "mail=:mail or username=:username "
+                "mail=:mail"
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY")
-        return db.fetch_one(query=query, values={"mail": check, "username": check})
+        return db.fetch_one(query=query, values={"mail": check})
     except Exception as e:
         logger.error("##### EXCEPTION IN FIND_EXIST_USER FUNCTION IS {}".format(e))
     finally:
