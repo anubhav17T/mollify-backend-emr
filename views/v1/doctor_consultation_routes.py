@@ -1,10 +1,11 @@
-from fastapi import status, APIRouter
+from fastapi import status, APIRouter,Depends
 from constants.variable_constants import (
     CONSULTATION_STATUS_OPEN,
     CONSULTATION_STATUS_CANCELLED, \
     CONSULTATION_STATUS_COMPLETED,
     CONSULTATION_STATUS_PROGRESS,
     CONSULTATION_STATUS_RESCHEDULED)
+from models.doctor import Doctor
 from utils.db_functions.db_consultation_function import (save_consultation,
                                                          fetch_consultation_status, \
                                                          fetch_all_consultation,
@@ -28,6 +29,7 @@ from utils.utils_classes.classes_for_checks import (CheckUserExistence,
 from utils.utils_classes.consultation_return_message import ConsultationStatusMessage
 from datetime import datetime
 from utils.utils_classes.consultation_upcoming_custom import CustomConsultation
+from utils.jwt_utils.jwt_utils import get_current_user, get_token_user
 
 doctor_consultation = APIRouter()
 global doctor_id
@@ -218,17 +220,17 @@ async def create_consultations(consultation: ConsultationTable):
         return message.message()
 
 
-@doctor_consultation.get("/doctors/consultations/{id}", tags=["DOCTORS/CONSULTATIONS"],
+@doctor_consultation.get("/doctors/consultations/", tags=["DOCTORS/CONSULTATIONS"],
                          description="GET CALL FOR CONSULTATIONS")
-async def get_consultations(id: int = Path(..., description="id of the doctor"),
+async def get_consultations(current_user: Doctor = Depends(get_current_user),
                             checkStatus: str = Query(None, description="return status of consultations")):
     logger.info("####### GET CONSULTATION METHOD IS CALLED #########")
     global doctor_id
-    response = CheckUserExistence(_id=id, target="DOCTORS-CONSULTATION-GEGTG")
+    response = CheckUserExistence(_id=current_user["id"], target="DOCTORS-CONSULTATION-GEGTG")
     await response.check_if_user_id_exist()
     if checkStatus is None:
         logger.info("######## CHECK STATUS IS NONE, FETCHING ALL ID #########")
-        check_response = await fetch_all_consultation(doctor_id=id)
+        check_response = await fetch_all_consultation(doctor_id=current_user["id"])
         if not check_response:
             logger.error("##### UNABLE TO FIND THE CONSULTATION STATUS #########")
             raise CustomExceptionHandler(message="Unable to find consultation with status open",
@@ -246,11 +248,11 @@ async def get_consultations(id: int = Path(..., description="id of the doctor"),
         return check_response
 
 
-@doctor_consultation.get("/doctors/consultations/upcoming/{doctors_id}", tags=["DOCTORS/CONSULTATIONS"],
+@doctor_consultation.get("/doctors/consultations/upcoming/", tags=["DOCTORS/CONSULTATIONS"],
                          description="GET CALL DOCTORS PREVIOUS CONSULTATIONS")
-async def get_upcoming_doctor_consultations(doctors_id: int):
+async def get_upcoming_doctor_consultations(current_user: Doctor = Depends(get_current_user)):
     logger.info("######## FETCHING UPCOMING CONSULTATIONS ###############")
-    fetching_upcoming_consultations = await doctor_upcoming_consultation(doctor_id=doctors_id)
+    fetching_upcoming_consultations = await doctor_upcoming_consultation(doctor_id=current_user["id"])
     if not fetching_upcoming_consultations:
         return {"message": "You have no upcoming consultations booked",
                 "success": True,
@@ -328,14 +330,16 @@ async def get_upcoming_doctor_consultations(doctors_id: int):
                 }
 
 
-@doctor_consultation.get("/doctors/consultations/history/{doctors_id}",
+@doctor_consultation.get("/doctors/consultations/history",
                          tags=["DOCTORS/CONSULTATIONS"],
                          description="GET CALL DOCTORS PREVIOUS CONSULTATIONS")
-async def get_past_doctor_consultations(doctors_id: int, size: int = Query(default=10),
+async def get_past_doctor_consultations(size: int = Query(default=10),
                                         page: int = Query(default=0,
-                                                          description="POSITION OF THE RECORDS TO START WITH")):
+                                                          description="POSITION OF THE RECORDS TO START WITH"),
+                                        current_user: Doctor = Depends(get_current_user)
+                                        ):
     logger.info("######## FETCHING PAST CONSULTATIONS ###############")
-    fetch_past_consultations = await doctor_past_consultations(doctor_id=doctors_id, limit=size, offset=page)
+    fetch_past_consultations = await doctor_past_consultations(doctor_id=current_user["id"], limit=size, offset=page)
     if not fetch_past_consultations:
         return {"message": "You have no past consultations",
                 "success": True,
@@ -346,7 +350,7 @@ async def get_past_doctor_consultations(doctors_id: int, size: int = Query(defau
                 "page": page
                 }
     # checking total consultations
-    fetch_total_past_consultations = await fetch_past_consultation_count(doctor_id=doctors_id)
+    fetch_total_past_consultations = await fetch_past_consultation_count(doctor_id=current_user["id"])
     print(fetch_total_past_consultations)
     consultation_information = []
     try:
@@ -425,19 +429,20 @@ async def get_past_doctor_consultations(doctors_id: int, size: int = Query(defau
 
 # todo: NEED TO ADD PAGINATION IN THIS ROUTE THIS IS UPCOMING CONSULTATION
 # open and number of consultation count
-@doctor_consultation.get("/doctors/consultations/custom/{doctors_id}", tags=["DOCTORS/CONSULTATIONS"])
-async def get_custom_consultations(doctors_id: int,
+@doctor_consultation.get("/doctors/consultations/custom", tags=["DOCTORS/CONSULTATIONS"])
+async def get_custom_consultations(
                                    field: str = Query(..., description="day/month/week CONSULTATIONS", min_length=3,
                                                       max_length=6),
                                    size: int = Query(default=10,
                                                      description="HOW MANY RECORDS IN PAGE CLIENT WANT"),
-                                   page: int = Query(default=0, description="FROM WHICH ROW TO BEGIN OR SKIP")
+                                   page: int = Query(default=0, description="FROM WHICH ROW TO BEGIN OR SKIP"),
+                                   current_user: Doctor = Depends(get_current_user)
                                    ):
     logger.info("########### FIELD PROVIDED IS {} #########".format(field))
     if field == "month" or field == "day" or field == "week":
         logger.info("####### FETCHING CUSTOM CONSULTATIONS #############")
-        #we have changed the name
-        consultations = CustomConsultation(doctor_id=doctors_id, field=field, size=size, page=page)
+        # we have changed the name
+        consultations = CustomConsultation(doctor_id=current_user["id"], field=field, size=size, page=page)
         logger.info("##### CUSTOM CONSULTATION OBJECT MADE ########")
         return await consultations.fetch_information()
     raise CustomExceptionHandler(message="OOPS!! Something went wrong at our end.",

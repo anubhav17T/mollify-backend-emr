@@ -17,22 +17,22 @@ from utils.db_functions.db_feedback_function import (save_feedback,
 doctor_feedback = APIRouter()
 
 
-@doctor_feedback.get("/doctors/feedback/{doctor_id}", tags=["DOCTORS/FEEDBACKS"], description="GET CALL FOR FEEDBACKS")
-async def get_feedbacks_doctor(doctor_id: int):
-    logger.info("##### GET SPECIFIC FEEDBACK METHOD CALLED ########")
-    response = CheckUserExistence(_id=doctor_id, target="SAVE-FEEDBACK")
-    await response.check_if_user_id_exist()
-    # todo:change it to internal api call because using same database
-    logger.info("###### GETTING ALL THE FEEDBACKS FOR SPECIFIC DOCTOR ID ############")
-    response = await get_all_feedbacks(doctor_id=doctor_id)
-    if not response:
-        return {"message": "Sorry, No Feedbacks Found",
-                "code": status.HTTP_200_OK,
-                "success": True,
-                "data": []}
-    return {"message": "Here is your feedbacks",
-            "code": status.HTTP_200_OK,
-            "success": True, "data": response}
+# @doctor_feedback.get("/doctors/feedback/", tags=["DOCTORS/FEEDBACKS"], description="GET CALL FOR FEEDBACKS")
+# async def get_feedbacks_doctor(doctor_id: int):
+#     logger.info("##### GET SPECIFIC FEEDBACK METHOD CALLED ########")
+#     response = CheckUserExistence(_id=doctor_id, target="SAVE-FEEDBACK")
+#     await response.check_if_user_id_exist()
+#     # todo:change it to internal api call because using same database
+#     logger.info("###### GETTING ALL THE FEEDBACKS FOR SPECIFIC DOCTOR ID ############")
+#     response = await get_all_feedbacks(doctor_id=doctor_id)
+#     if not response:
+#         return {"message": "Sorry, No Feedbacks Found",
+#                 "code": status.HTTP_200_OK,
+#                 "success": True,
+#                 "data": []}
+#     return {"message": "Here is your feedbacks",
+#             "code": status.HTTP_200_OK,
+#             "success": True, "data": response}
 
 
 @doctor_feedback.get("/doctors/feedback/", tags=["DOCTORS/RESTRICTED"], description="GET CALL FOR FEEDBACKS")
