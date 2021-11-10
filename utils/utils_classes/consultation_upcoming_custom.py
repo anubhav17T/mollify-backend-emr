@@ -88,7 +88,7 @@ class CustomConsultation:
         consultation_information = []
         fetch_field_consultations, count = await self.find_consultation()
         if not fetch_field_consultations:
-            return {"message": "No consultations for today",
+            return {"message": "No consultations found for {}".format(self.field),
                     "success": True,
                     "code": status.HTTP_200_OK,
                     "data": []

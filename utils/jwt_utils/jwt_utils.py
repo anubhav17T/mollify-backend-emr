@@ -1,14 +1,13 @@
-import jwt
 from pydantic import ValidationError
 from datetime import datetime, timedelta
 from constants.const import JWT_EXPIRATION_TIME, JWT_SECRET_KEY, JWT_ALGORITHM
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, status
 from fastapi.exceptions import HTTPException
-from utils.db_functions.db_functions import find_exist_user, find_exist_username_email
-from models.doctor import Doctor
+from utils.db_functions.db_functions import find_exist_username_email
 from utils.db_functions.db_functions import find_black_list_token
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
+import jwt
 
 
 async def create_access_token(data: dict, expire_delta: timedelta = None):
@@ -56,14 +55,14 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
                                          success=False,
                                          target="JWT-VERIFICATION"
                                          )
-        return {"id":result["id"],
-                "full_name":result["full_name"],
-                "mail":result["mail"],
-                "phone_number":result["phone_number"],
-                "gender":result["gender"],
-                "experience":result["experience"],
-                "url":result["url"],
-                "about":result["about"]
+        return {"id": result["id"],
+                "full_name": result["full_name"],
+                "mail": result["mail"],
+                "phone_number": result["phone_number"],
+                "gender": result["gender"],
+                "experience": result["experience"],
+                "url": result["url"],
+                "about": result["about"]
                 }
     except ValidationError:
         raise credential_exception
@@ -71,5 +70,5 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         raise CustomExceptionHandler(message="Something went wrong,please try again later",
                                      code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                      success=False,
-                                     target="JWT-VERIFICATION CAUSEED[{}]".format(e)
+                                     target="JWT-VERIFICATION CAUSED[{}]".format(e)
                                      )
