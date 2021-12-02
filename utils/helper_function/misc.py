@@ -21,6 +21,13 @@ def get_last_date(year,month):
     return date[1]
 
 
+def check_for_cancellation_time(cancel_time):
+    dt = datetime.now(timezone("Asia/Kolkata"))
+    if cancel_time.date() == dt.date():
+        return False
+    return True
+
+
 # c = "30/9/2021 23:59:51"
 # current_time_object = datetime.strptime(c, "%d/%m/%Y %H:%M:%S")
 # print(current_time_object)

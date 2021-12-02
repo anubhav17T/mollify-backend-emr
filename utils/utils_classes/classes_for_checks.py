@@ -220,3 +220,5 @@ class ConsultationChecks:
                 code=status.HTTP_400_BAD_REQUEST,
                 success=False, target="CONSULTATION(STATUS_OPEN AND PARENT_ID DUPLICATE CHECK),BOOKING ALREADY EXIST "
                                       "FOR THE SPECIFIED DOCTOR AT GIVEN TIME")
+
+

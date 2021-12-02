@@ -89,7 +89,6 @@ app.include_router(information, prefix=V1_PREFIX)
 app.include_router(documents, prefix=V1_PREFIX)
 
 
-
 async def home():
     """:return MOLLIFY HOME"""
     return {"API": "MOLLIFY DOCTOR-EMR SERVICE"}

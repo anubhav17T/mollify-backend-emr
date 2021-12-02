@@ -1,4 +1,4 @@
-from fastapi import status, APIRouter,Depends
+from fastapi import status, APIRouter, Depends
 from constants.variable_constants import (
     CONSULTATION_STATUS_OPEN,
     CONSULTATION_STATUS_CANCELLED, \
@@ -17,7 +17,7 @@ from utils.db_functions.db_consultation_function import (save_consultation,
                                                          doctor_upcoming_consultation, fetch_all_form_details,
                                                          doctor_custom_day_consultations, fetch_past_consultation_count, \
                                                          )
-from utils.helper_function.misc import convert_datetime
+from utils.helper_function.misc import convert_datetime, check_for_cancellation_time
 from utils.logger.logger import logger
 from utils.custom_exceptions.custom_exceptions import CustomExceptionHandler
 from models.consultation import ConsultationTable
@@ -191,11 +191,14 @@ async def create_consultations(consultation: ConsultationTable):
                 temp = dict(response)
                 if temp["session_type"] != consultation.session_type:
                     raise Exception("Session type is different in state in cancelled/reschudeled")
-
+                if consultation.status == CONSULTATION_STATUS_CANCELLED:
+                    check = check_for_cancellation_time(cancel_time=temp["start_time"])
+                    if not check:
+                        raise Exception(".We Regret,Same Day Consultation Cancellation is not allowed")
                 if temp["id"] == consultation.parent_id and temp["status"] == "OPEN":
                     logger.info("###### STAGE-1 PARENT_ID AND STATUS-> OPEN IS VALIDATED")
                     if consultation.cancel_reason is None:
-                        raise Exception("Can you please specify {} reason".format(str(consultation.status)))
+                        raise Exception(",Can you please specify {} reason".format(str(consultation.status.name)))
                     check = await check_for_consultation_existence(parent_id=consultation.parent_id,
                                                                    patient_id=consultation.patient_id,
                                                                    doctor_id=consultation.doctor_id,
@@ -203,7 +206,7 @@ async def create_consultations(consultation: ConsultationTable):
                                                                    )
                     if check is not None:
                         raise Exception("CONSULTATION IS ALREADY CANCELLED/RESCHEDULED, DUPLICATE ENTRY?")
-                # todo: same day consultation cancel/reschedule  not allow or money will cut !!
+                # todo: same day consultation cancellation  not allow or money will cut !!
     except Exception as Why:
         raise CustomExceptionHandler(
             message="Something went wrong in doctor consultation booking {}".format(Why),
@@ -351,7 +354,6 @@ async def get_past_doctor_consultations(size: int = Query(default=10),
                 }
     # checking total consultations
     fetch_total_past_consultations = await fetch_past_consultation_count(doctor_id=current_user["id"])
-    print(fetch_total_past_consultations)
     consultation_information = []
     try:
         for values in fetch_past_consultations:
@@ -431,13 +433,13 @@ async def get_past_doctor_consultations(size: int = Query(default=10),
 # open and number of consultation count
 @doctor_consultation.get("/doctors/consultations/custom", tags=["DOCTORS/CONSULTATIONS"])
 async def get_custom_consultations(
-                                   field: str = Query(..., description="day/month/week CONSULTATIONS", min_length=3,
-                                                      max_length=6),
-                                   size: int = Query(default=10,
-                                                     description="HOW MANY RECORDS IN PAGE CLIENT WANT"),
-                                   page: int = Query(default=0, description="FROM WHICH ROW TO BEGIN OR SKIP"),
-                                   current_user: Doctor = Depends(get_current_user)
-                                   ):
+        field: str = Query(..., description="day/month/week CONSULTATIONS", min_length=3,
+                           max_length=6),
+        size: int = Query(default=10,
+                          description="HOW MANY RECORDS IN PAGE CLIENT WANT"),
+        page: int = Query(default=0, description="FROM WHICH ROW TO BEGIN OR SKIP"),
+        current_user: Doctor = Depends(get_current_user)
+):
     logger.info("########### FIELD PROVIDED IS {} #########".format(field))
     if field == "month" or field == "day" or field == "week":
         logger.info("####### FETCHING CUSTOM CONSULTATIONS #############")
