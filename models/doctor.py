@@ -36,6 +36,20 @@ class Doctor(BaseModel):
     languages: List[int]
     consultation_charges: ConsultationSpecificFee
 
+class DoctorOut(BaseModel):
+    full_name: str
+    mail: str
+    gender: str
+    experience: str
+    is_active: bool
+    url: str
+    is_online: bool
+    url: str
+    about: str
+    slug: str
+
+
+
 
 class DoctorResponse(BaseModel):
     username: str

@@ -17,6 +17,7 @@ from utils.db_functions.raw_queries import (QUERY_FOR_REGISTER_DOCTOR, QUERY_FOR
                                             QUERY_FOR_DOCTOR_TIMESLOT_MAP, \
                                             QUERY_FOR_DOCTOR_DETAILS_AND_QUALIFICATIONS,
                                             QUERY_TO_FIND_DOCTOR_TIMESLOT_ID)
+from utils.helper_function.misc import list_to_set_with_case_conversion
 from utils.logger.logger import logger
 from utils.connection_configuration.db_object import db
 from datetime import datetime, timezone
@@ -79,6 +80,47 @@ def get_all_doctor():
         return db.fetch_all(query)
     except Exception as e:
         logger.error("#### EXCEPTION IN GET SPECIFIC DOCTOR IS {} #####".format(e))
+
+
+def filter_doctor(experties, languages):
+    try:
+        query = """SELECT id,full_name,mail,gender,experience,is_active,url, is_online,about,slug FROM doctors WHERE 
+        id IN (SELECT doctor_id FROM doctors_languages_map WHERE languages_id IN (SELECT id FROM languages WHERE name 
+        IN {})) INTERSECT SELECT id,full_name,mail,gender,experience, is_active,url,is_online,about,slug FROM doctors 
+        WHERE id IN (SELECT doctor_id FROM doctors_specialisations_map WHERE specialisation_id IN (SELECT id FROM 
+        specialisations WHERE name IN {})); """.format(languages, experties)
+
+        logger.info(
+            f"### PROCEEDING FURTHER FOR EXECUTION OF QUERY TO GET THE SPECIALISATION IN {experties}  WITH LANGUAGE {languages}")
+        return db.fetch_all(query)
+    except Exception as e:
+        logger.error("#### EXCEPTION IN GET SPECIFIC DOCTOR ON SPECIALISATION AND LANGUAGE IS {} #####".format(e))
+
+
+def get_doctor_on_specialisation(special):
+
+    try:
+        query = """ SELECT id,full_name,mail,gender,experience,is_active,url,
+            is_online,about,slug FROM doctors WHERE id IN (SELECT doctor_id FROM doctors_specialisations_map 
+        WHERE specialisation_id IN (SELECT id FROM specialisations WHERE name IN {})) ORDER BY created_on DESC""".format(
+            special)
+
+        logger.info(f"### PROCEEDING FURTHER FOR EXECUTION OF QUERY TO GET THE SPECIALISATION IN {special} ")
+        return db.fetch_all(query)
+    except Exception as e:
+        logger.error("#### EXCEPTION IN GET SPECIFIC DOCTOR ON SPECIALISATION IS {} #####".format(e))
+
+
+def get_doctor_on_languages(languages):
+    try:
+        query = """ SELECT id,full_name,mail,gender,experience,is_active,url,
+            is_online,about,slug FROM doctors WHERE id IN (SELECT doctor_id FROM doctors_specialisations_map 
+        WHERE specialisation_id IN (SELECT id FROM specialisations WHERE name IN {})) ORDER BY created_on DESC""".format(languages)
+
+        logger.info(f"### PROCEEDING FURTHER FOR EXECUTION OF QUERY TO GET THE SPECIALISATION IN {languages} ")
+        return db.fetch_all(query)
+    except Exception as e:
+        logger.error("#### EXCEPTION IN GET SPECIFIC DOCTOR ON SPECIALISATION IS {} #####".format(e))
 
 
 def doctor_by_name(name: str):
@@ -237,25 +279,26 @@ def find_slug_therapist(slug: str):
     finally:
         logger.info("#### FIND IND_SLUG_THERAPIST FUNCTION COMPLETED ####")
 
+
 def save_doctor(doctor: Doctor, slug):
     dt = datetime.now(timezone("Asia/Kolkata"))
     try:
         query = """ INSERT INTO doctors VALUES (nextval('doctors_id_seq'),:full_name,:mail,:password,:phone_number,:gender,:experience,:econsultation_fee,:isActive,:isOnline,:url,:follow_up_fee,:about, :slug, :created_on) RETURNING id """
         logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY")
         return db.execute(query=query, values={
-                                               "full_name": doctor.full_name, "mail": doctor.mail,
-                                               "password": doctor.password,
-                                               "phone_number": doctor.phone_number, "gender": doctor.gender,
-                                               "experience": doctor.experience,
-                                               "econsultation_fee": doctor.econsultation_fee,
-                                               "is_active": doctor.is_active,
-                                               "is_online": doctor.is_online,
-                                               "url": doctor.url,
-                                               "follow_up_fee": doctor.follow_up_fee,
-                                               "about": doctor.about,
-                                               "slug": slug,
-                                               "created_on": dt.utcnow()
-                                               }
+            "full_name": doctor.full_name, "mail": doctor.mail,
+            "password": doctor.password,
+            "phone_number": doctor.phone_number, "gender": doctor.gender,
+            "experience": doctor.experience,
+            "econsultation_fee": doctor.econsultation_fee,
+            "is_active": doctor.is_active,
+            "is_online": doctor.is_online,
+            "url": doctor.url,
+            "follow_up_fee": doctor.follow_up_fee,
+            "about": doctor.about,
+            "slug": slug,
+            "created_on": dt.utcnow()
+        }
                           )
 
     except Exception as e:
@@ -552,22 +595,22 @@ async def register_user_combined(doctor, slug):
             dt = datetime.now(timezone("Asia/Kolkata"))
             logger.info("#### PROCEEDING FURTHER FOR THE EXECUTION OF QUERY")
             doctor_id = await db.execute(query=QUERY_FOR_REGISTER_DOCTOR, values={
-                                                                                  "full_name": doctor.full_name,
-                                                                                  "mail": doctor.mail,
-                                                                                  "password": doctor.password,
-                                                                                  "phone_number": doctor.phone_number,
-                                                                                  "gender": doctor.gender,
-                                                                                  "experience": doctor.experience,
-                                                                                  "is_active": doctor.is_active,
-                                                                                  "is_online": doctor.is_online,
-                                                                                  "url": doctor.url,
-                                                                                  "about": doctor.about,
-                                                                                  "slug": slug,
-                                                                                  "chat": doctor.consultation_charges.chat,
-                                                                                  "audio": doctor.consultation_charges.audio,
-                                                                                  "video": doctor.consultation_charges.video,
-                                                                                  "created_on": dt.utcnow()
-                                                                                  }
+                "full_name": doctor.full_name,
+                "mail": doctor.mail,
+                "password": doctor.password,
+                "phone_number": doctor.phone_number,
+                "gender": doctor.gender,
+                "experience": doctor.experience,
+                "is_active": doctor.is_active,
+                "is_online": doctor.is_online,
+                "url": doctor.url,
+                "about": doctor.about,
+                "slug": slug,
+                "chat": doctor.consultation_charges.chat,
+                "audio": doctor.consultation_charges.audio,
+                "video": doctor.consultation_charges.video,
+                "created_on": dt.utcnow()
+            }
                                          )
             logger.info("####### SUCCESS IN DOCTOR TABLE #########")
             map_object = []
