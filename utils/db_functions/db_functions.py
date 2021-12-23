@@ -73,7 +73,7 @@ def get_specific_doctor(search_query):
 
 def get_all_doctor():
     try:
-        query = """SELECT id,full_name,mail,gender,experience,is_active,url,
+        query = """SELECT id,full_name,gender,experience,is_active,url,
         is_online,about,slug FROM doctors ORDER BY created_on DESC """
         logger.info("### PROCEEDING FURTHER FOR EXECUTION OF QUERY OF GET SPECIFIC DOCTOR")
         return db.fetch_all(query)
@@ -451,7 +451,7 @@ def get_doctor_id(slug: str):
 
 
 def find_doctor_information(slug: str):
-    query = """SELECT id,full_name,mail,phone_number,gender,experience,is_active,url,
+    query = """SELECT id,full_name,gender,experience,is_active,url,
         is_online,about,slug,audio,video,chat FROM doctors WHERE slug=:slug"""
     try:
         return db.fetch_one(query, values={"slug": slug})
