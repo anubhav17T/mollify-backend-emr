@@ -31,8 +31,6 @@ from utils.tables.db_tables import (
     doctor_specialisation_mapping,
     doctors_time_slot, \
     doctors_timeSlot_map,
-    feedback,
-    consultation,
     creating_language_table,
     doctor_language_mapping,
     create_razorpay_order_status_table
@@ -52,8 +50,6 @@ def connections():
     doctor_specialisation_mapping()
     doctors_time_slot()
     doctors_timeSlot_map()
-    consultation()
-    feedback()
     creating_language_table()
     doctor_language_mapping()
     create_razorpay_order_status_table()

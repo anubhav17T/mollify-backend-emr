@@ -127,7 +127,7 @@ def check_for_duplicate_consultation_booking(doctor_id: int, start_time: datetim
 
 
 def check_for_open_status(parent_id: int, doctor_id: int, patient_id: int):
-    query = "SELECT id,patient_id,doctor_id,parent_id,status,session_type FROM consultations " \
+    query = "SELECT id,patient_id,doctor_id,parent_id,status,session_type,start_time FROM consultations " \
             "WHERE patient_id=:patient_id AND doctor_id=:doctor_id AND " \
             "id=:parent_id AND status='OPEN' "
     return db.fetch_one(query=query,

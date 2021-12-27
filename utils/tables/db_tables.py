@@ -266,80 +266,80 @@ def doctors_timeSlot_map():
     finally:
         logger.info("###### CREATE SPECIALISATION TABLE FUNCTION OVER ###### ")
 
+#
+# def feedback():
+#     logger.info("######## GOING FOR DOCTOR/THERAPIST FEEDBACK  TABLE #########")
+#     try:
+#         conn = psycopg2.connect(database=DB_NAME, user=DB_USER, host=DB_HOST, password=DB_PASSWORD, port=DB_PORT)
+#         cur = conn.cursor()
+#         cur.execute("select * from information_schema.tables where table_name=%s", ('feedbacks',))
+#         if bool(cur.rowcount):
+#             logger.info("#### TABLE FEEDBACK ALREADY EXIST IN THE DATABASE PASSING IT")
+#             conn.close()
+#             return True
+#         else:
+#             metadata = sqlalchemy.MetaData()
+#             feedbacks_table = sqlalchemy.Table(
+#                 "feedbacks", metadata,
+#                 sqlalchemy.Column("id", Integer, Sequence("feedbacks_id_seq"), primary_key=True),
+#                 sqlalchemy.Column("consultation_id", Integer),
+#                 sqlalchemy.Column("doctor_id", Integer),
+#                 sqlalchemy.Column("patient_id", Integer),
+#                 sqlalchemy.Column("wait_time_rating", sqlalchemy.FLOAT),
+#                 sqlalchemy.Column("overall_rating", sqlalchemy.FLOAT),
+#                 sqlalchemy.Column("review", sqlalchemy.String(500)),
+#                 sqlalchemy.Column("is_doctor_recommended", sqlalchemy.Boolean),
+#                 sqlalchemy.Column("is_doctor_active", sqlalchemy.Boolean),
+#                 sqlalchemy.Column("created_on", DateTime),
+#             )
+#             engine = sqlalchemy.create_engine(
+#                 DB_URL, pool_size=3)
+#             metadata.create_all(engine)
+#             conn.close()
+#             return feedbacks_table
+#     except Exception as e:
+#         logger.error("######## WENT WRONG IN CREATING FEEDBACK TABLE {} ########".format(e))
+#     finally:
+#         logger.info("###### CREATE FEEDBACK TABLE FUNCTION OVER ###### ")
 
-def feedback():
-    logger.info("######## GOING FOR DOCTOR/THERAPIST FEEDBACK  TABLE #########")
-    try:
-        conn = psycopg2.connect(database=DB_NAME, user=DB_USER, host=DB_HOST, password=DB_PASSWORD, port=DB_PORT)
-        cur = conn.cursor()
-        cur.execute("select * from information_schema.tables where table_name=%s", ('feedbacks',))
-        if bool(cur.rowcount):
-            logger.info("#### TABLE FEEDBACK ALREADY EXIST IN THE DATABASE PASSING IT")
-            conn.close()
-            return True
-        else:
-            metadata = sqlalchemy.MetaData()
-            feedbacks_table = sqlalchemy.Table(
-                "feedbacks", metadata,
-                sqlalchemy.Column("id", Integer, Sequence("feedbacks_id_seq"), primary_key=True),
-                sqlalchemy.Column("consultation_id", Integer),
-                sqlalchemy.Column("doctor_id", Integer),
-                sqlalchemy.Column("patient_id", Integer),
-                sqlalchemy.Column("wait_time_rating", sqlalchemy.FLOAT),
-                sqlalchemy.Column("overall_rating", sqlalchemy.FLOAT),
-                sqlalchemy.Column("review", sqlalchemy.String(500)),
-                sqlalchemy.Column("is_doctor_recommended", sqlalchemy.Boolean),
-                sqlalchemy.Column("is_doctor_active", sqlalchemy.Boolean),
-                sqlalchemy.Column("created_on", DateTime),
-            )
-            engine = sqlalchemy.create_engine(
-                DB_URL, pool_size=3)
-            metadata.create_all(engine)
-            conn.close()
-            return feedbacks_table
-    except Exception as e:
-        logger.error("######## WENT WRONG IN CREATING FEEDBACK TABLE {} ########".format(e))
-    finally:
-        logger.info("###### CREATE FEEDBACK TABLE FUNCTION OVER ###### ")
 
-
-def consultation():
-    """:returns consultation table"""
-    logger.info("######## GOING FOR DOCTOR/THERAPIST CONSULTATION  TABLE #########")
-    try:
-        conn = psycopg2.connect(database=DB_NAME, user=DB_USER, host=DB_HOST, password=DB_PASSWORD, port=DB_PORT)
-        cur = conn.cursor()
-        cur.execute("select * from information_schema.tables where table_name=%s", ('consultations',))
-        if bool(cur.rowcount):
-            logger.info("#### TABLE CONSULTATIONS ALREADY EXIST IN THE DATABASE PASSING IT")
-            conn.close()
-            return True
-        else:
-            metadata = sqlalchemy.MetaData()
-            consultations_table = sqlalchemy.Table(
-                "consultations", metadata,
-                sqlalchemy.Column("id", Integer, Sequence("consultations_id_seq"), primary_key=True),
-                sqlalchemy.Column("patient_id", Integer),
-                sqlalchemy.Column("doctor_id", Integer),
-                sqlalchemy.Column("parent_id", Integer),
-                sqlalchemy.Column("start_time", DateTime),
-                sqlalchemy.Column("end_time", DateTime),
-                sqlalchemy.Column("time_slot_config_id", Integer),
-                sqlalchemy.Column("status", sqlalchemy.String(20)),
-                sqlalchemy.Column("cancel_reason", sqlalchemy.String(200)),
-                sqlalchemy.Column("created_on", DateTime),
-                sqlalchemy.Column("day",sqlalchemy.String(10)),
-                sqlalchemy.Column("session_type", sqlalchemy.String(10))
-            )
-            engine = sqlalchemy.create_engine(
-                DB_URL, pool_size=3)
-            metadata.create_all(engine)
-            conn.close()
-            return consultations_table
-    except Exception as e:
-        logger.error("######## WENT WRONG IN CREATING CONSULTATIONS TABLE {} ########".format(e))
-    finally:
-        logger.info("###### CREATE CONSULTATIONS TABLE FUNCTION OVER ###### ")
+# def consultation():
+#     """:returns consultation table"""
+#     logger.info("######## GOING FOR DOCTOR/THERAPIST CONSULTATION  TABLE #########")
+#     try:
+#         conn = psycopg2.connect(database=DB_NAME, user=DB_USER, host=DB_HOST, password=DB_PASSWORD, port=DB_PORT)
+#         cur = conn.cursor()
+#         cur.execute("select * from information_schema.tables where table_name=%s", ('consultations',))
+#         if bool(cur.rowcount):
+#             logger.info("#### TABLE CONSULTATIONS ALREADY EXIST IN THE DATABASE PASSING IT")
+#             conn.close()
+#             return True
+#         else:
+#             metadata = sqlalchemy.MetaData()
+#             consultations_table = sqlalchemy.Table(
+#                 "consultations", metadata,
+#                 sqlalchemy.Column("id", Integer, Sequence("consultations_id_seq"), primary_key=True),
+#                 sqlalchemy.Column("patient_id", Integer),
+#                 sqlalchemy.Column("doctor_id", Integer),
+#                 sqlalchemy.Column("parent_id", Integer),
+#                 sqlalchemy.Column("start_time", DateTime),
+#                 sqlalchemy.Column("end_time", DateTime),
+#                 sqlalchemy.Column("time_slot_config_id", Integer),
+#                 sqlalchemy.Column("status", sqlalchemy.String(20)),
+#                 sqlalchemy.Column("cancel_reason", sqlalchemy.String(200)),
+#                 sqlalchemy.Column("created_on", DateTime),
+#                 sqlalchemy.Column("day",sqlalchemy.String(10)),
+#                 sqlalchemy.Column("session_type", sqlalchemy.String(10))
+#             )
+#             engine = sqlalchemy.create_engine(
+#                 DB_URL, pool_size=3)
+#             metadata.create_all(engine)
+#             conn.close()
+#             return consultations_table
+#     except Exception as e:
+#         logger.error("######## WENT WRONG IN CREATING CONSULTATIONS TABLE {} ########".format(e))
+#     finally:
+#         logger.info("###### CREATE CONSULTATIONS TABLE FUNCTION OVER ###### ")
 
 
 def creating_language_table():

@@ -222,3 +222,9 @@ class ConsultationChecks:
                                       "FOR THE SPECIFIED DOCTOR AT GIVEN TIME")
 
 
+class CheckTimeIntersection:
+    pass
+
+
+
+print(datetime.now(timezone("Asia/Kolkata")))

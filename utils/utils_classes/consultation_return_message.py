@@ -33,7 +33,7 @@ class ConsultationStatusMessage:
                     "success": True}
 
         if self.status == "CANCELLED":
-            return {"message": "We Regret that you have cancelled the confirmation",
+            return {"message": "Your Consultation has been cancelled, amount will be refunded in 3-5 days",
                     "code": status.HTTP_200_OK,
                     "id": self.id,
                     "success": True}
